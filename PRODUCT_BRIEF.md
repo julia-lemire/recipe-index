@@ -178,20 +178,6 @@ An Android-native (Kotlin) mobile app that stores recipes locally, extracts reci
 5. **Flexible**: Support different cooking styles and planning preferences
 6. **Smart defaults**: Sensible defaults with easy customization
 
-## Success Metrics
-
-### Primary Metrics
-- **Recipe retention**: Average number of recipes stored per active user
-- **Weekly active usage**: Users accessing app at least once per week
-- **Meal plan completion**: % of planned meals marked as cooked
-- **Cooking mode engagement**: % of recipes viewed in cooking mode
-
-### Secondary Metrics
-- **Recipe import success rate**: % of successful URL/PDF/photo imports
-- **Shopping list usage**: % of meal plans generating shopping lists
-- **Recipe sharing**: Number of recipes shared via Quick Share
-- **Tag accuracy**: % of automated tags accepted by users
-
 ## Future Considerations
 
 ### Phase 2 Features (Post-Launch)
@@ -244,21 +230,6 @@ An Android-native (Kotlin) mobile app that stores recipes locally, extracts reci
 5. **Grocery list organization**: Default sort order (alphabetical, by recipe, by category)?
 6. **Sharing permissions**: Can shared recipes include user notes, or only original recipe?
 7. **Offline ML**: Can photo-to-recipe work offline, or require internet for ML model?
-
-## Competitive Landscape
-
-### Existing Solutions
-- **Paprika**: Cross-platform, cloud sync, strong URL parsing (but requires subscription)
-- **Cookmate**: Android app with meal planning (limited import options)
-- **Cooklist**: Recipe manager with meal planning (no photo extraction)
-- **Mela**: iOS-only, excellent UX (not available on Android)
-
-### Differentiation
-- **Offline-first**: No cloud dependency, no subscription
-- **Photo extraction**: Advanced OCR/ML for recipe photos
-- **Cooking mode**: Purpose-built for in-kitchen use
-- **Samsung ecosystem**: Native Quick Share integration
-- **Free**: No subscription model, one-time purchase or ad-supported
 
 ## Appendix
 
