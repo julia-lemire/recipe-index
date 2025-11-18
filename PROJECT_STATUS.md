@@ -52,8 +52,8 @@
 
 ## 1. Project Overview
 
-**Current Phase:** Planning & Documentation
-**Current Focus:** Project foundation - Android initialization, Hearth design system implementation
+**Current Phase:** Setup & Foundation
+**Current Focus:** Basic navigation structure and UI foundation complete, ready for recipe management implementation
 
 Recipe Index: Offline-first Android app for home cooks to store, organize, and plan meals with recipes from URLs/PDFs/photos.
 
@@ -120,15 +120,26 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ 5-document system
 - ✅ Git workflow
 
+### Foundation
+- ✅ Android project setup with Compose dependencies
+- ✅ DebugConfig utility with category-based logging
+- ✅ Hearth theme implementation (Color.kt, Type.kt, HearthTheme.kt)
+- ✅ Responsive navigation drawer (modal for phone, permanent for tablet)
+- ✅ Navigation structure with Screen sealed class
+- ✅ MainActivity with WindowSizeClass support
+- ✅ Screen placeholders (Home, Recipe Index, Meal Planning, Grocery Lists, Settings)
+
 ---
 
 ## 5. Active Backlog
 
 ### Phase 0: Setup
-- [ ] Android project initialization
-- [ ] Gradle config
-- [ ] Material 3 theme (Hearth colors)
-- [ ] DebugConfig utility
+- [x] Android project initialization
+- [x] Gradle config (Compose, Navigation, Room)
+- [x] Material 3 theme (Hearth colors)
+- [x] DebugConfig utility
+- [x] Navigation drawer (responsive)
+- [x] Screen scaffolding
 - [ ] AppSettings with StateFlow
 
 ### Phase 1: Recipe Management
