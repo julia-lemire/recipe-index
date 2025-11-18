@@ -70,8 +70,7 @@ fun ImportSourceSelectionScreen(
                 icon = Icons.Default.PictureAsPdf,
                 title = "From PDF",
                 description = "Import from PDF cookbooks or saved recipe files",
-                onClick = { onSourceSelected(ImportSource.PDF) },
-                enabled = false // Will implement later
+                onClick = { onSourceSelected(ImportSource.PDF) }
             )
 
             // Photo Import Option
@@ -79,8 +78,7 @@ fun ImportSourceSelectionScreen(
                 icon = Icons.Default.CameraAlt,
                 title = "From Photo",
                 description = "Import from recipe photos using OCR (camera or gallery)",
-                onClick = { onSourceSelected(ImportSource.PHOTO) },
-                enabled = false // Will implement later
+                onClick = { onSourceSelected(ImportSource.PHOTO) }
             )
         }
     }

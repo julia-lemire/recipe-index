@@ -11,6 +11,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.recipeindex.app.data.AppDatabase
 import com.recipeindex.app.data.managers.RecipeManager
+import com.recipeindex.app.data.parsers.PdfRecipeParser
+import com.recipeindex.app.data.parsers.PhotoRecipeParser
 import com.recipeindex.app.data.parsers.SchemaOrgRecipeParser
 import com.recipeindex.app.ui.components.AppNavigationDrawer
 import com.recipeindex.app.ui.theme.HearthTheme
@@ -43,16 +45,25 @@ class MainActivity : ComponentActivity() {
         val database = AppDatabase.getDatabase(applicationContext)
         val recipeManager = RecipeManager(database.recipeDao())
 
-        // Setup HTTP client for recipe import
+        // Setup HTTP client for URL recipe import
         val httpClient = HttpClient(OkHttp) {
             install(Logging) {
                 logger = Logger.DEFAULT
                 level = LogLevel.INFO
             }
         }
-        val recipeParser = SchemaOrgRecipeParser(httpClient)
+        val urlRecipeParser = SchemaOrgRecipeParser(httpClient)
 
-        val viewModelFactory = ViewModelFactory(recipeManager, recipeParser)
+        // Setup PDF and Photo parsers
+        val pdfRecipeParser = PdfRecipeParser(applicationContext)
+        val photoRecipeParser = PhotoRecipeParser(applicationContext)
+
+        val viewModelFactory = ViewModelFactory(
+            recipeManager,
+            urlRecipeParser,
+            pdfRecipeParser,
+            photoRecipeParser
+        )
 
         setContent {
             val windowSizeClass = calculateWindowSizeClass(this)

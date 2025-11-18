@@ -11,6 +11,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.recipeindex.app.navigation.Screen
 import com.recipeindex.app.ui.screens.*
+import com.recipeindex.app.ui.viewmodels.ImportPdfViewModel
+import com.recipeindex.app.ui.viewmodels.ImportPhotoViewModel
 import com.recipeindex.app.ui.viewmodels.ImportViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.ui.viewmodels.ViewModelFactory
@@ -168,10 +170,10 @@ fun RecipeIndexNavigation(
                             navController.navigate(Screen.ImportUrl.route)
                         }
                         ImportSource.PDF -> {
-                            // TODO: Implement PDF import
+                            navController.navigate(Screen.ImportPdf.route)
                         }
                         ImportSource.PHOTO -> {
-                            // TODO: Implement photo import
+                            navController.navigate(Screen.ImportPhoto.route)
                         }
                     }
                 }
@@ -192,6 +194,50 @@ fun RecipeIndexNavigation(
                         "Recipe imported, navigating to recipe list"
                     )
                     importViewModel.reset()
+                    // Pop back to recipe list, clearing import screens from stack
+                    navController.popBackStack(Screen.RecipeIndex.route, inclusive = false)
+                }
+            )
+        }
+
+        // Import from PDF
+        composable(Screen.ImportPdf.route) {
+            val pdfImportViewModel: ImportPdfViewModel = viewModel(factory = viewModelFactory)
+
+            ImportPdfScreen(
+                viewModel = pdfImportViewModel,
+                onNavigateBack = {
+                    pdfImportViewModel.reset()
+                    navController.popBackStack()
+                },
+                onSaveComplete = {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.NAVIGATION,
+                        "PDF recipe imported, navigating to recipe list"
+                    )
+                    pdfImportViewModel.reset()
+                    // Pop back to recipe list, clearing import screens from stack
+                    navController.popBackStack(Screen.RecipeIndex.route, inclusive = false)
+                }
+            )
+        }
+
+        // Import from Photo
+        composable(Screen.ImportPhoto.route) {
+            val photoImportViewModel: ImportPhotoViewModel = viewModel(factory = viewModelFactory)
+
+            ImportPhotoScreen(
+                viewModel = photoImportViewModel,
+                onNavigateBack = {
+                    photoImportViewModel.reset()
+                    navController.popBackStack()
+                },
+                onSaveComplete = {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.NAVIGATION,
+                        "Photo recipe imported, navigating to recipe list"
+                    )
+                    photoImportViewModel.reset()
                     // Pop back to recipe list, clearing import screens from stack
                     navController.popBackStack(Screen.RecipeIndex.route, inclusive = false)
                 }

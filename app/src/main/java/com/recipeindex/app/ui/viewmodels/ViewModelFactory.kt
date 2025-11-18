@@ -3,6 +3,8 @@ package com.recipeindex.app.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.recipeindex.app.data.managers.RecipeManager
+import com.recipeindex.app.data.parsers.PdfRecipeParser
+import com.recipeindex.app.data.parsers.PhotoRecipeParser
 import com.recipeindex.app.data.parsers.RecipeParser
 
 /**
@@ -12,7 +14,9 @@ import com.recipeindex.app.data.parsers.RecipeParser
  */
 class ViewModelFactory(
     private val recipeManager: RecipeManager,
-    private val recipeParser: RecipeParser
+    private val urlRecipeParser: RecipeParser,
+    private val pdfRecipeParser: PdfRecipeParser,
+    private val photoRecipeParser: PhotoRecipeParser
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -22,7 +26,13 @@ class ViewModelFactory(
                 RecipeViewModel(recipeManager) as T
             }
             modelClass.isAssignableFrom(ImportViewModel::class.java) -> {
-                ImportViewModel(recipeParser, recipeManager) as T
+                ImportViewModel(urlRecipeParser, recipeManager) as T
+            }
+            modelClass.isAssignableFrom(ImportPdfViewModel::class.java) -> {
+                ImportPdfViewModel(pdfRecipeParser, recipeManager) as T
+            }
+            modelClass.isAssignableFrom(ImportPhotoViewModel::class.java) -> {
+                ImportPhotoViewModel(photoRecipeParser, recipeManager) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }

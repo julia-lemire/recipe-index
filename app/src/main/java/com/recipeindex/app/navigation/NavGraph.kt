@@ -36,6 +36,8 @@ sealed class Screen(
     // Import screens (not in drawer)
     object ImportSourceSelection : Screen("import_source", "Import Recipe", Icons.Default.List)
     object ImportUrl : Screen("import_url", "Import from URL", Icons.Default.List)
+    object ImportPdf : Screen("import_pdf", "Import from PDF", Icons.Default.List)
+    object ImportPhoto : Screen("import_photo", "Import from Photo", Icons.Default.List)
 
     companion object {
         val drawerScreens = listOf(Home, RecipeIndex, MealPlanning, GroceryLists, Settings)
