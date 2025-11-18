@@ -65,6 +65,19 @@
 
 ```
 com.recipeindex.app/
+├── data/
+│   ├── dao/
+│   │   └── RecipeDao.kt
+│   │
+│   ├── entities/
+│   │   └── Recipe.kt
+│   │
+│   ├── managers/
+│   │   └── RecipeManager.kt
+│   │
+│   ├── AppDatabase.kt
+│   └── Converters.kt
+│
 ├── navigation/
 │   └── NavGraph.kt
 │
@@ -73,9 +86,11 @@ com.recipeindex.app/
 │   │   └── AppNavigationDrawer.kt
 │   │
 │   ├── screens/
+│   │   ├── AddEditRecipeScreen.kt
 │   │   ├── GroceryListScreen.kt
 │   │   ├── HomeScreen.kt
 │   │   ├── MealPlanningScreen.kt
+│   │   ├── RecipeDetailScreen.kt
 │   │   ├── RecipeListScreen.kt
 │   │   └── SettingsScreen.kt
 │   │
@@ -84,7 +99,12 @@ com.recipeindex.app/
 │   │   ├── HearthTheme.kt
 │   │   └── Type.kt
 │   │
-│   └── MainActivity.kt
+│   ├── viewmodels/
+│   │   ├── RecipeViewModel.kt
+│   │   └── ViewModelFactory.kt
+│   │
+│   ├── MainActivity.kt
+│   └── Navigation.kt
 │
 └── utils/
     └── DebugConfig.kt
@@ -104,33 +124,60 @@ com.recipeindex.app/
 > - Format: `FileA.kt → FileB.kt, FileC.kt` (A uses/depends on B and C)
 
 ### Navigation Flow
-- MainActivity → AppNavigationDrawer → NavGraph → All Screens
-- AppNavigationDrawer → Screen sealed class for routes
-- Uses WindowSizeClass for responsive drawer (modal/permanent)
+- MainActivity → AppDatabase → RecipeManager → ViewModelFactory
+- MainActivity → Navigation.kt → RecipeViewModel → RecipeManager → RecipeDao
+- AppNavigationDrawer → Navigation.kt (content parameter)
+- Navigation.kt → All screens with ViewModel integration
+
+### Recipe Management Flow
+- RecipeListScreen → RecipeViewModel → RecipeManager → RecipeDao → AppDatabase
+- AddEditRecipeScreen → RecipeViewModel.createRecipe/updateRecipe → RecipeManager
+- RecipeDetailScreen → RecipeViewModel → RecipeManager (delete, favorite toggle)
+- Navigation.kt orchestrates screen transitions with navController
 
 ---
 
 ## Component Details by Layer
 
-> **Organization**: Components grouped by package/layer (navigation/, ui/, utils/)
+> **Organization**: Components grouped by package/layer (data/, navigation/, ui/, utils/)
 >
 > Using simple one-liner format for all files
 
+### Data - Entities
+- **Recipe.kt** - Recipe entity with Room annotations: title, ingredients, instructions, servings, times, tags, source, photos, notes, behavioral flags (isFavorite, isTemplate)
+
+### Data - DAOs
+- **RecipeDao.kt** - Recipe CRUD operations: getAllRecipes, getRecipeById, getFavoriteRecipes, searchRecipes, insert/update/delete, updateFavoriteStatus (all return Flow)
+
+### Data - Managers
+- **RecipeManager.kt** - Recipe business logic: validation, CRUD operations, favorite toggle, recipe scaling stub (delegates to RecipeDao)
+
+### Data - Database
+- **AppDatabase.kt** - Room database singleton: Recipe table, version 1, Converters for List<String> and RecipeSource
+- **Converters.kt** - Room type converters: List<String> ↔ delimited string, RecipeSource ↔ string
+
 ### Navigation
-- **NavGraph.kt** - Navigation routes sealed class: Home, RecipeIndex, MealPlanning, GroceryLists, Settings with icons
+- **NavGraph.kt** - Navigation routes sealed class: Home, RecipeIndex, MealPlanning, GroceryLists, Settings (drawer), AddRecipe, EditRecipe, RecipeDetail (recipe screens with createRoute helpers)
 
 ### UI - MainActivity
-- **MainActivity.kt** - App entry point: EdgeToEdge, WindowSizeClass calculation, Hearth theme initialization
+- **MainActivity.kt** - Orchestrator only: Setup dependencies (AppDatabase, RecipeManager, ViewModelFactory), wire theme and navigation, NO business/navigation logic
+- **Navigation.kt** - All navigation logic: NavHost with routes for Home, RecipeIndex, AddRecipe, EditRecipe, RecipeDetail, MealPlanning, GroceryLists, Settings
 
 ### UI - Screens
 - **HomeScreen.kt** - Landing page: This week's meal plans, recipe suggestions
-- **RecipeListScreen.kt** - Recipe browsing: FAB for adding recipes, empty state placeholder
+- **RecipeListScreen.kt** - Recipe browsing: LazyColumn with RecipeCards, FAB for add, search, favorite toggle, empty state, ViewModel integration
+- **AddEditRecipeScreen.kt** - Recipe add/edit form: Single screen with title, servings, times, ingredients, instructions, tags, notes, validation
+- **RecipeDetailScreen.kt** - Recipe detail view: Servings/time card, ingredients list, numbered instructions, tags, notes, favorite/edit/delete actions, delete confirmation dialog
 - **MealPlanningScreen.kt** - Weekly meal planning: Placeholder for future implementation
 - **GroceryListScreen.kt** - Shopping lists: Placeholder for future implementation
 - **SettingsScreen.kt** - App preferences: Placeholder for future implementation
 
 ### UI - Components
-- **AppNavigationDrawer.kt** - Responsive navigation: Modal drawer for phones, permanent for tablets, drawer header with logo/name
+- **AppNavigationDrawer.kt** - Responsive navigation drawer: Modal for phones, permanent for tablets, accepts content parameter, drawer header with logo/name, UI only
+
+### UI - ViewModels
+- **RecipeViewModel.kt** - Recipe UI state: StateFlow for recipes/currentRecipe/isLoading/error, delegates all business logic to RecipeManager, event functions (loadRecipes, createRecipe, updateRecipe, deleteRecipe, toggleFavorite, searchRecipes)
+- **ViewModelFactory.kt** - ViewModel dependency injection: Creates RecipeViewModel with RecipeManager dependency
 
 ### UI - Theme
 - **Color.kt** - Hearth color palette: Terracotta, Clay, SageGreen, Cream neutrals, cooking mode high-contrast colors

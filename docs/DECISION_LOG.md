@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 18, 2025: MainActivity as Orchestrator Pattern
+- **Decision**: MainActivity only sets up dependencies and wires components - navigation logic in Navigation.kt, business logic in Managers
+- **Rationale**: Keeps MainActivity clean and focused, easier to test navigation independently, follows single responsibility principle
+- **Implementation**: MainActivity creates AppDatabase/RecipeManager/ViewModelFactory, calls Navigation.kt composable; AppNavigationDrawer accepts content parameter
+
 #### Nov 18, 2025: Responsive Navigation Drawer
 - **Decision**: Modal drawer for phones (Samsung S23 Ultra), permanent drawer for tablets (Samsung Galaxy Tab S10+) using WindowSizeClass
 - **Rationale**: Tablet's larger screen benefits from always-visible navigation, phone needs max content space with drawer overlay
