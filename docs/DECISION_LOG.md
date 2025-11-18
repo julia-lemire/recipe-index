@@ -46,6 +46,26 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 18, 2025: Multiple Photo Support for Recipe Import
+- **Decision**: PhotoRecipeParser supports multiple photos via parseMultiple(List<Uri>) that combines OCR text from all images before parsing
+- **Rationale**: Recipes often span multiple photos (ingredient lists, instruction steps); combining text improves parsing accuracy and UX vs forcing single photo
+- **Implementation**: ImportPhotoScreen uses GetMultipleContents activity result contract, displays photo preview grid with remove buttons, processes all photos together button
+
+#### Nov 18, 2025: ML Kit Text Recognition for Photo Import
+- **Decision**: Use Google ML Kit Text Recognition (16.0.1) for OCR to extract text from recipe photos and camera captures
+- **Rationale**: ML Kit provides accurate on-device OCR with no server dependency (offline-first principle), official Google library with coroutines support via kotlinx-coroutines-play-services
+- **Implementation**: PhotoRecipeParser uses TextRecognition.getClient() to process InputImage from URI, extracts text blocks, delegates to TextRecipeParser for recipe parsing
+
+#### Nov 18, 2025: PdfBox-Android for PDF Text Extraction
+- **Decision**: Use PdfBox-Android (2.0.27.0) for extracting text from PDF recipe files
+- **Rationale**: PdfBox-Android is the stable Android port of Apache PDFBox, supports offline text extraction without external dependencies, widely used and maintained
+- **Implementation**: PdfRecipeParser loads PDDocument from ContentResolver URI, uses PDFTextStripper to extract all text, delegates to TextRecipeParser for recipe parsing
+
+#### Nov 18, 2025: TextRecipeParser with Smart Pattern Matching
+- **Decision**: Create TextRecipeParser with regex pattern matching to parse unstructured recipe text from PDFs and photos (detects sections, extracts times/servings, cleans formatting)
+- **Rationale**: Mobile UX requires smart parsing since selecting/copying text is difficult; pattern matching handles various recipe formats without manual organization
+- **Implementation**: detectSections() finds ingredients/instructions headers via regex, parseTimeString() converts "1h 30min" to minutes, cleanIngredient()/cleanInstruction() remove bullets/numbering
+
 #### Nov 18, 2025: Tabbed Instruction Sections for Multi-Method Recipes
 - **Decision**: Parse instruction sections (detected by lines ending with ":") and display as tabs within instructions card when multiple sections exist
 - **Rationale**: Recipes with multiple cooking methods (Slow Cooker, Instant Pot, etc.) need clear separation; users select one method and tabs prevent scrolling through irrelevant instructions
