@@ -10,7 +10,7 @@
 - [TEST_SCENARIOS.md](./TEST_SCENARIOS.md) - Test coverage and scenarios to implement for automated testing
 - [PROJECT_CONVENTIONS.md](../PROJECT_CONVENTIONS.md) - How to maintain documentation
 
-**Quick Navigation:** [How to Update](#how-to-update-this-file) | [Quick Lookup](#quick-lookup-i-need-to) | [Patterns](#architecture-patterns) | [New Screen Guide](#new-screen-creation-guide) | [Back Button](#system-back-button-pattern) | [Debug Logging](#debug-logging-pattern)
+**Quick Navigation:** [How to Update](#how-to-update-this-file) | [Quick Lookup](#quick-lookup-i-need-to) | [Patterns](#architecture-patterns) | [Back Button](#system-back-button-pattern) | [Save Button](#save-button-pattern)
 
 ---
 
@@ -146,6 +146,24 @@
 - Use `when` statements on flags for type-specific behavior
 
 **Example**: Recipe entity with `isTemplate` flag vs separate RecipeTemplate entity class
+
+### System Back Button Pattern
+**Use when**: Any screen with back/cancel navigation (detail screens, forms, dialogs)
+**Structure**:
+- Import `androidx.activity.compose.BackHandler`
+- Add `BackHandler { onBack() }` or `BackHandler { onCancel() }` before Scaffold
+- TopAppBar navigationIcon uses `ArrowBack` icon with same callback
+
+**Example**: `BackHandler { onCancel() }` in AddEditRecipeScreen calls same function as navigationIcon
+
+### Save Button Pattern
+**Use when**: Forms or edit screens with primary save action
+**Structure**:
+- Use `TextButton` with "SAVE" text in TopAppBar actions (not icon-only button)
+- Place in TopAppBar actions slot (top right)
+- Include validation before calling onSave callback
+
+**Example**: AddEditRecipeScreen uses `TextButton { Text("SAVE") }` instead of `IconButton { Icon(Icons.Default.Check) }`
 
 
 ---

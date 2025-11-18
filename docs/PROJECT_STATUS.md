@@ -138,8 +138,8 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ RecipeViewModel with StateFlow (delegates to Manager)
 - ✅ ViewModelFactory for dependency injection
 - ✅ RecipeListScreen with cards (servings/times above ingredients per request, favorite toggle, FAB)
-- ✅ RecipeDetailScreen (view recipe, edit/delete/favorite actions)
-- ✅ AddEditRecipeScreen (single screen form with validation)
+- ✅ RecipeDetailScreen (view recipe, edit/delete/favorite actions, BackHandler)
+- ✅ AddEditRecipeScreen (single screen form with validation, "SAVE" text button, BackHandler)
 - ✅ Full navigation integration (add, edit, detail, list)
 
 ---

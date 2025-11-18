@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 18, 2025: Save Button and Back Handling Pattern
+- **Decision**: Text "SAVE" button (not icon) for save actions, ArrowBack icon for navigation, BackHandler for system back button
+- **Rationale**: Text buttons are more discoverable than icon-only for primary actions; consistent back behavior across in-app and system navigation
+- **Implementation**: AddEditRecipeScreen uses TextButton with "SAVE" text, all screens with back navigation use BackHandler composable
+
 #### Nov 18, 2025: MainActivity as Orchestrator Pattern
 - **Decision**: MainActivity only sets up dependencies and wires components - navigation logic in Navigation.kt, business logic in Managers
 - **Rationale**: Keeps MainActivity clean and focused, easier to test navigation independently, follows single responsibility principle
