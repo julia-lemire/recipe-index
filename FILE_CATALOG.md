@@ -1,7 +1,7 @@
-# Refract File Catalog
+# Recipe Index File Catalog
 
 > **Purpose**: Complete file tree, system relationships, and component descriptions
-> **Last Updated**: <Date>
+> **Last Updated**: 2025-11-18
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -11,7 +11,7 @@
 
 **Quick Navigation:** [How to Update](#how-to-update-this-file) | [File Tree](#complete-file-tree) | [System Relationships](#system-relationships) | [Component Details](#component-details-by-layer)
 
-**System Flows:** [Core Content](#core-content-flow) | [Settings](#settings--configuration-flow) | [Data Management](#data-management-flow) | [Filter/Search](#filtersearch-flow) | [UI](#ui-components)
+**System Flows:** [Recipe Management](#recipe-management-flow) | [Meal Planning](#meal-planning-flow) | [Grocery Lists](#grocery-list-flow) | [Import](#import-flow)
 
 ---
 
@@ -60,25 +60,56 @@
 
 ## Complete File Tree
 
-**Quick Links**: Jump to component descriptions: [Audio Analysis](#audio-analysis-essentia-based) | [Music Metadata](#music-metadata-extraction) | [Content Managers](#content-organization-managers) | [Playlists](#playlist-system) | [Playback](#playback--queue) | [Playback Statistics](#playback-statistics) | [Search & Filter](#search--filter) | [Settings](#settings) | [Database](#database--persistence) | [Utilities](#utilities) | [UI Screens](#screens-uiscreens) | [UI Components](#components---cards-uicomponentscards) | [Utils](#utils-layer-utils) | [JNI/Native](#jninative-layer-cpp) | [Main Entry](#main-entry)
+**Quick Links**: Jump to component descriptions: [Recipes](#recipes) | [Meal Plans](#meal-plans) | [Grocery Lists](#grocery-lists) | [Importers](#importers) | [Settings](#settings) | [Database](#database) | [UI Screens](#ui-screens) | [UI Components](#ui-components) | [Theme](#theme) | [Utils](#utils)
 
 ```
-com.threadbox.app/
+com.recipeindex.app/
 ├── data/
-│   
+│   ├── ContentManagers/
+│   │   ├── RecipeManager.kt
+│   │   ├── MealPlanManager.kt
+│   │   └── GroceryListManager.kt
+│   │
+│   ├── dao/
+│   │   ├── RecipeDao.kt
+│   │   ├── MealPlanDao.kt
+│   │   └── GroceryListDao.kt
+│   │
+│   ├── entities/
+│   │   ├── Recipe.kt
+│   │   ├── MealPlan.kt
+│   │   └── GroceryList.kt
+│   │
+│   ├── importers/
+│   │   ├── UrlRecipeImporter.kt
+│   │   ├── PdfRecipeImporter.kt
+│   │   └── PhotoRecipeImporter.kt
+│   │
+│   ├── AppDatabase.kt
+│   └── AppSettings.kt
+│
 ├── ui/
 │   ├── components/
-│   │   
+│   │   ├── RecipeCard.kt
+│   │   └── IngredientList.kt
+│   │
 │   ├── screens/
+│   │   ├── RecipeListScreen.kt
+│   │   ├── RecipeDetailScreen.kt
+│   │   ├── MealPlanningScreen.kt
+│   │   └── GroceryListScreen.kt
 │   │
 │   ├── theme/
-│   │   └── RefractTheme.kt
+│   │   ├── HearthTheme.kt
+│   │   └── Color.kt
 │   │
 │   └── MainActivity.kt
 │
 ├── navigation/
+│   └── NavGraph.kt
 │
 └── utils/
+    └── DebugConfig.kt
 
 ```
 
@@ -94,6 +125,22 @@ com.threadbox.app/
 > - When understanding one file requires knowing about another
 > - Format: `FileA.kt → FileB.kt, FileC.kt` (A uses/depends on B and C)
 
+### Recipe Management Flow
+- RecipeListScreen → RecipeViewModel → RecipeManager → RecipeDao → AppDatabase
+- RecipeDetailScreen → RecipeViewModel → RecipeManager
+- RecipeCard → RecipeListScreen
+
+### Meal Planning Flow
+- MealPlanningScreen → MealPlanViewModel → MealPlanManager → MealPlanDao, RecipeDao
+- MealPlanManager → RecipeManager (get recipes for meal slots)
+
+### Grocery List Flow
+- GroceryListScreen → GroceryListViewModel → GroceryListManager → MealPlanManager, RecipeManager
+- GroceryListManager → MealPlanManager (extract ingredients from planned meals)
+
+### Import Flow
+- RecipeDetailScreen → UrlRecipeImporter/PdfRecipeImporter/PhotoRecipeImporter → RecipeManager
+- Importers → RecipeManager (save imported recipe)
 
 ---
 

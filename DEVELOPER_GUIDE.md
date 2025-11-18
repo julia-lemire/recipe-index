@@ -1,7 +1,7 @@
-# Refract Developer Guide
+# Recipe Index Developer Guide
 
 > **Purpose**: Quick lookup ("I need to...") and architecture patterns (HOW to implement)
-> **Last Updated**: <Date>
+> **Last Updated**: 2025-11-18
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -64,7 +64,31 @@
 > - [Optional: Related files or patterns]
 > ```
 
-### Work with <XYZ>
+### Work with Recipes
+- **Manager**: `data/ContentManagers/RecipeManager.kt`
+- **Entity**: `data/entities/Recipe.kt`
+- **DAO**: `data/dao/RecipeDao.kt`
+- **Screens**: `ui/screens/RecipeListScreen.kt`, `ui/screens/RecipeDetailScreen.kt`
+
+### Work with Meal Plans
+- **Manager**: `data/ContentManagers/MealPlanManager.kt`
+- **Entity**: `data/entities/MealPlan.kt`
+- **DAO**: `data/dao/MealPlanDao.kt`
+- **Screen**: `ui/screens/MealPlanningScreen.kt`
+
+### Work with Grocery Lists
+- **Manager**: `data/ContentManagers/GroceryListManager.kt`
+- **Entity**: `data/entities/GroceryList.kt`
+- **Screen**: `ui/screens/GroceryListScreen.kt`
+
+### Import Recipes
+- **URL Import**: `data/importers/UrlRecipeImporter.kt`
+- **PDF Import**: `data/importers/PdfRecipeImporter.kt`
+- **Photo Import**: `data/importers/PhotoRecipeImporter.kt` (OCR)
+
+### Handle App Settings
+- **Settings**: `data/AppSettings.kt`
+- **StateFlow-based**: Exposes preferences as StateFlow for reactive UI
 
 
 ---
@@ -85,7 +109,42 @@
 > - Examples worthy of inclusion: Manager Pattern, Config Over Code, Screen Over Dialog
 > - Don't add: One-off solutions, file-specific implementations, minor code conventions
 
-### Pattern
+### Manager Pattern
+**Use when**: Complex business logic needed (CRUD + rules/validation/coordination)
+**Structure**:
+- Manager in `data/ContentManagers/` (e.g., RecipeManager)
+- ViewModel delegates all business logic to Manager
+- Manager handles state coordination, validation, multi-step operations
+- Thin Repositories for simple CRUD only
+
+**Example**: RecipeManager handles recipe import, tag extraction, duplicate detection; RecipeViewModel just exposes StateFlow<RecipeListState>
+
+### Config Over Code
+**Use when**: Any value that might change or vary by user preference
+**Structure**:
+- Settings class with `MutableStateFlow<T>` for each preference
+- ViewModels/Managers read from Settings StateFlow
+- Never hardcode values like "max ingredients = 50"
+
+**Example**: `AppSettings.defaultServings: StateFlow<Int>` instead of hardcoded constant
+
+### Single Source of Truth (SSOT)
+**Use when**: Always - each piece of data has ONE authoritative source
+**Structure**:
+- Database is SSOT for persisted data
+- StateFlow in Manager/ViewModel is SSOT for UI state
+- Never duplicate state across multiple StateFlows
+
+**Example**: RecipeManager exposes `recipes: StateFlow<List<Recipe>>` from Room, UI observes this only
+
+### Unified Entities
+**Use when**: Multiple types share same database table and most fields
+**Structure**:
+- Single entity class with behavioral flags (e.g., `isTemplate: Boolean`)
+- Avoid separate entity classes that duplicate fields
+- Use `when` statements on flags for type-specific behavior
+
+**Example**: Recipe entity with `isTemplate` flag vs separate RecipeTemplate entity class
 
 
 ---
