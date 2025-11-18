@@ -10,7 +10,7 @@
 - [TEST_SCENARIOS.md](./TEST_SCENARIOS.md) - Test coverage and scenarios to implement for automated testing
 - [PROJECT_CONVENTIONS.md](../PROJECT_CONVENTIONS.md) - How to maintain documentation
 
-**Quick Navigation:** [How to Update](#how-to-update-this-file) | [Quick Lookup](#quick-lookup-i-need-to) | [Patterns](#architecture-patterns) | [Back Button](#system-back-button-pattern) | [Save Button](#save-button-pattern)
+**Quick Navigation:** [How to Update](#how-to-update-this-file) | [Quick Lookup](#quick-lookup-i-need-to) | [Patterns](#architecture-patterns) | [Back Button](#system-back-button-pattern) | [Auto-Save](#auto-save-pattern)
 
 ---
 
@@ -156,14 +156,16 @@
 
 **Example**: `BackHandler { onCancel() }` in AddEditRecipeScreen calls same function as navigationIcon
 
-### Save Button Pattern
-**Use when**: Forms or edit screens with primary save action
+### Auto-Save Pattern
+**Use when**: Forms or edit screens where user expects automatic saving
 **Structure**:
-- Use `TextButton` with "SAVE" text in TopAppBar actions (not icon-only button)
-- Place in TopAppBar actions slot (top right)
-- Include validation before calling onSave callback
+- Create handleBack() function that checks for content, validates, and auto-saves
+- Skip save if form is empty (no meaningful content entered)
+- Show validation errors and block navigation if data is invalid
+- Only navigate back on successful save or empty form
+- Wire handleBack() to both BackHandler and navigationIcon
 
-**Example**: AddEditRecipeScreen uses `TextButton { Text("SAVE") }` instead of `IconButton { Icon(Icons.Default.Check) }`
+**Example**: AddEditRecipeScreen handleBack() checks `hasContent`, validates fields, saves if valid, or shows error and stays on screen
 
 
 ---
