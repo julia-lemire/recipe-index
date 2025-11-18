@@ -1,79 +1,109 @@
 # Android Design Principles & Standards
 
-**Version:** 1.0
-**Last Updated:** 2025-11-14
-
-This document captures architectural patterns, coding standards, and best practices for building robust Android applications. These principles were refined through the development of the Refract audio player app.
+**Version:** 2.0
+**Last Updated:** 2025-11-18
 
 ---
 
-## Table of Contents
+## 🎯 Quick Reference - Core Rules
 
-1. [Core Architecture Principles](#core-architecture-principles)
-2. [State Management](#state-management)
-3. [UI/UX Standards](#uiux-standards)
-4. [Code Organization](#code-organization)
-5. [Debug Logging Standards](#debug-logging-standards)
-6. [Documentation Requirements](#documentation-requirements)
-7. [Common Anti-Patterns to Avoid](#common-anti-patterns-to-avoid)
-8. [Testing Standards](#testing-standards)
-9. [Git Commit Standards](#git-commit-standards)
-10. [Development Workflow](#development-workflow)
-11. [Performance Considerations](#performance-considerations)
+### ❌ CRITICAL - Never Do This
+1. **NEVER use `android.util.Log` directly** → Always use `DebugConfig.debugLog(context, category, message)`
+2. **NO business logic in ViewModels** → Business logic belongs in Manager classes in `data/`
+3. **NO hardcoded settings in business logic** → Use Settings classes with StateFlow
+4. **NO duplicate data sources** → Single Source of Truth (SSOT) only
+5. **NO direct DAO/database access in UI** → Use ViewModels that call Managers/Repositories
+6. **NEVER use LiveData in new code** → Always use StateFlow
+
+### 🏗️ Architecture Rules
+1. **Manager Pattern**: Complex business logic → `data/ContentManagers/` or `data/Playback/`
+2. **Single Source of Truth**: Each piece of data has exactly ONE authoritative source
+3. **Config Over Code**: User preferences → Settings classes, not hardcoded behavior
+4. **Unified Entities**: Single data class with behavioral flags vs. separate entity classes
+5. **Thin Repositories**: Simple CRUD only; complex operations → Managers
+
+### 📊 State Management Rules
+1. **StateFlow for all observable state** (settings, ViewModels, managers)
+2. **ViewModel pattern**: Expose `StateFlow<State>`, handle events via functions, delegate to Managers
+3. **Compose state**: `remember { mutableStateOf() }` for local UI, `collectAsState()` for StateFlow
+4. **Never expose MutableStateFlow** → Use `.asStateFlow()` for public API
+
+### 🎨 UI/Code Organization Rules
+1. **Extract components proactively**: If >50 lines, self-contained, or might be reused → extract to `ui/components/`
+2. **Material 3 spacing constants**: Use `Spacing.small/medium/large` (4dp/8dp/16dp/24dp/32dp)
+3. **Detail screens**: Use `contentWindowInsets = WindowInsets(0, 0, 0, 0)` to prevent double padding
+4. **Package structure**: `data/`, `ui/screens/`, `ui/components/`, `ui/theme/`, `utils/`, `navigation/`
+
+### 📝 Documentation Rules
+1. **Maintain 5 core docs**: PROJECT_STATUS.md, DECISION_LOG.md, DEVELOPER_GUIDE.md, FILE_CATALOG.md, TEST_SCENARIOS.md
+2. **Update docs with code changes**: When adding features, update all relevant documentation files
+3. **Log architectural decisions**: Record major decisions with rationale in DECISION_LOG.md
+
+### 🧪 Testing Rules
+1. **Test coverage priorities**: Managers (80%+), Data layer (70%+), Utils (60%+), UI (manual OK)
+2. **Use in-memory database** for DAO/repository tests
+3. **Document test scenarios** in TEST_SCENARIOS.md
+
+### 💾 Performance Rules
+1. **Always use `Dispatchers.IO`** for database and file operations
+2. **Use Flow for reactive queries** instead of suspend functions returning lists
+3. **Batch database inserts** with `@Transaction`
+4. **LazyColumn with keys** for long lists: `items(list, key = { it.id })`
+
+### 📦 Git/Commit Rules
+1. **Commit format**: `<type>: <description>` with types: feat, fix, refactor, docs, test, chore, style
+2. **Include attribution**: `Generated with [Claude Code](https://claude.com/claude-code)` and `Co-Authored-By: Claude <noreply@anthropic.com>`
+3. **Branch naming**: `<type>/<short-description>` (e.g., `feat/smart-playlists`)
+4. **NEVER merge directly to main**: Always create PR for review, even for small changes
+5. **PR requirements**: Summary, test plan, screenshots (if UI changes)
 
 ---
 
-## Core Architecture Principles
+## 📚 Detailed Sections
 
-### 1. Single Source of Truth (SSOT)
+Jump to: [Architecture](#architecture-details) | [State Management](#state-management-details) | [UI/UX](#uiux-details) | [Code Organization](#code-organization-details) | [Logging](#logging-details) | [Documentation](#documentation-details) | [Testing](#testing-details) | [Git](#git-details)
 
-**Principle:** Each piece of data should have exactly one authoritative source.
+---
 
-**Examples:**
-- Genre normalization: `GenreNormalizer.kt` is the ONLY place canonical genre names are defined
-- Settings: `AppSettings` and category-specific settings classes (e.g., `GenreSettings`) own their data
-- Database entities: Room DAOs are the sole source for persisted data
+## Architecture Details
 
-**Implementation Pattern:**
+### Single Source of Truth (SSOT)
+
+**Intent:** Eliminate data synchronization bugs by having exactly one place where each piece of data is defined.
+
+**Pattern:**
 ```kotlin
 // GOOD: Single source of truth
 object GenreNormalizer {
-    private val canonicalGenres = setOf("Rock", "Jazz", "Classical", ...)
-
+    private val canonicalGenres = setOf("Rock", "Jazz", "Classical")
     fun getCanonicalGenres(): List<String> = canonicalGenres.sorted()
-    fun normalize(input: String): String { /* ... */ }
 }
 
-// BAD: Duplicated genre lists in multiple files
+// BAD: Duplicate data
 class FilterScreen {
-    private val genres = listOf("Rock", "Jazz", ...) // DON'T DO THIS
+    private val genres = listOf("Rock", "Jazz") // DON'T DO THIS
 }
 ```
 
-**Benefits:**
-- No sync issues between duplicate data sources
-- Clear ownership of data
-- Easier to maintain and update
+**Examples:**
+- Canonical genre lists → `GenreNormalizer.kt`
+- User settings → `AppSettings.kt`, `[Feature]Settings.kt`
+- Persisted data → Room DAOs
 
 ---
 
-### 2. Config Over Code
+### Config Over Code
 
-**Principle:** User preferences and behavioral settings belong in settings files, not hardcoded in business logic.
+**Intent:** Make app behavior configurable through settings instead of hardcoding values in business logic.
 
-**Examples:**
-- Genre filter preferences → `GenreSettings.kt`
-- Genre exclusion preferences → `GenreExclusionSettings.kt`
-- App-wide preferences → `AppSettings.kt`
-
-**Implementation Pattern:**
+**Pattern:**
 ```kotlin
-// GOOD: Configurable behavior
-class GenreSettings(private val context: Context) {
-    private val _enabledGenres = MutableStateFlow(getDefaultEnabledGenres())
+// GOOD: Configurable via settings
+class GenreSettings(context: Context) {
+    private val _enabledGenres = MutableStateFlow(getDefaults())
     val enabledGenres: StateFlow<Set<String>> = _enabledGenres.asStateFlow()
 
-    fun updateEnabledGenres(genres: Set<String>) {
+    fun update(genres: Set<String>) {
         _enabledGenres.value = genres
         saveToPreferences()
     }
@@ -81,161 +111,142 @@ class GenreSettings(private val context: Context) {
 
 // Usage in business logic
 class PlaylistManager {
-    fun filterByGenres(tracks: List<Track>): List<Track> {
-        val enabledGenres = genreSettings.enabledGenres.value
-        return tracks.filter { it.genre in enabledGenres }
+    fun filter(tracks: List<Track>): List<Track> {
+        val enabled = genreSettings.enabledGenres.value
+        return tracks.filter { it.genre in enabled }
     }
 }
 
 // BAD: Hardcoded behavior
-class PlaylistManager {
-    fun filterByGenres(tracks: List<Track>): List<Track> {
-        return tracks.filter { it.genre != "Christmas" } // DON'T DO THIS
-    }
-}
+fun filter(tracks: List<Track>) = tracks.filter { it.genre != "Christmas" }
 ```
-
-**Benefits:**
-- User preferences are respected
-- Easy to add settings UI
-- Behavior can change without code changes
 
 ---
 
-### 3. Manager Pattern
+### Manager Pattern
 
-**Principle:** Complex operations involving multiple data sources or business logic belong in dedicated Manager classes in the `data/` package, NOT in UI code or ViewModels.
+**Intent:** Separate complex business logic from UI concerns. Managers orchestrate multi-step operations and coordinate between data sources.
 
-**File Location:** `data/` package (e.g., `data/ContentManagers/`, `data/Playback/`)
+**Location:** `data/ContentManagers/` or `data/Playback/`
 
-**Examples:**
-- `AudioFileManager`: File scanning, metadata extraction
-- `PlaylistManager`: Playlist creation, smart playlists
-- `FileImportManager`: Import/export operations
-- `GenreNormalizer`: Genre standardization (object pattern)
+**Responsibilities:**
+- **Managers**: Business logic, data transformation, multi-step operations, orchestration
+- **ViewModels**: UI state, user events, calling managers, exposing StateFlow
+- **Repositories**: Simple CRUD operations, thin DAO wrappers
 
-**Implementation Pattern:**
+**Pattern:**
 ```kotlin
-// GOOD: Manager in data/ package
-package com.refract.app.data.ContentManagers
-
-class PlaylistManager(private val db: AppDatabase, private val context: Context) {
+// data/ContentManagers/PlaylistManager.kt
+class PlaylistManager(
+    private val db: AppDatabase,
+    private val context: Context
+) {
     suspend fun createSmartPlaylist(
         name: String,
-        bpmRange: IntRange,
-        genres: Set<String>,
-        excludeGenres: Set<String>
+        criteria: SmartCriteria
     ): Playlist = withContext(Dispatchers.IO) {
-        // Complex business logic here
         val tracks = db.trackDao().getAll()
-        val filtered = tracks.filter { /* complex filtering */ }
+        val filtered = applySmartCriteria(tracks, criteria)
 
-        val playlist = Playlist(name = name, trackCount = filtered.size)
-        val playlistId = db.playlistDao().insert(playlist)
+        val playlist = Playlist(
+            name = name,
+            isSmartPlaylist = true,
+            smartCriteria = criteria.toJson()
+        )
+        val id = db.playlistDao().insert(playlist)
 
         // Insert cross-references
         filtered.forEach { track ->
-            db.playlistTrackDao().insert(PlaylistTrack(playlistId, track.id))
+            db.playlistTrackDao().insert(PlaylistTrack(id, track.id))
         }
 
-        playlist.copy(id = playlistId)
+        playlist.copy(id = id)
     }
 }
 
-// BAD: Business logic in ViewModel
-class PlaylistViewModel : ViewModel() {
-    fun createPlaylist() {
+// ui/screens/PlaylistViewModel.kt
+class PlaylistViewModel(
+    private val playlistManager: PlaylistManager
+) : ViewModel() {
+    private val _state = MutableStateFlow(PlaylistState())
+    val state: StateFlow<PlaylistState> = _state.asStateFlow()
+
+    fun createPlaylist(name: String, criteria: SmartCriteria) {
         viewModelScope.launch {
-            // DON'T put complex business logic here
-            val tracks = db.trackDao().getAll() // Direct DB access - BAD
-            val filtered = tracks.filter { /* ... */ }
-            // This belongs in a Manager!
+            playlistManager.createSmartPlaylist(name, criteria)
         }
     }
 }
 ```
 
-**Guidelines:**
-- **Managers** handle: Business logic, data transformation, multi-step operations
-- **ViewModels** handle: UI state, user events, calling managers, exposing StateFlow
-- **Repositories** handle: Simple CRUD operations, direct DAO wrappers
-
 ---
 
-### 4. Unified Entity Pattern
+### Unified Entity Pattern
 
-**Principle:** Instead of creating separate entity classes for similar concepts, use a single data class with behavioral flags.
+**Intent:** Use single data class with behavioral flags instead of creating separate entities for variations.
 
-**Example:**
+**Pattern:**
 ```kotlin
-// GOOD: Unified entity with behavioral flags
+// GOOD: Unified entity
 @Entity(tableName = "playlists")
 data class Playlist(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val trackCount: Int = 0,
-    val isSmartPlaylist: Boolean = false,  // Behavioral flag
-    val smartCriteria: String? = null,     // Only used if isSmartPlaylist=true
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val isSmartPlaylist: Boolean = false,      // Behavioral flag
+    val smartCriteria: String? = null,         // Only used if isSmartPlaylist=true
+    val createdAt: Long = System.currentTimeMillis()
 )
 
-// BAD: Separate entities for same concept
+// BAD: Separate entities
 @Entity(tableName = "playlists")
 data class Playlist(...)
 
 @Entity(tableName = "smart_playlists")
-data class SmartPlaylist(...)  // Duplicates most fields from Playlist
+data class SmartPlaylist(...)  // Duplicates fields
 ```
 
 **Benefits:**
 - Single DAO handles all variants
-- Easier to convert between types
+- Easy type conversion
 - Simpler database schema
-- UI code doesn't need to handle multiple types
+- UI doesn't need to handle multiple types
 
 ---
 
-### 5. Repository Pattern (Simple CRUD Only)
+### Repository Pattern
 
-**Principle:** Repositories are thin wrappers around DAOs for simple CRUD operations. Complex logic goes in Managers.
+**Intent:** Thin wrapper around DAOs for simple CRUD. Keep it simple.
 
-**Implementation Pattern:**
+**Pattern:**
 ```kotlin
 // GOOD: Simple repository
-class PlaylistRepository(private val playlistDao: PlaylistDao) {
-    fun getAllPlaylists(): Flow<List<Playlist>> = playlistDao.getAllPlaylists()
-
-    suspend fun getPlaylistById(id: Long): Playlist? = playlistDao.getById(id)
-
-    suspend fun insertPlaylist(playlist: Playlist): Long = playlistDao.insert(playlist)
-
-    suspend fun deletePlaylist(playlist: Playlist) = playlistDao.delete(playlist)
+class PlaylistRepository(private val dao: PlaylistDao) {
+    fun getAll(): Flow<List<Playlist>> = dao.getAllPlaylists()
+    suspend fun getById(id: Long): Playlist? = dao.getById(id)
+    suspend fun insert(playlist: Playlist): Long = dao.insert(playlist)
+    suspend fun delete(playlist: Playlist) = dao.delete(playlist)
 }
 
 // Complex operations go in Manager
-class PlaylistManager(
-    private val repository: PlaylistRepository,
-    private val trackRepository: TrackRepository
-) {
-    suspend fun createSmartPlaylist(criteria: SmartPlaylistCriteria): Playlist {
-        // Complex multi-step logic here
-    }
+class PlaylistManager(private val repository: PlaylistRepository) {
+    suspend fun createSmartPlaylist(...) { /* complex logic */ }
 }
 ```
 
 ---
 
-## State Management
+## State Management Details
 
-### 1. StateFlow for Observable State
+### StateFlow for Observable State
 
-**Principle:** Use `StateFlow` for all observable state in settings and managers. Never use `LiveData` in new code.
+**Intent:** Modern, type-safe reactive state that works seamlessly with Kotlin coroutines and Compose.
 
 **Pattern:**
 ```kotlin
+// Settings class
 class GenreSettings(private val context: Context) {
-    private val _enabledGenres = MutableStateFlow(getDefaultEnabledGenres())
+    private val _enabledGenres = MutableStateFlow(getDefaults())
     val enabledGenres: StateFlow<Set<String>> = _enabledGenres.asStateFlow()
 
     fun updateEnabledGenres(genres: Set<String>) {
@@ -244,25 +255,24 @@ class GenreSettings(private val context: Context) {
     }
 }
 
-// UI consumption in Compose
+// Compose consumption
 @Composable
-fun GenreFilterScreen(genreSettings: GenreSettings) {
-    val enabledGenres by genreSettings.enabledGenres.collectAsState()
-
+fun GenreFilterScreen(settings: GenreSettings) {
+    val enabledGenres by settings.enabledGenres.collectAsState()
     // Use enabledGenres in UI
 }
 ```
 
-**Benefits:**
-- Type-safe, null-safe by default
-- Better Kotlin coroutine integration
-- Works seamlessly with Compose `collectAsState()`
+**Rules:**
+- Never expose `MutableStateFlow` publicly
+- Always use `.asStateFlow()` for external API
+- Never use LiveData in new code
 
 ---
 
-### 2. ViewModel State Pattern
+### ViewModel State Pattern
 
-**Principle:** ViewModels expose UI state via `StateFlow` and handle events via functions.
+**Intent:** Centralize UI state in a single data class for predictability and testability.
 
 **Pattern:**
 ```kotlin
@@ -274,9 +284,8 @@ data class PlaylistScreenState(
 )
 
 class PlaylistViewModel(
-    private val playlistManager: PlaylistManager
+    private val manager: PlaylistManager
 ) : ViewModel() {
-
     private val _state = MutableStateFlow(PlaylistScreenState())
     val state: StateFlow<PlaylistScreenState> = _state.asStateFlow()
 
@@ -288,7 +297,7 @@ class PlaylistViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                playlistManager.getPlaylists().collect { playlists ->
+                manager.getPlaylists().collect { playlists ->
                     _state.update { it.copy(playlists = playlists, isLoading = false) }
                 }
             } catch (e: Exception) {
@@ -297,9 +306,10 @@ class PlaylistViewModel(
         }
     }
 
-    fun createPlaylist(name: String) {
-        viewModelScope.launch {
-            playlistManager.createPlaylist(name)
+    fun onEvent(event: PlaylistEvent) {
+        when (event) {
+            is PlaylistEvent.Create -> createPlaylist(event.name)
+            is PlaylistEvent.Delete -> deletePlaylist(event.id)
         }
     }
 }
@@ -307,26 +317,24 @@ class PlaylistViewModel(
 
 ---
 
-### 3. Compose State Rules
+### Compose State Rules
 
-**Guidelines:**
-- Use `remember { mutableStateOf() }` for local UI state (e.g., text field, expanded/collapsed)
-- Use `collectAsState()` for StateFlow from ViewModel or settings
-- Use `derivedStateOf` for computed values based on other state
-- Hoist state when multiple components need to share it
+**When to use what:**
+- `remember { mutableStateOf() }`: Local UI state (expanded/collapsed, text field, dialog open)
+- `collectAsState()`: StateFlow from ViewModel or settings
+- `derivedStateOf`: Computed values based on other state
+- Hoist state: When multiple components need to share it
 
 **Example:**
 ```kotlin
 @Composable
 fun FilterSection(
-    enabledGenres: Set<String>,  // Hoisted state
-    onGenresChange: (Set<String>) -> Unit  // Callback
+    enabledGenres: Set<String>,           // Hoisted state
+    onGenresChange: (Set<String>) -> Unit // Callback
 ) {
     var expanded by remember { mutableStateOf(false) }  // Local UI state
 
-    Card(
-        modifier = Modifier.clickable { expanded = !expanded }
-    ) {
+    Card(modifier = Modifier.clickable { expanded = !expanded }) {
         // UI implementation
     }
 }
@@ -334,15 +342,15 @@ fun FilterSection(
 
 ---
 
-## UI/UX Standards
+## UI/UX Details
 
-### 1. Material 3 Spacing Constants
+### Material 3 Spacing Constants
 
-**Principle:** Use consistent spacing throughout the app. Define constants in a utility file.
+**Intent:** Consistent spacing creates visual harmony and professional appearance.
 
 **Implementation:**
 ```kotlin
-// SpacingConstants.kt
+// ui/theme/Spacing.kt
 object Spacing {
     val extraSmall = 4.dp
     val small = 8.dp
@@ -360,31 +368,28 @@ Column(
 }
 ```
 
-**Standard Spacings:**
+**Standard Use Cases:**
 - `4.dp`: Between related text elements, icon padding
-- `8.dp`: Between list items in dense layouts, card content padding
-- `16.dp`: Default padding for screens, between sections
+- `8.dp`: Between list items, dense layouts, card content padding
+- `16.dp`: Default screen padding, between sections
 - `24.dp`: Between major UI sections
 - `32.dp`: Top/bottom screen padding for prominent sections
 
 ---
 
-### 2. Detail Screen Pattern
+### Detail Screen Pattern
 
-**Principle:** Detail screens (playlist detail, track detail) should use `WindowInsets(0, 0, 0, 0)` to allow full-screen scrolling with content padding.
+**Intent:** Prevent double padding and allow natural scrolling.
 
 **Pattern:**
 ```kotlin
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlaylistDetailScreen(
-    playlistId: Long,
-    onNavigateBack: () -> Unit
-) {
+fun DetailScreen(onNavigateBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Playlist Name") },
+                title = { Text("Title") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
@@ -392,7 +397,7 @@ fun PlaylistDetailScreen(
                 }
             )
         },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)  // IMPORTANT
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)  // CRITICAL
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -406,16 +411,111 @@ fun PlaylistDetailScreen(
 }
 ```
 
-**Why:** Prevents double padding and allows content to scroll naturally.
+---
+
+### Component Extraction Guidelines
+
+**Intent:** Keep files small and readable. Encourage modularity and reusability.
+
+**Extract to `ui/components/` when:**
+- Component is >50 lines
+- Component has self-contained, clear responsibility
+- Component might reasonably be reused (even if not used yet)
+- Extracting would make parent screen more readable
+
+**Don't extract when:**
+- Component is <20 lines and very simple
+- Component is tightly coupled to single screen's specific state
+- Extraction would create unnecessary indirection
+
+**Example:**
+```kotlin
+// Before: Inline in screen (getting long)
+@Composable
+fun RecipeScreen() {
+    LazyColumn {
+        items(recipes) { recipe ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { /* navigate */ }
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(recipe.name, style = MaterialTheme.typography.titleMedium)
+                        Text("${recipe.prepTime} min")
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(recipe.description, maxLines = 2)
+                    Spacer(Modifier.height(8.dp))
+                    FlowRow {
+                        recipe.tags.forEach { tag ->
+                            AssistChip(onClick = {}, label = { Text(tag) })
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// After: Extracted component
+// ui/components/RecipeCard.kt
+@Composable
+fun RecipeCard(
+    recipe: Recipe,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(recipe.name, style = MaterialTheme.typography.titleMedium)
+                Text("${recipe.prepTime} min")
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(recipe.description, maxLines = 2)
+            Spacer(Modifier.height(8.dp))
+            FlowRow {
+                recipe.tags.forEach { tag ->
+                    AssistChip(onClick = {}, label = { Text(tag) })
+                }
+            }
+        }
+    }
+}
+
+// Screen is now much cleaner
+@Composable
+fun RecipeScreen() {
+    LazyColumn {
+        items(recipes) { recipe ->
+            RecipeCard(
+                recipe = recipe,
+                onClick = { /* navigate */ }
+            )
+        }
+    }
+}
+```
 
 ---
 
-### 3. Card Consistency
+### Card Consistency
 
-**Principle:** Use consistent card styling throughout the app.
+**Intent:** Uniform card styling across the app.
 
-**Standard Card Pattern:**
+**Patterns:**
 ```kotlin
+// Standard card
 Card(
     modifier = Modifier
         .fillMaxWidth()
@@ -424,16 +524,12 @@ Card(
         containerColor = MaterialTheme.colorScheme.surfaceVariant
     )
 ) {
-    Column(
-        modifier = Modifier.padding(16.dp)
-    ) {
-        // Card content
+    Column(modifier = Modifier.padding(16.dp)) {
+        // Content
     }
 }
-```
 
-**Clickable Card Pattern:**
-```kotlin
+// Clickable card
 Card(
     modifier = Modifier.fillMaxWidth(),
     onClick = { /* action */ },
@@ -447,9 +543,9 @@ Card(
 
 ---
 
-### 4. Collapsible Section Pattern
+### Collapsible Section Pattern
 
-**Principle:** For long settings or filter screens, use collapsible sections to reduce scrolling.
+**Intent:** Reduce scrolling on long settings/filter screens.
 
 **Pattern:**
 ```kotlin
@@ -468,7 +564,6 @@ fun CollapsibleSection(
         )
     ) {
         Column {
-            // Header row (clickable)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -477,18 +572,13 @@ fun CollapsibleSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Text(title, style = MaterialTheme.typography.titleMedium)
                 Icon(
-                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    imageVector = if (expanded) Icons.Default.ExpandLess
+                                  else Icons.Default.ExpandMore,
                     contentDescription = if (expanded) "Collapse" else "Expand"
                 )
             }
-
-            // Expandable content
             if (expanded) {
                 content()
             }
@@ -499,50 +589,21 @@ fun CollapsibleSection(
 
 ---
 
-### 5. Icon Button Guidelines
+## Code Organization Details
 
-**Principle:** Use inline icon buttons for secondary actions. Reserve full buttons for primary actions.
+### Package Structure
 
-**Examples:**
-```kotlin
-// GOOD: Inline icon for reset
-Row(
-    horizontalArrangement = Arrangement.SpaceBetween,
-    verticalAlignment = Alignment.CenterVertically
-) {
-    Text("Genre Exclusions", style = MaterialTheme.typography.titleMedium)
-    IconButton(onClick = { /* reset */ }) {
-        Icon(Icons.Default.Refresh, contentDescription = "Reset to defaults")
-    }
-}
-
-// BAD: Large button taking up space
-OutlinedButton(
-    onClick = { /* reset */ },
-    modifier = Modifier.fillMaxWidth()
-) {
-    Text("Reset to Defaults")
-}
-```
-
----
-
-## Code Organization
-
-### 1. Package Structure
-
-**Standard Structure:**
 ```
 app/src/main/java/com/yourapp/
 ├── data/
 │   ├── ContentManagers/       # Business logic managers
 │   ├── Database/              # Room entities, DAOs, database
-│   ├── Playback/             # Playback-related managers
+│   ├── Playback/             # Playback-related managers (if applicable)
 │   └── Settings/             # Settings classes
 ├── ui/
 │   ├── screens/              # Full-screen composables
 │   ├── components/           # Reusable UI components
-│   └── theme/                # Material theme configuration
+│   └── theme/                # Material theme, spacing, colors
 ├── utils/
 │   ├── DebugConfig.kt        # Debug logging utility
 │   ├── PermissionUtils.kt    # Permission helpers
@@ -553,97 +614,58 @@ app/src/main/java/com/yourapp/
 ```
 
 **Rules:**
-- **Business logic** → `data/ContentManagers/` or `data/Playback/`
-- **Database code** → `data/Database/`
-- **Settings classes** → `data/Settings/`
-- **Screen composables** → `ui/screens/`
-- **Reusable components** → `ui/components/` (only if used 2+ times)
-- **Utilities** → `utils/`
+- Business logic → `data/ContentManagers/` or `data/Playback/`
+- Database code → `data/Database/`
+- Settings classes → `data/Settings/`
+- Screen composables → `ui/screens/`
+- Reusable components → `ui/components/`
+- Utilities → `utils/`
 
 ---
 
-### 2. Component Extraction Rule
+### File Naming Conventions
 
-**Principle:** Extract a composable to `ui/components/` ONLY when it's used in 2 or more places.
-
-**Why:** Avoid premature abstraction. Keep code colocated until reuse is needed.
-
-**Example:**
-```kotlin
-// Used in 1 place: Keep inline in screen file
-@Composable
-fun PlaylistScreen() {
-    LazyColumn {
-        items(playlists) { playlist ->
-            // Inline composable - fine for now
-            Card { /* ... */ }
-        }
-    }
-}
-
-// Used in 2+ places: Extract to components/
-// ui/components/PlaylistCard.kt
-@Composable
-fun PlaylistCard(
-    playlist: Playlist,
-    onClick: () -> Unit
-) {
-    Card(onClick = onClick) { /* ... */ }
-}
-```
+- **Screens:** `[Feature]Screen.kt` (e.g., `RecipeScreen.kt`, `SettingsScreen.kt`)
+- **Components:** `[Component].kt` (e.g., `RecipeCard.kt`, `TagChip.kt`)
+- **Managers:** `[Domain]Manager.kt` (e.g., `RecipeManager.kt`, `MealPlanManager.kt`)
+- **Settings:** `[Category]Settings.kt` (e.g., `RecipeSettings.kt`, `AppSettings.kt`)
+- **DAOs:** `[Entity]Dao.kt` (e.g., `RecipeDao.kt`, `MealPlanDao.kt`)
+- **Repositories:** `[Entity]Repository.kt` (e.g., `RecipeRepository.kt`)
 
 ---
 
-### 3. File Naming Conventions
+## Logging Details
 
-- **Screens:** `[Feature]Screen.kt` (e.g., `PlaylistScreen.kt`, `SettingsScreen.kt`)
-- **Components:** `[Component].kt` (e.g., `TrackListItem.kt`, `GenreChip.kt`)
-- **Managers:** `[Domain]Manager.kt` (e.g., `PlaylistManager.kt`, `AudioFileManager.kt`)
-- **Settings:** `[Category]Settings.kt` (e.g., `GenreSettings.kt`, `AppSettings.kt`)
-- **DAOs:** `[Entity]Dao.kt` (e.g., `TrackDao.kt`, `PlaylistDao.kt`)
-- **Repositories:** `[Entity]Repository.kt` (e.g., `TrackRepository.kt`)
+### CRITICAL: DebugConfig System
 
----
-
-## Debug Logging Standards
-
-### CRITICAL RULE: NEVER Use `android.util.Log` Directly
-
-**Principle:** ALL debug logging MUST go through a category-based debug system that can be toggled on/off.
-
-**Why:**
-- Production apps should not log sensitive data
+**Why this matters:**
+- Production apps should NOT log sensitive data
 - Debug logs create performance overhead
 - Users don't want log spam
 - Developers need targeted logging during development
 
----
-
-### Implementation: DebugConfig System
-
-**File:** `utils/DebugConfig.kt`
-
+**Implementation:**
 ```kotlin
-package com.refract.app.utils
+// utils/DebugConfig.kt
+package com.yourapp.utils
 
 import android.content.Context
 import android.util.Log
-import com.refract.app.data.Settings.AppSettings
+import com.yourapp.data.Settings.AppSettings
 import kotlinx.coroutines.runBlocking
 
 /**
  * DebugConfig - Centralized debug logging system
  *
- * IMPORTANT: NEVER use android.util.Log directly in the codebase.
+ * CRITICAL: NEVER use android.util.Log directly in the codebase.
  * Always use DebugConfig.debugLog() which respects user's debug mode setting.
  */
 object DebugConfig {
-
     /**
      * Category-based debug logging
      *
      * @param context Application context
-     * @param category Log category (e.g., "PlaylistManager", "AudioScanner")
+     * @param category Log category (e.g., "RecipeManager", "URLParser")
      * @param message Log message
      */
     fun debugLog(context: Context, category: String, message: String) {
@@ -653,75 +675,65 @@ object DebugConfig {
         }
 
         if (debugMode) {
-            Log.d("Refract-$category", message)
+            Log.d("RecipeIndex-$category", message)
         }
     }
 }
 ```
 
----
-
-### Usage Pattern
-
+**Usage:**
 ```kotlin
-// GOOD: Using DebugConfig
-class PlaylistManager(private val context: Context, private val db: AppDatabase) {
+// GOOD
+class RecipeManager(private val context: Context, private val db: AppDatabase) {
+    suspend fun createRecipe(name: String): Recipe {
+        DebugConfig.debugLog(context, "RecipeManager", "Creating recipe: $name")
 
-    suspend fun createPlaylist(name: String): Playlist {
-        DebugConfig.debugLog(context, "PlaylistManager", "Creating playlist: $name")
+        val recipe = Recipe(name = name)
+        val id = db.recipeDao().insert(recipe)
 
-        val playlist = Playlist(name = name)
-        val id = db.playlistDao().insert(playlist)
+        DebugConfig.debugLog(context, "RecipeManager", "Recipe created with ID: $id")
 
-        DebugConfig.debugLog(context, "PlaylistManager", "Playlist created with ID: $id")
-
-        return playlist.copy(id = id)
+        return recipe.copy(id = id)
     }
 }
 
-// BAD: Direct Log usage
-class PlaylistManager {
-    suspend fun createPlaylist(name: String): Playlist {
-        Log.d("PlaylistManager", "Creating playlist: $name")  // DON'T DO THIS
-        // ...
-    }
-}
+// BAD - NEVER DO THIS
+Log.d("RecipeManager", "Creating recipe")  // ❌ NEVER
 ```
 
----
-
-### Category Guidelines
-
-Use descriptive categories that reflect the class or feature:
-
-- `"MainActivity"` - Main app lifecycle events
-- `"PlaylistManager"` - Playlist operations
-- `"AudioScanner"` - File scanning operations
-- `"GenreNormalizer"` - Genre normalization
-- `"PermissionHandler"` - Permission requests
-- `"DatabaseMigration"` - Database migrations
+**Category Guidelines:**
+- `"MainActivity"`: App lifecycle events
+- `"RecipeManager"`: Recipe operations
+- `"URLParser"`: URL parsing operations
+- `"PermissionHandler"`: Permission requests
+- `"DatabaseMigration"`: Database migrations
 
 **Benefits:**
-- Easy to filter logs by category: `adb logcat | grep "Refract-PlaylistManager"`
-- Users can disable debug mode in production
-- No sensitive data leaks in release builds
-- Developers can trace operations through categories
+- Filter logs: `adb logcat | grep "RecipeIndex-RecipeManager"`
+- Users can disable in production
+- No sensitive data leaks
+- Easy operation tracing
 
 ---
 
-## Documentation Requirements
+## Documentation Details
 
 ### The 5-Document System
 
-**Principle:** Every project MUST maintain these 5 core documentation files in the root directory.
+**Intent:** Maintain institutional knowledge and make codebase understandable for new developers (including future you).
+
+Every project MUST maintain these files in the root:
+
+1. **PROJECT_STATUS.md**: High-level overview, current state, completed features, known issues, next milestones
+2. **DECISION_LOG.md**: Architectural decisions with context, rationale, consequences, alternatives considered
+3. **DEVELOPER_GUIDE.md**: Onboarding guide, setup instructions, coding standards, common tasks
+4. **FILE_CATALOG.md**: Directory of important files with descriptions and purposes
+5. **TEST_SCENARIOS.md**: Automated test coverage, manual test scenarios, regression tests
 
 ---
 
-### 1. PROJECT_STATUS.md
+### PROJECT_STATUS.md Structure
 
-**Purpose:** High-level project overview and current state
-
-**Structure:**
 ```markdown
 # Project Status
 
@@ -747,19 +759,12 @@ Use descriptive categories that reflect the class or feature:
 - Milestone 1 (Target: Date)
 ```
 
-**Update When:**
-- Completing major features
-- Starting new work phases
-- Releasing versions
-- Discovering critical bugs
+**Update when:** Completing features, starting new phases, releasing versions, discovering critical bugs
 
 ---
 
-### 2. DECISION_LOG.md
+### DECISION_LOG.md Structure
 
-**Purpose:** Record architectural decisions and their rationale
-
-**Structure:**
 ```markdown
 # Decision Log
 
@@ -772,10 +777,10 @@ Use descriptive categories that reflect the class or feature:
 [What was decided]
 
 **Rationale:**
-[Why this approach was chosen over alternatives]
+[Why this approach was chosen]
 
 **Consequences:**
-[Impact on codebase, performance, or future development]
+[Impact on codebase, performance, future development]
 
 **Alternatives Considered:**
 - Alternative 1: [Why not chosen]
@@ -784,356 +789,48 @@ Use descriptive categories that reflect the class or feature:
 
 **Example:**
 ```markdown
-## [2025-11-10] Use Unified Playlist Entity Instead of Separate Tables
+## [2025-11-18] Use Unified Recipe Entity for All Import Sources
 
 **Context:**
-Need to support both manual playlists and smart playlists with genre/BPM filtering.
+Recipes can be imported from URLs, PDFs, photos, or manual entry. Need to decide whether to use separate entities or unified entity.
 
 **Decision:**
-Use single Playlist entity with `isSmartPlaylist` flag and `smartCriteria` JSON field.
+Use single Recipe entity with `importSource` enum and source-specific nullable fields.
 
 **Rationale:**
-- Simpler database schema (1 table instead of 2)
-- Easier to convert between types
-- Single DAO handles all playlist operations
-- UI code doesn't need to handle multiple types
+- Simpler database schema (1 table vs 4)
+- Easier to convert between import methods
+- Single DAO handles all recipe operations
+- UI doesn't need type-specific handling
 
 **Consequences:**
-- `smartCriteria` field is nullable and only used when `isSmartPlaylist=true`
-- Need to serialize/deserialize criteria JSON
-- Slight increase in unused field storage for manual playlists
+- Some fields nullable and only used for specific sources
+- Need to validate source-specific fields based on importSource
+- Slight storage overhead for unused fields
 
 **Alternatives Considered:**
-- Separate SmartPlaylist entity: Rejected due to code duplication
-- Inheritance with Room: Rejected due to Room's limited inheritance support
+- Separate entities per source: Rejected due to massive code duplication
+- Inheritance: Rejected due to Room's limited inheritance support
 ```
 
-**Update When:**
-- Making architectural decisions
-- Choosing libraries or frameworks
-- Changing major patterns
-- Refactoring significant code sections
+**Update when:** Making architectural decisions, choosing libraries, changing major patterns, significant refactoring
 
 ---
 
-### 3. DEVELOPER_GUIDE.md
+### Documentation Update Checklist
 
-**Purpose:** Onboarding guide for new developers + coding standards reference
-
-**Structure:**
-```markdown
-# Developer Guide
-
-## Getting Started
-### Prerequisites
-- Android Studio [version]
-- JDK [version]
-- Minimum SDK: [version]
-
-### Setup
-1. Clone repository
-2. Open in Android Studio
-3. Sync Gradle
-4. Run app
-
-## Project Architecture
-[Brief overview of architecture patterns]
-
-## Code Standards
-### Logging
-- NEVER use `android.util.Log` directly
-- Use `DebugConfig.debugLog(context, category, message)`
-
-### Naming Conventions
-[List conventions]
-
-### Package Structure
-[Describe organization]
-
-## Testing
-[How to run tests, testing patterns]
-
-## Common Tasks
-### Adding a New Screen
-[Step-by-step guide]
-
-### Creating a Manager
-[Step-by-step guide]
-```
-
-**Update When:**
-- Adding new patterns or utilities
-- Changing build configuration
-- Adding new dependencies
-- Establishing new coding conventions
-
----
-
-### 4. FILE_CATALOG.md
-
-**Purpose:** Directory of important files with descriptions and purposes
-
-**Structure:**
-```markdown
-# File Catalog
-
-## Core Application Files
-
-### MainActivity.kt
-**Path:** `app/src/main/java/com/yourapp/MainActivity.kt`
-**Purpose:** Main entry point, handles permissions, navigation setup
-**Key Responsibilities:**
-- File picker launchers
-- Permission requests
-- Scaffold and navigation host
-
-## Data Layer
-
-### PlaylistManager.kt
-**Path:** `app/src/main/java/com/yourapp/data/ContentManagers/PlaylistManager.kt`
-**Purpose:** Business logic for playlist operations
-**Key Functions:**
-- `createSmartPlaylist()`: Creates filtered playlists
-- `updatePlaylist()`: Updates playlist metadata
-
-[Continue for all major files...]
-```
-
-**Update When:**
-- Adding new major files
-- Changing file responsibilities
-- Refactoring file locations
-
----
-
-### 5. TEST_SCENARIOS.md
-
-**Purpose:** Document test coverage and manual testing scenarios
-
-**Structure:**
-```markdown
-# Test Scenarios
-
-## Automated Tests
-
-### PlaylistManagerTest
-**File:** `test/java/com/yourapp/PlaylistManagerTest.kt`
-**Coverage:**
-- ✅ Create playlist
-- ✅ Add tracks to playlist
-- ✅ Smart playlist filtering
-
-## Manual Test Scenarios
-
-### First-Time Setup Flow
-**Steps:**
-1. Install app (clean install)
-2. Grant storage permission
-3. Select music folder
-4. Complete setup wizard
-
-**Expected:**
-- Setup wizard appears
-- All steps can be completed
-- Settings are saved
-- Main screen appears after completion
-
-### Smart Playlist Creation
-**Steps:**
-1. Navigate to Playlists screen
-2. Tap "Create Smart Playlist"
-3. Set BPM range: 120-140
-4. Enable genres: Rock, Electronic
-5. Exclude genres: Christmas
-6. Save playlist
-
-**Expected:**
-- Only tracks matching criteria appear
-- Playlist auto-updates when new tracks scanned
-```
-
-**Update When:**
-- Adding automated tests
-- Fixing bugs (add regression test scenario)
-- Adding new features (add test scenarios)
-- Discovering edge cases
-
----
-
-### Documentation Update Rules
-
-**IMPORTANT:** When updating any documentation file, consider whether the other 4 files also need updates.
-
-**Example:**
-- Adding a new Manager class:
-  - ✅ Update FILE_CATALOG.md (add new file entry)
-  - ✅ Update DEVELOPER_GUIDE.md (if it introduces new patterns)
-  - ✅ Update TEST_SCENARIOS.md (add test coverage)
-  - ✅ Update DECISION_LOG.md (if architectural decision was made)
-  - ✅ Update PROJECT_STATUS.md (if completing a feature)
-
-**Checklist Template:**
-```
 When making changes, update relevant docs:
 - [ ] PROJECT_STATUS.md - If feature state changed
 - [ ] DECISION_LOG.md - If architectural decision made
 - [ ] DEVELOPER_GUIDE.md - If new pattern/standard introduced
 - [ ] FILE_CATALOG.md - If new major file added
 - [ ] TEST_SCENARIOS.md - If new tests added
-```
 
 ---
 
-## Common Anti-Patterns to Avoid
+## Testing Details
 
-### 1. ❌ Business Logic in ViewModels
-
-**DON'T:**
-```kotlin
-class PlaylistViewModel : ViewModel() {
-    fun createSmartPlaylist() {
-        viewModelScope.launch {
-            val tracks = db.trackDao().getAll()  // Direct DB access
-            val filtered = tracks.filter {
-                it.bpm in 120..140 && it.genre == "Rock"
-            }
-            val playlist = Playlist(name = "My Playlist")
-            db.playlistDao().insert(playlist)
-            // Complex logic in ViewModel - BAD
-        }
-    }
-}
-```
-
-**DO:**
-```kotlin
-class PlaylistViewModel(
-    private val playlistManager: PlaylistManager
-) : ViewModel() {
-    fun createSmartPlaylist(criteria: SmartPlaylistCriteria) {
-        viewModelScope.launch {
-            playlistManager.createSmartPlaylist(criteria)
-        }
-    }
-}
-```
-
----
-
-### 2. ❌ Using `Log.d()` Directly
-
-**DON'T:**
-```kotlin
-Log.d("MyTag", "User clicked button")  // NEVER DO THIS
-```
-
-**DO:**
-```kotlin
-DebugConfig.debugLog(context, "ButtonHandler", "User clicked button")
-```
-
----
-
-### 3. ❌ Hardcoded Settings in Business Logic
-
-**DON'T:**
-```kotlin
-fun filterTracks(tracks: List<Track>): List<Track> {
-    return tracks.filter { it.genre != "Christmas" }  // Hardcoded
-}
-```
-
-**DO:**
-```kotlin
-fun filterTracks(tracks: List<Track>): List<Track> {
-    val excludedGenres = genreExclusionSettings.defaultExclusions.value
-    return tracks.filter { it.genre !in excludedGenres }
-}
-```
-
----
-
-### 4. ❌ Premature Component Extraction
-
-**DON'T:**
-```kotlin
-// Used only once, but extracted anyway
-// ui/components/PlaylistHeaderSection.kt
-@Composable
-fun PlaylistHeaderSection(name: String) { /* ... */ }
-```
-
-**DO:**
-```kotlin
-// Keep inline until used 2+ times
-@Composable
-fun PlaylistScreen(playlist: Playlist) {
-    Column {
-        // Inline header section - fine for now
-        Text(playlist.name, style = MaterialTheme.typography.headlineMedium)
-    }
-}
-```
-
----
-
-### 5. ❌ Duplicate Data Sources
-
-**DON'T:**
-```kotlin
-// GenreNormalizer.kt
-object GenreNormalizer {
-    private val genres = setOf("Rock", "Jazz", "Classical")
-}
-
-// GenreFilterScreen.kt
-class GenreFilterScreen {
-    private val genres = setOf("Rock", "Jazz", "Classical")  // DUPLICATE - BAD
-}
-```
-
-**DO:**
-```kotlin
-// Single source of truth
-object GenreNormalizer {
-    private val canonicalGenres = setOf("Rock", "Jazz", "Classical")
-    fun getCanonicalGenres(): List<String> = canonicalGenres.sorted()
-}
-
-// Usage everywhere
-class GenreFilterScreen {
-    val genres = GenreNormalizer.getCanonicalGenres()
-}
-```
-
----
-
-### 6. ❌ Direct Room Usage in UI
-
-**DON'T:**
-```kotlin
-@Composable
-fun PlaylistScreen(database: AppDatabase) {
-    val playlists by database.playlistDao().getAllPlaylists()
-        .collectAsState(initial = emptyList())
-    // Direct DAO access from UI - BAD
-}
-```
-
-**DO:**
-```kotlin
-@Composable
-fun PlaylistScreen(viewModel: PlaylistViewModel = viewModel()) {
-    val state by viewModel.state.collectAsState()
-    // ViewModel abstracts data access
-}
-```
-
----
-
-## Testing Standards
-
-### 1. Testing Framework
+### Testing Framework
 
 **Use:**
 - **JUnit 4** for unit tests
@@ -1151,35 +848,34 @@ testImplementation 'androidx.room:room-testing:2.6.1'
 
 ---
 
-### 2. Test Organization
+### Test Organization
 
-**Structure:**
 ```
 app/src/test/java/com/yourapp/
 ├── data/
 │   ├── managers/
-│   │   └── PlaylistManagerTest.kt
+│   │   └── RecipeManagerTest.kt
 │   ├── database/
-│   │   └── PlaylistDaoTest.kt
+│   │   └── RecipeDaoTest.kt
 │   └── normalizers/
-│       └── GenreNormalizerTest.kt
+│       └── IngredientNormalizerTest.kt
 └── utils/
-    └── FileUtilsTest.kt
+    └── UnitConverterTest.kt
 ```
 
 **Naming:** `[ClassName]Test.kt`
 
 ---
 
-### 3. Test Pattern for Managers
+### Test Pattern for Managers
 
 ```kotlin
 @RunWith(RobolectricTestRunner::class)
-class PlaylistManagerTest {
+class RecipeManagerTest {
 
     private lateinit var database: AppDatabase
     private lateinit var context: Context
-    private lateinit var playlistManager: PlaylistManager
+    private lateinit var recipeManager: RecipeManager
 
     @Before
     fun setup() {
@@ -1189,7 +885,7 @@ class PlaylistManagerTest {
             AppDatabase::class.java
         ).allowMainThreadQueries().build()
 
-        playlistManager = PlaylistManager(database, context)
+        recipeManager = RecipeManager(database, context)
     }
 
     @After
@@ -1198,15 +894,15 @@ class PlaylistManagerTest {
     }
 
     @Test
-    fun `createPlaylist creates playlist in database`() = runBlocking {
-        val name = "Test Playlist"
+    fun `createRecipe creates recipe in database`() = runBlocking {
+        val name = "Chocolate Chip Cookies"
 
-        val playlist = playlistManager.createPlaylist(name)
+        val recipe = recipeManager.createRecipe(name)
 
-        assertNotNull(playlist.id)
-        assertEquals(name, playlist.name)
+        assertNotNull(recipe.id)
+        assertEquals(name, recipe.name)
 
-        val retrieved = database.playlistDao().getById(playlist.id)
+        val retrieved = database.recipeDao().getById(recipe.id)
         assertEquals(name, retrieved?.name)
     }
 }
@@ -1214,7 +910,7 @@ class PlaylistManagerTest {
 
 ---
 
-### 4. Test Coverage Goals
+### Test Coverage Goals
 
 **Priority:**
 - ✅ **Critical:** Business logic in Managers (80%+ coverage)
@@ -1224,21 +920,21 @@ class PlaylistManagerTest {
 
 ---
 
-### 5. Manual Testing Checklist
+### Manual Testing Checklist
 
 **Before Each Release:**
-- [ ] Fresh install flow (setup wizard)
+- [ ] Fresh install flow
 - [ ] Permission grant/deny scenarios
 - [ ] Core feature walkthrough
 - [ ] Edge cases (empty states, no data)
-- [ ] Performance (large datasets)
+- [ ] Performance with large datasets
 - [ ] Rotation and configuration changes
 
 ---
 
-## Git Commit Standards
+## Git Details
 
-### 1. Commit Message Format
+### Commit Message Format
 
 ```
 <type>: <short description>
@@ -1261,12 +957,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 **Examples:**
 ```
-feat: Add smart playlist creation with BPM and genre filtering
+feat: Add recipe import from URLs with metadata extraction
 
-Implemented PlaylistManager.createSmartPlaylist() with support for:
-- BPM range filtering
-- Genre inclusion/exclusion
-- Auto-updating playlist criteria
+Implemented RecipeManager.importFromUrl() with support for:
+- Recipe Schema JSON-LD parsing
+- Fallback HTML parsing for common recipe sites
+- Automatic image download and storage
 
 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -1274,10 +970,10 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ```
-fix: Prevent duplicate genres in filter settings
+fix: Prevent crash when scaling recipe with zero servings
 
-GenreSettings now deduplicates enabled genres on load to prevent
-UI rendering issues.
+RecipeManager now validates servings > 0 before scaling to prevent
+division by zero.
 
 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -1286,7 +982,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-### 2. Commit Size Guidelines
+### Commit Size Guidelines
 
 **Good Commit:**
 - Single logical change
@@ -1299,109 +995,127 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Mixing refactoring with new features
 
 **Too Small:**
-- Separate commits for whitespace changes
-- Breaking single feature across 10 commits
+- Separate commits for whitespace
+- Breaking single feature across 10+ commits
 
 ---
 
-### 3. Branch Naming
+### Branch Naming
 
 **Pattern:** `<type>/<short-description>`
 
 **Examples:**
-- `feat/smart-playlists`
-- `fix/genre-filter-crash`
-- `refactor/playlist-manager`
+- `feat/recipe-import`
+- `fix/scaling-crash`
+- `refactor/recipe-manager`
 - `docs/update-decision-log`
 
 ---
 
-## Development Workflow
+### Pull Request Workflow
 
-### Before Starting Work
+**Rule:** NEVER merge directly to main. Always create a PR for review, even for small changes.
 
-- [ ] Review relevant documentation (DEVELOPER_GUIDE.md, DECISION_LOG.md)
-- [ ] Check existing patterns in codebase
-- [ ] Identify which Manager or settings class is affected
-- [ ] Plan architectural approach (discuss if major)
+**PR Template:**
+```markdown
+## Summary
+[Brief description of changes]
 
----
+## Changes
+- Change 1
+- Change 2
+- Change 3
 
-### During Development
+## Test Plan
+- [ ] Tested feature X
+- [ ] Verified edge case Y
+- [ ] Ran full test suite
+- [ ] Manual testing completed
 
-- [ ] Follow Single Source of Truth principle
-- [ ] Use DebugConfig for all logging
-- [ ] Write unit tests for business logic
-- [ ] Keep UI code thin (delegate to ViewModels/Managers)
-- [ ] Use StateFlow for observable state
-- [ ] Follow Material 3 spacing constants
-- [ ] Extract components only when used 2+ times
+## Screenshots (if UI changes)
+[Add screenshots or video]
 
----
+## Documentation Updated
+- [ ] PROJECT_STATUS.md
+- [ ] DECISION_LOG.md
+- [ ] DEVELOPER_GUIDE.md
+- [ ] FILE_CATALOG.md
+- [ ] TEST_SCENARIOS.md
 
-### After Completing Work
+## Checklist
+- [ ] Code follows design principles
+- [ ] All tests pass
+- [ ] No direct Log.d() usage
+- [ ] Business logic in Managers
+- [ ] Documentation updated
+```
 
-- [ ] Run full test suite
-- [ ] Manual testing of affected features
-- [ ] Update all relevant documentation files:
-  - [ ] PROJECT_STATUS.md (if feature state changed)
-  - [ ] DECISION_LOG.md (if architectural decision made)
-  - [ ] DEVELOPER_GUIDE.md (if new pattern introduced)
-  - [ ] FILE_CATALOG.md (if new major file added)
-  - [ ] TEST_SCENARIOS.md (if new tests added)
-- [ ] Write clear commit message
-- [ ] Create PR with summary and test plan
+**PR Review Checklist:**
+- [ ] Code follows architectural patterns (SSOT, Manager pattern, Config over Code)
+- [ ] No business logic in ViewModels
+- [ ] DebugConfig used instead of Log.d()
+- [ ] StateFlow used for observable state
+- [ ] Components extracted appropriately
+- [ ] Tests added for business logic
+- [ ] Documentation updated
+- [ ] Commit messages follow format
+- [ ] No merge conflicts
+
+**Merging:**
+- Require at least 1 approval before merging
+- Use "Squash and merge" for cleaner history
+- Delete branch after merging
 
 ---
 
 ## Performance Considerations
 
-### 1. Database Operations
+### Database Operations
 
 **Always use IO dispatcher:**
 ```kotlin
-suspend fun loadPlaylists(): List<Playlist> = withContext(Dispatchers.IO) {
-    database.playlistDao().getAll()
+suspend fun loadRecipes(): List<Recipe> = withContext(Dispatchers.IO) {
+    database.recipeDao().getAll()
 }
 ```
 
 **Use Flow for reactive queries:**
 ```kotlin
-fun observePlaylists(): Flow<List<Playlist>> {
-    return database.playlistDao().getAllPlaylists()
+fun observeRecipes(): Flow<List<Recipe>> {
+    return database.recipeDao().getAllRecipes()
+}
+```
+
+**Batch inserts:**
+```kotlin
+@Transaction
+suspend fun insertRecipes(recipes: List<Recipe>) {
+    recipes.forEach { recipeDao.insert(it) }
 }
 ```
 
 ---
 
-### 2. File Scanning
+### File Operations
 
 **Use background threads:**
 ```kotlin
-class AudioFileManager {
-    suspend fun scanDirectory(path: String) = withContext(Dispatchers.IO) {
+class RecipeImportManager {
+    suspend fun importPDF(uri: Uri) = withContext(Dispatchers.IO) {
         // File operations here
     }
 }
 ```
 
-**Batch database inserts:**
-```kotlin
-@Transaction
-suspend fun insertTracks(tracks: List<Track>) {
-    tracks.forEach { trackDao.insert(it) }
-}
-```
-
 ---
 
-### 3. UI Performance
+### UI Performance
 
 **LazyColumn for long lists:**
 ```kotlin
 LazyColumn {
-    items(tracks, key = { it.id }) { track ->
-        TrackListItem(track)
+    items(recipes, key = { it.id }) { recipe ->
+        RecipeCard(recipe)
     }
 }
 ```
@@ -1411,31 +1125,179 @@ LazyColumn {
 // BAD
 @Composable
 fun Screen() {
-    val filtered = tracks.filter { /* expensive */ }  // Runs every recomposition
+    val filtered = recipes.filter { /* expensive */ }  // Every recomposition
 }
 
 // GOOD
 @Composable
 fun Screen() {
-    val filtered = remember(tracks) {
-        tracks.filter { /* expensive */ }
+    val filtered = remember(recipes) {
+        recipes.filter { /* expensive */ }
     }
 }
 ```
 
 ---
 
-## Summary Checklist
+## Common Anti-Patterns to Avoid
 
-When starting a new Android project, use this as your setup checklist:
+### ❌ Business Logic in ViewModels
 
-### Architecture Setup
+**DON'T:**
+```kotlin
+class RecipeViewModel : ViewModel() {
+    fun createRecipe() {
+        viewModelScope.launch {
+            val recipe = db.recipeDao().getAll()  // Direct DB access - BAD
+            val filtered = recipe.filter { /* logic */ }
+            db.recipeDao().insert(...)
+        }
+    }
+}
+```
+
+**DO:**
+```kotlin
+class RecipeViewModel(private val manager: RecipeManager) : ViewModel() {
+    fun createRecipe(name: String) {
+        viewModelScope.launch {
+            manager.createRecipe(name)
+        }
+    }
+}
+```
+
+---
+
+### ❌ Using Log.d() Directly
+
+**DON'T:**
+```kotlin
+Log.d("MyTag", "User action")  // NEVER
+```
+
+**DO:**
+```kotlin
+DebugConfig.debugLog(context, "RecipeScreen", "User action")
+```
+
+---
+
+### ❌ Hardcoded Settings
+
+**DON'T:**
+```kotlin
+fun filterRecipes(recipes: List<Recipe>) =
+    recipes.filter { it.cuisine != "Mexican" }  // Hardcoded
+```
+
+**DO:**
+```kotlin
+fun filterRecipes(recipes: List<Recipe>): List<Recipe> {
+    val excluded = cuisineSettings.excludedCuisines.value
+    return recipes.filter { it.cuisine !in excluded }
+}
+```
+
+---
+
+### ❌ Duplicate Data Sources
+
+**DON'T:**
+```kotlin
+// IngredientNormalizer.kt
+object IngredientNormalizer {
+    private val units = setOf("cup", "tbsp", "tsp")
+}
+
+// RecipeScreen.kt
+class RecipeScreen {
+    private val units = setOf("cup", "tbsp", "tsp")  // DUPLICATE - BAD
+}
+```
+
+**DO:**
+```kotlin
+// Single source of truth
+object IngredientNormalizer {
+    private val canonicalUnits = setOf("cup", "tbsp", "tsp")
+    fun getUnits(): List<String> = canonicalUnits.sorted()
+}
+
+// Usage everywhere
+class RecipeScreen {
+    val units = IngredientNormalizer.getUnits()
+}
+```
+
+---
+
+### ❌ Direct Room Usage in UI
+
+**DON'T:**
+```kotlin
+@Composable
+fun RecipeScreen(database: AppDatabase) {
+    val recipes by database.recipeDao().getAll()
+        .collectAsState(initial = emptyList())
+    // Direct DAO - BAD
+}
+```
+
+**DO:**
+```kotlin
+@Composable
+fun RecipeScreen(viewModel: RecipeViewModel = viewModel()) {
+    val state by viewModel.state.collectAsState()
+    // ViewModel abstracts data access
+}
+```
+
+---
+
+## Development Workflow
+
+### Before Starting Work
+
+- [ ] Review relevant documentation
+- [ ] Check existing patterns in codebase
+- [ ] Identify affected Manager/Settings classes
+- [ ] Plan architectural approach
+
+### During Development
+
+- [ ] Follow SSOT principle
+- [ ] Use DebugConfig for logging
+- [ ] Write tests for business logic
+- [ ] Keep UI code thin
+- [ ] Use StateFlow for observable state
+- [ ] Follow Material 3 spacing
+- [ ] Extract components proactively (>50 lines or self-contained)
+
+### After Completing Work
+
+- [ ] Run full test suite
+- [ ] Manual testing of features
+- [ ] Update documentation:
+  - [ ] PROJECT_STATUS.md
+  - [ ] DECISION_LOG.md
+  - [ ] DEVELOPER_GUIDE.md
+  - [ ] FILE_CATALOG.md
+  - [ ] TEST_SCENARIOS.md
+- [ ] Write clear commit message
+- [ ] Create PR with summary
+
+---
+
+## Summary Checklist - New Project Setup
+
+### Architecture
 - [ ] Create `data/`, `ui/`, `utils/`, `navigation/` packages
 - [ ] Set up Room database with DAOs
-- [ ] Create AppSettings class with SharedPreferences
+- [ ] Create AppSettings with SharedPreferences
 - [ ] Implement DebugConfig utility
 
-### Documentation Setup
+### Documentation
 - [ ] Create PROJECT_STATUS.md
 - [ ] Create DECISION_LOG.md
 - [ ] Create DEVELOPER_GUIDE.md
@@ -1449,25 +1311,21 @@ When starting a new Android project, use this as your setup checklist:
 - [ ] Configure StateFlow usage
 - [ ] Set up ViewModel pattern
 
-### Testing Setup
+### Testing
 - [ ] Add JUnit dependencies
 - [ ] Add Room in-memory database testing
 - [ ] Set up Kotlin coroutines test
 - [ ] Create first Manager test
 
-### Git Setup
+### Git
 - [ ] Configure commit message template
 - [ ] Set up branch naming convention
 - [ ] Create .gitignore
 
 ---
 
-## Document Version History
-
-| Version | Date       | Changes                                      |
-|---------|------------|----------------------------------------------|
-| 1.0     | 2025-11-14 | Initial document based on another project    |
-
----
+**Document Version:** 2.0
+**Last Updated:** 2025-11-18
+**Changes from 1.0:** Restructured with Quick Reference section at top, updated component extraction rule to be more proactive
 
 **End of Document**
