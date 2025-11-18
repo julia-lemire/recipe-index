@@ -122,7 +122,8 @@ fun ImportPhotoScreen(
                         if (selectedPhotoUris.isNotEmpty()) {
                             viewModel.fetchRecipeFromPhotos(selectedPhotoUris)
                         }
-                    }
+                    },
+                    errorMessage = state.errorMessage
                 )
             }
 
@@ -169,7 +170,8 @@ private fun SelectPhotoContent(
     onTakePhoto: () -> Unit,
     onSelectFromGallery: () -> Unit,
     onRemovePhoto: (Uri) -> Unit,
-    onProcess: () -> Unit
+    onProcess: () -> Unit,
+    errorMessage: String? = null
 ) {
     Column(
         modifier = modifier
@@ -187,6 +189,23 @@ private fun SelectPhotoContent(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        // Error message
+        if (errorMessage != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Text(
+                    text = errorMessage,
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 

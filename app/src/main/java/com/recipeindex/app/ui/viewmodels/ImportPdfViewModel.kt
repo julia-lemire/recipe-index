@@ -21,13 +21,13 @@ class ImportPdfViewModel(
 ) : ViewModel() {
 
     sealed class UiState {
-        data object SelectFile : UiState()
+        data class SelectFile(val errorMessage: String? = null) : UiState()
         data object Loading : UiState()
         data class Editing(val recipe: Recipe, val errorMessage: String? = null) : UiState()
         data object Saved : UiState()
     }
 
-    private val _uiState = MutableStateFlow<UiState>(UiState.SelectFile)
+    private val _uiState = MutableStateFlow<UiState>(UiState.SelectFile())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     fun fetchRecipeFromPdf(uri: Uri) {
@@ -52,8 +52,7 @@ class ImportPdfViewModel(
                     DebugConfig.Category.IMPORT,
                     "Failed to parse PDF: ${error.message}"
                 )
-                _uiState.value = UiState.SelectFile
-                showError("Failed to parse PDF: ${error.message}")
+                _uiState.value = UiState.SelectFile(errorMessage = "Failed to parse PDF: ${error.message}")
             }
         }
     }
@@ -102,18 +101,19 @@ class ImportPdfViewModel(
     fun showError(message: String) {
         val currentState = _uiState.value
         when (currentState) {
+            is UiState.SelectFile -> {
+                _uiState.value = currentState.copy(errorMessage = message)
+            }
             is UiState.Editing -> {
                 _uiState.value = currentState.copy(errorMessage = message)
             }
             else -> {
-                // For SelectFile state, we'd need to add error field
-                // For now, log it
                 DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Error: $message")
             }
         }
     }
 
     fun reset() {
-        _uiState.value = UiState.SelectFile
+        _uiState.value = UiState.SelectFile()
     }
 }

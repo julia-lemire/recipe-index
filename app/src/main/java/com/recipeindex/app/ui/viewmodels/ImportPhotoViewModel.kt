@@ -21,13 +21,13 @@ class ImportPhotoViewModel(
 ) : ViewModel() {
 
     sealed class UiState {
-        data object SelectPhoto : UiState()
+        data class SelectPhoto(val errorMessage: String? = null) : UiState()
         data object Loading : UiState()
         data class Editing(val recipe: Recipe, val errorMessage: String? = null) : UiState()
         data object Saved : UiState()
     }
 
-    private val _uiState = MutableStateFlow<UiState>(UiState.SelectPhoto)
+    private val _uiState = MutableStateFlow<UiState>(UiState.SelectPhoto())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     fun fetchRecipeFromPhoto(uri: Uri) {
@@ -52,8 +52,7 @@ class ImportPhotoViewModel(
                     DebugConfig.Category.IMPORT,
                     "Failed to parse photo: ${error.message}"
                 )
-                _uiState.value = UiState.SelectPhoto
-                showError("Failed to parse photo: ${error.message}")
+                _uiState.value = UiState.SelectPhoto(errorMessage = "Failed to parse photo: ${error.message}")
             }
         }
     }
@@ -84,8 +83,7 @@ class ImportPhotoViewModel(
                     DebugConfig.Category.IMPORT,
                     "Failed to parse photos: ${error.message}"
                 )
-                _uiState.value = UiState.SelectPhoto
-                showError("Failed to parse photos: ${error.message}")
+                _uiState.value = UiState.SelectPhoto(errorMessage = "Failed to parse photos: ${error.message}")
             }
         }
     }
@@ -134,17 +132,19 @@ class ImportPhotoViewModel(
     fun showError(message: String) {
         val currentState = _uiState.value
         when (currentState) {
+            is UiState.SelectPhoto -> {
+                _uiState.value = currentState.copy(errorMessage = message)
+            }
             is UiState.Editing -> {
                 _uiState.value = currentState.copy(errorMessage = message)
             }
             else -> {
-                // For SelectPhoto state, log error
                 DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Error: $message")
             }
         }
     }
 
     fun reset() {
-        _uiState.value = UiState.SelectPhoto
+        _uiState.value = UiState.SelectPhoto()
     }
 }
