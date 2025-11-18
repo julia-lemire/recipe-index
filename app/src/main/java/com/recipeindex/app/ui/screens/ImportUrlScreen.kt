@@ -9,7 +9,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.ui.viewmodels.ImportViewModel
 
@@ -258,6 +261,19 @@ private fun EditRecipeContent(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
+
+        // Recipe Photo
+        recipe.photoPath?.let { photoUrl ->
+            AsyncImage(
+                model = photoUrl,
+                contentDescription = "Recipe photo",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(MaterialTheme.shapes.medium),
+                contentScale = ContentScale.Crop
+            )
+        }
 
         // Title
         OutlinedTextField(
