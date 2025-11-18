@@ -6,22 +6,25 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.recipeindex.app.data.AppDatabase
+import com.recipeindex.app.data.managers.RecipeManager
 import com.recipeindex.app.ui.components.AppNavigationDrawer
 import com.recipeindex.app.ui.theme.HearthTheme
+import com.recipeindex.app.ui.viewmodels.ViewModelFactory
 import com.recipeindex.app.utils.DebugConfig
 
 /**
- * MainActivity - Entry point for Recipe Index
+ * MainActivity - Orchestrator only, no business logic
  *
- * Implements responsive navigation:
- * - Modal drawer for phones (Samsung S23 Ultra)
- * - Permanent drawer for tablets (Samsung Galaxy Tab S10+)
+ * Responsibilities:
+ * - Setup dependencies (Database, Managers, ViewModelFactory)
+ * - Configure window and theme
+ * - Wire navigation and UI components
  *
- * Uses Hearth design system theme
+ * Follows design principle: MainActivity orchestrates, business logic elsewhere
  */
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -32,6 +35,11 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        // Setup dependencies
+        val database = AppDatabase.getDatabase(applicationContext)
+        val recipeManager = RecipeManager(database.recipeDao())
+        val viewModelFactory = ViewModelFactory(recipeManager)
+
         setContent {
             val windowSizeClass = calculateWindowSizeClass(this)
 
@@ -41,21 +49,21 @@ class MainActivity : ComponentActivity() {
             )
 
             HearthTheme {
-                RecipeIndexApp(windowSizeClass = windowSizeClass)
+                val navController = rememberNavController()
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+
+                AppNavigationDrawer(
+                    navController = navController,
+                    currentRoute = currentRoute,
+                    windowSizeClass = windowSizeClass
+                ) { paddingValues ->
+                    RecipeIndexNavigation(
+                        navController = navController,
+                        viewModelFactory = viewModelFactory
+                    )
+                }
             }
         }
     }
-}
-
-@Composable
-fun RecipeIndexApp(windowSizeClass: androidx.compose.material3.windowsizeclass.WindowSizeClass) {
-    val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-
-    AppNavigationDrawer(
-        navController = navController,
-        currentRoute = currentRoute,
-        windowSizeClass = windowSizeClass
-    )
 }

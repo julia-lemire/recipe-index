@@ -1,6 +1,5 @@
 package com.recipeindex.app.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -11,32 +10,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import com.recipeindex.app.navigation.Screen
-import com.recipeindex.app.ui.screens.*
 import com.recipeindex.app.utils.DebugConfig
 import kotlinx.coroutines.launch
 
 /**
- * Responsive Navigation Drawer
+ * Responsive Navigation Drawer - UI component only, no business logic
  *
  * Modal drawer for phones (Samsung S23 Ultra)
  * Permanent drawer for tablets (Samsung Galaxy Tab S10+)
  *
- * Follows ANDROID_DESIGN_PRINCIPLES.md navigation rules:
- * - NEVER use BottomNavigation
- * - Use TopAppBar or NavigationDrawer
+ * Follows design principle: MainActivity orchestrates, navigation logic separated
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigationDrawer(
     navController: NavHostController,
     currentRoute: String?,
-    windowSizeClass: WindowSizeClass
+    windowSizeClass: WindowSizeClass,
+    content: @Composable (PaddingValues) -> Unit
 ) {
     DebugConfig.debugLog(
         DebugConfig.Category.NAVIGATION,
@@ -76,7 +70,8 @@ fun AppNavigationDrawer(
             MainContent(
                 navController = navController,
                 showMenuButton = false,
-                onMenuClick = {}
+                onMenuClick = {},
+                content = content
             )
         }
     } else {
@@ -112,7 +107,8 @@ fun AppNavigationDrawer(
                     scope.launch {
                         drawerState.open()
                     }
-                }
+                },
+                content = content
             )
         }
     }
@@ -179,7 +175,8 @@ private fun DrawerContent(
 private fun MainContent(
     navController: NavHostController,
     showMenuButton: Boolean,
-    onMenuClick: () -> Unit
+    onMenuClick: () -> Unit,
+    content: @Composable (PaddingValues) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -207,34 +204,6 @@ private fun MainContent(
             }
         }
     ) { paddingValues ->
-        NavHost(
-            navController = navController,
-            startDestination = Screen.Home.route,
-            modifier = Modifier.padding(paddingValues)
-        ) {
-            composable(Screen.Home.route) {
-                HomeScreen()
-            }
-            composable(Screen.RecipeIndex.route) {
-                RecipeListScreen(
-                    onAddRecipe = {
-                        // TODO: Navigate to add recipe screen
-                        DebugConfig.debugLog(
-                            DebugConfig.Category.UI,
-                            "Add recipe - not yet implemented"
-                        )
-                    }
-                )
-            }
-            composable(Screen.MealPlanning.route) {
-                MealPlanningScreen()
-            }
-            composable(Screen.GroceryLists.route) {
-                GroceryListScreen()
-            }
-            composable(Screen.Settings.route) {
-                SettingsScreen()
-            }
-        }
+        content(paddingValues)
     }
 }
