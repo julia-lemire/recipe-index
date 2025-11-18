@@ -11,10 +11,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.recipeindex.app.data.AppDatabase
 import com.recipeindex.app.data.managers.RecipeManager
+import com.recipeindex.app.data.parsers.SchemaOrgRecipeParser
 import com.recipeindex.app.ui.components.AppNavigationDrawer
 import com.recipeindex.app.ui.theme.HearthTheme
 import com.recipeindex.app.ui.viewmodels.ViewModelFactory
 import com.recipeindex.app.utils.DebugConfig
+import io.ktor.client.*
+import io.ktor.client.engine.okhttp.*
+import io.ktor.client.plugins.logging.*
 
 /**
  * MainActivity - Orchestrator only, no business logic
@@ -38,7 +42,17 @@ class MainActivity : ComponentActivity() {
         // Setup dependencies
         val database = AppDatabase.getDatabase(applicationContext)
         val recipeManager = RecipeManager(database.recipeDao())
-        val viewModelFactory = ViewModelFactory(recipeManager)
+
+        // Setup HTTP client for recipe import
+        val httpClient = HttpClient(OkHttp) {
+            install(Logging) {
+                logger = Logger.DEFAULT
+                level = LogLevel.INFO
+            }
+        }
+        val recipeParser = SchemaOrgRecipeParser(httpClient)
+
+        val viewModelFactory = ViewModelFactory(recipeManager, recipeParser)
 
         setContent {
             val windowSizeClass = calculateWindowSizeClass(this)

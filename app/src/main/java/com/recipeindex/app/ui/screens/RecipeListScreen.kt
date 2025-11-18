@@ -6,13 +6,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -30,6 +31,7 @@ import com.recipeindex.app.utils.DebugConfig
 fun RecipeListScreen(
     viewModel: RecipeViewModel,
     onAddRecipe: () -> Unit,
+    onImportRecipe: () -> Unit = {},
     onRecipeClick: (Long) -> Unit,
     onMenuClick: () -> Unit = {}
 ) {
@@ -37,6 +39,7 @@ fun RecipeListScreen(
 
     val recipes by viewModel.recipes.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    var fabExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -50,18 +53,74 @@ fun RecipeListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    DebugConfig.debugLog(DebugConfig.Category.UI, "Add Recipe FAB clicked")
-                    onAddRecipe()
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add Recipe"
-                )
+                // Import FAB (shown when expanded)
+                if (fabExpanded) {
+                    SmallFloatingActionButton(
+                        onClick = {
+                            DebugConfig.debugLog(DebugConfig.Category.UI, "Import Recipe FAB clicked")
+                            fabExpanded = false
+                            onImportRecipe()
+                        },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Import")
+                            Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = "Import Recipe"
+                            )
+                        }
+                    }
+                }
+
+                // Create FAB (shown when expanded)
+                if (fabExpanded) {
+                    SmallFloatingActionButton(
+                        onClick = {
+                            DebugConfig.debugLog(DebugConfig.Category.UI, "Create Recipe FAB clicked")
+                            fabExpanded = false
+                            onAddRecipe()
+                        },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Create")
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Create Recipe"
+                            )
+                        }
+                    }
+                }
+
+                // Main FAB (always shown)
+                FloatingActionButton(
+                    onClick = {
+                        fabExpanded = !fabExpanded
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = if (fabExpanded) "Close menu" else "Add Recipe",
+                        modifier = Modifier.rotate(if (fabExpanded) 45f else 0f)
+                    )
+                }
             }
         }
     ) { paddingValues ->

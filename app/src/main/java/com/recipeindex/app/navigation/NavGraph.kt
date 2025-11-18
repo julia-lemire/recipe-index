@@ -33,6 +33,10 @@ sealed class Screen(
         fun createRoute(recipeId: Long) = "recipe_detail/$recipeId"
     }
 
+    // Import screens (not in drawer)
+    object ImportSourceSelection : Screen("import_source", "Import Recipe", Icons.Default.List)
+    object ImportUrl : Screen("import_url", "Import from URL", Icons.Default.List)
+
     companion object {
         val drawerScreens = listOf(Home, RecipeIndex, MealPlanning, GroceryLists, Settings)
     }
