@@ -1,6 +1,8 @@
 package com.recipeindex.app.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -11,16 +13,30 @@ import com.recipeindex.app.utils.DebugConfig
 /**
  * Grocery List Screen - Generated shopping lists from meal plans
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GroceryListScreen() {
+fun GroceryListScreen(onMenuClick: () -> Unit = {}) {
     DebugConfig.debugLog(DebugConfig.Category.UI, "GroceryListScreen composed")
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Grocery Lists") },
+                navigationIcon = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -43,4 +59,5 @@ fun GroceryListScreen() {
             )
         }
     }
+}
 }

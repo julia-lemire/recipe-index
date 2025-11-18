@@ -35,7 +35,7 @@ fun RecipeIndexNavigation(
     ) {
         // Home screen
         composable(Screen.Home.route) {
-            HomeScreen()
+            HomeScreen(onMenuClick = onMenuClick)
         }
 
         // Recipe Index (list)
@@ -138,17 +138,17 @@ fun RecipeIndexNavigation(
 
         // Meal Planning
         composable(Screen.MealPlanning.route) {
-            MealPlanningScreen()
+            MealPlanningScreen(onMenuClick = onMenuClick)
         }
 
         // Grocery Lists
         composable(Screen.GroceryLists.route) {
-            GroceryListScreen()
+            GroceryListScreen(onMenuClick = onMenuClick)
         }
 
         // Settings
         composable(Screen.Settings.route) {
-            SettingsScreen()
+            SettingsScreen(onMenuClick = onMenuClick)
         }
     }
 }
