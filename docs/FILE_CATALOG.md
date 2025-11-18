@@ -183,9 +183,9 @@ com.recipeindex.app/
 
 ### UI - Screens
 - **HomeScreen.kt** - Landing page: This week's meal plans, recipe suggestions
-- **RecipeListScreen.kt** - Recipe browsing: LazyColumn with RecipeCards, expandable FAB menu (create/import), favorite toggle, empty state, ViewModel integration
+- **RecipeListScreen.kt** - Recipe browsing: LazyColumn with RecipeCards (photo, title, servings/times, tags), expandable FAB menu (create/import), favorite toggle, empty state, Coil AsyncImage for photos (180dp)
 - **AddEditRecipeScreen.kt** - Recipe add/edit form: Single screen with title, servings, times, ingredients, instructions, tags, notes, validation, auto-save on back
-- **RecipeDetailScreen.kt** - Recipe detail view: Servings/time card, ingredients list, numbered instructions, tags, notes, favorite/edit/delete actions, delete confirmation dialog
+- **RecipeDetailScreen.kt** - Recipe detail view: Photo (240dp), servings/time card, ingredients list, tabbed instruction sections (detected by ":" suffix), tags, notes, favorite/edit/delete actions, Coil AsyncImage
 - **ImportSourceSelectionScreen.kt** - Import source selection: Choose URL/PDF/Photo import source with cards, PDF/Photo coming soon
 - **ImportUrlScreen.kt** - URL import flow: URL input → loading → recipe preview/edit → save, auto-save on back navigation
 - **MealPlanningScreen.kt** - Weekly meal planning: Placeholder for future implementation

@@ -144,12 +144,15 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 
 ### Recipe Import (Phase 2)
 - ✅ RecipeParser interface for extensible parsing (URL/PDF/Photo support)
-- ✅ SchemaOrgRecipeParser with Jsoup and Ktor (parses Schema.org JSON-LD markup, HowToStep/HowToSection instructions, ISO 8601 durations, Open Graph fallback, debug logging)
+- ✅ SchemaOrgRecipeParser with Jsoup and Ktor (parses Schema.org JSON-LD markup, HowToStep/HowToSection instructions, ISO 8601 durations, Open Graph fallback, debug logging, main photo extraction, comma-separated tags)
 - ✅ ImportSourceSelectionScreen (choose URL/PDF/Photo import source)
 - ✅ ImportUrlScreen (URL input, loading state, recipe preview/edit before save, auto-save on back)
 - ✅ ImportViewModel with UI states (Input → Loading → Editing → Saved)
 - ✅ Import navigation routes (ImportSourceSelection, ImportUrl)
 - ✅ HTTP client setup (Ktor with OkHttp engine, logging)
+- ✅ Coil library for async image loading
+- ✅ Recipe photo display (list cards and detail screen)
+- ✅ Tabbed instruction sections (Slow Cooker, Instant Pot, etc.)
 
 ---
 
@@ -177,6 +180,8 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [x] URL import (Schema.org)
 - [ ] PDF import
 - [ ] Photo-to-recipe (OCR)
+- [ ] Instructional photos import
+- [ ] Recipe videos import
 
 ### Phase 3: Meal Planning
 - [ ] Meal plan entity/manager
