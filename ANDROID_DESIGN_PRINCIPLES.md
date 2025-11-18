@@ -14,6 +14,7 @@
 4. **NO duplicate data sources** → Single Source of Truth (SSOT) only
 5. **NO direct DAO/database access in UI** → Use ViewModels that call Managers/Repositories
 6. **NEVER use LiveData in new code** → Always use StateFlow
+7. **NEVER use BottomNavigation** → Use TopAppBar or NavigationDrawer only
 
 ### 🏗️ Architecture Rules
 1. **Manager Pattern**: Complex business logic → `data/ContentManagers/` or `data/Playback/`
@@ -29,10 +30,11 @@
 4. **Never expose MutableStateFlow** → Use `.asStateFlow()` for public API
 
 ### 🎨 UI/Code Organization Rules
-1. **Extract components proactively**: If >50 lines, self-contained, or might be reused → extract to `ui/components/`
-2. **Material 3 spacing constants**: Use `Spacing.small/medium/large` (4dp/8dp/16dp/24dp/32dp)
-3. **Detail screens**: Use `contentWindowInsets = WindowInsets(0, 0, 0, 0)` to prevent double padding
-4. **Package structure**: `data/`, `ui/screens/`, `ui/components/`, `ui/theme/`, `utils/`, `navigation/`
+1. **Navigation**: Use TopAppBar or NavigationDrawer ONLY. NEVER use BottomNavigation
+2. **Extract components proactively**: If >50 lines, self-contained, or might be reused → extract to `ui/components/`
+3. **Material 3 spacing constants**: Use `Spacing.small/medium/large` (4dp/8dp/16dp/24dp/32dp)
+4. **Detail screens**: Use `contentWindowInsets = WindowInsets(0, 0, 0, 0)` to prevent double padding
+5. **Package structure**: `data/`, `ui/screens/`, `ui/components/`, `ui/theme/`, `utils/`, `navigation/`
 
 ### 📝 Documentation Rules
 1. **Maintain 5 core docs**: PROJECT_STATUS.md, DECISION_LOG.md, DEVELOPER_GUIDE.md, FILE_CATALOG.md, TEST_SCENARIOS.md
@@ -343,6 +345,105 @@ fun FilterSection(
 ---
 
 ## UI/UX Details
+
+### Navigation Pattern
+
+**Intent:** Maintain consistent, ergonomic navigation that doesn't interfere with content.
+
+**Rule:** NEVER use BottomNavigation. Always use TopAppBar or NavigationDrawer.
+
+**Why Bottom Navigation is Prohibited:**
+- Takes up valuable screen real estate at the bottom
+- Can conflict with on-screen keyboards
+- Harder to reach on large phones (especially one-handed use)
+- Creates visual clutter during content consumption (recipes, cooking mode)
+- Not ideal for content-focused apps where screen space is critical
+
+**Approved Navigation Patterns:**
+
+**1. TopAppBar for Simple Navigation**
+```kotlin
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreen() {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Recipe Index") },
+                actions = {
+                    IconButton(onClick = { /* settings */ }) {
+                        Icon(Icons.Default.Settings, "Settings")
+                    }
+                    IconButton(onClick = { /* search */ }) {
+                        Icon(Icons.Default.Search, "Search")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        // Content
+    }
+}
+```
+
+**2. NavigationDrawer for Complex Apps**
+```kotlin
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreen() {
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Text("Recipe Index", modifier = Modifier.padding(16.dp))
+                Divider()
+                NavigationDrawerItem(
+                    label = { Text("Recipes") },
+                    selected = false,
+                    onClick = { /* navigate */ }
+                )
+                NavigationDrawerItem(
+                    label = { Text("Meal Plans") },
+                    selected = false,
+                    onClick = { /* navigate */ }
+                )
+                NavigationDrawerItem(
+                    label = { Text("Shopping Lists") },
+                    selected = false,
+                    onClick = { /* navigate */ }
+                )
+            }
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Recipes") },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, "Menu")
+                        }
+                    }
+                )
+            }
+        ) { paddingValues ->
+            // Content
+        }
+    }
+}
+```
+
+**Benefits:**
+- Maximum screen space for content
+- Consistent with content-focused apps
+- No keyboard conflicts
+- Clean, uncluttered interface
+- Better for one-handed use (drawer from edge)
+
+---
 
 ### Material 3 Spacing Constants
 
@@ -1250,6 +1351,98 @@ fun RecipeScreen(database: AppDatabase) {
 fun RecipeScreen(viewModel: RecipeViewModel = viewModel()) {
     val state by viewModel.state.collectAsState()
     // ViewModel abstracts data access
+}
+```
+
+---
+
+### ❌ Using BottomNavigation
+
+**DON'T:**
+```kotlin
+@Composable
+fun MainScreen() {
+    Scaffold(
+        bottomBar = {
+            NavigationBar {  // NEVER USE THIS
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Home, "Home") },
+                    label = { Text("Home") },
+                    selected = true,
+                    onClick = { }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.ShoppingCart, "Shop") },
+                    label = { Text("Shop") },
+                    selected = false,
+                    onClick = { }
+                )
+            }
+        }
+    ) {
+        // Content - loses valuable screen space
+    }
+}
+```
+
+**DO:**
+```kotlin
+// Option 1: TopAppBar for simple navigation
+@Composable
+fun MainScreen() {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Recipe Index") },
+                actions = {
+                    IconButton(onClick = { /* navigate */ }) {
+                        Icon(Icons.Default.Settings, "Settings")
+                    }
+                }
+            )
+        }
+    ) {
+        // Full screen space for content
+    }
+}
+
+// Option 2: NavigationDrawer for complex apps
+@Composable
+fun MainScreen() {
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                NavigationDrawerItem(
+                    label = { Text("Recipes") },
+                    selected = true,
+                    onClick = { }
+                )
+                NavigationDrawerItem(
+                    label = { Text("Shopping Lists") },
+                    selected = false,
+                    onClick = { }
+                )
+            }
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Recipes") },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, "Menu")
+                        }
+                    }
+                )
+            }
+        ) { paddingValues ->
+            // Maximum screen space for content
+        }
+    }
 }
 ```
 
