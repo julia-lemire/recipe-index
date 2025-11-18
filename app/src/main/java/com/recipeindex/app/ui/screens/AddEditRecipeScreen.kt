@@ -19,6 +19,7 @@ import com.recipeindex.app.utils.DebugConfig
 /**
  * AddEditRecipeScreen - Single screen form for creating/editing recipes
  *
+ * Auto-saves when navigating back. Only saves if there's meaningful content.
  * Layout order: Title, Servings, Prep/Cook Time, Ingredients, Instructions, Tags, Notes
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,9 +43,63 @@ fun AddEditRecipeScreen(
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
+    // Auto-save logic when navigating back
+    fun handleBack() {
+        // Check if form has any meaningful content
+        val hasContent = title.isNotBlank() || ingredients.isNotBlank() || instructions.isNotBlank()
+
+        if (!hasContent) {
+            // Empty form, just cancel
+            onCancel()
+            return
+        }
+
+        // Validate before saving
+        when {
+            title.isBlank() -> {
+                errorMessage = "Title is required"
+                showError = true
+            }
+            ingredients.isBlank() -> {
+                errorMessage = "At least one ingredient is required"
+                showError = true
+            }
+            instructions.isBlank() -> {
+                errorMessage = "Instructions are required"
+                showError = true
+            }
+            servings.toIntOrNull() == null || servings.toInt() <= 0 -> {
+                errorMessage = "Valid servings required"
+                showError = true
+            }
+            else -> {
+                // Valid data, auto-save
+                val newRecipe = Recipe(
+                    id = recipe?.id ?: 0,
+                    title = title.trim(),
+                    servings = servings.toInt(),
+                    prepTimeMinutes = prepTime.toIntOrNull(),
+                    cookTimeMinutes = cookTime.toIntOrNull(),
+                    ingredients = ingredients.split("\n").map { it.trim() }.filter { it.isNotBlank() },
+                    instructions = instructions.split("\n\n").map { it.trim() }.filter { it.isNotBlank() },
+                    tags = tags.split(",").map { it.trim() }.filter { it.isNotBlank() },
+                    notes = notes.ifBlank { null },
+                    source = recipe?.source ?: RecipeSource.MANUAL,
+                    sourceUrl = recipe?.sourceUrl,
+                    photoPath = recipe?.photoPath,
+                    isFavorite = recipe?.isFavorite ?: false,
+                    isTemplate = recipe?.isTemplate ?: false,
+                    createdAt = recipe?.createdAt ?: System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis()
+                )
+                onSave(newRecipe)
+            }
+        }
+    }
+
     // Handle system back button
     BackHandler {
-        onCancel()
+        handleBack()
     }
 
     Scaffold(
@@ -52,56 +107,8 @@ fun AddEditRecipeScreen(
             TopAppBar(
                 title = { Text(if (recipe == null) "Add Recipe" else "Edit Recipe") },
                 navigationIcon = {
-                    IconButton(onClick = onCancel) {
+                    IconButton(onClick = { handleBack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    TextButton(
-                        onClick = {
-                            // Validate
-                            when {
-                                title.isBlank() -> {
-                                    errorMessage = "Title is required"
-                                    showError = true
-                                }
-                                ingredients.isBlank() -> {
-                                    errorMessage = "At least one ingredient is required"
-                                    showError = true
-                                }
-                                instructions.isBlank() -> {
-                                    errorMessage = "Instructions are required"
-                                    showError = true
-                                }
-                                servings.toIntOrNull() == null || servings.toInt() <= 0 -> {
-                                    errorMessage = "Valid servings required"
-                                    showError = true
-                                }
-                                else -> {
-                                    val newRecipe = Recipe(
-                                        id = recipe?.id ?: 0,
-                                        title = title.trim(),
-                                        servings = servings.toInt(),
-                                        prepTimeMinutes = prepTime.toIntOrNull(),
-                                        cookTimeMinutes = cookTime.toIntOrNull(),
-                                        ingredients = ingredients.split("\n").map { it.trim() }.filter { it.isNotBlank() },
-                                        instructions = instructions.split("\n\n").map { it.trim() }.filter { it.isNotBlank() },
-                                        tags = tags.split(",").map { it.trim() }.filter { it.isNotBlank() },
-                                        notes = notes.ifBlank { null },
-                                        source = recipe?.source ?: RecipeSource.MANUAL,
-                                        sourceUrl = recipe?.sourceUrl,
-                                        photoPath = recipe?.photoPath,
-                                        isFavorite = recipe?.isFavorite ?: false,
-                                        isTemplate = recipe?.isTemplate ?: false,
-                                        createdAt = recipe?.createdAt ?: System.currentTimeMillis(),
-                                        updatedAt = System.currentTimeMillis()
-                                    )
-                                    onSave(newRecipe)
-                                }
-                            }
-                        }
-                    ) {
-                        Text("SAVE", style = MaterialTheme.typography.labelLarge)
                     }
                 }
             )

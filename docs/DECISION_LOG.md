@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 18, 2025: Auto-Save on Back Navigation
+- **Decision**: Auto-save form data when navigating back instead of manual save button; skip save if form is empty, validate before saving
+- **Rationale**: Reduces friction by eliminating manual save step while preventing data loss; aligns with modern mobile UX patterns
+- **Implementation**: AddEditRecipeScreen handleBack() checks for content, validates, auto-saves if valid; shows errors and blocks navigation if invalid
+
 #### Nov 18, 2025: MainActivity as Orchestrator Pattern
 - **Decision**: MainActivity only sets up dependencies and wires components - navigation logic in Navigation.kt, business logic in Managers
 - **Rationale**: Keeps MainActivity clean and focused, easier to test navigation independently, follows single responsibility principle
