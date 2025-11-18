@@ -108,8 +108,9 @@ fun ImportPhotoScreen(
                     onTakePhoto = {
                         // Create temp file for camera
                         // Note: In production, use proper file provider setup
-                        tempPhotoUri = Uri.parse("content://temp/photo_${System.currentTimeMillis()}.jpg")
-                        cameraLauncher.launch(tempPhotoUri)
+                        val photoUri = Uri.parse("content://temp/photo_${System.currentTimeMillis()}.jpg")
+                        tempPhotoUri = photoUri
+                        cameraLauncher.launch(photoUri)
                     },
                     onSelectFromGallery = {
                         galleryLauncher.launch("image/*")
