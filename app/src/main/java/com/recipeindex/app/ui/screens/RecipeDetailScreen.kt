@@ -34,6 +34,7 @@ fun RecipeDetailScreen(
     DebugConfig.debugLog(DebugConfig.Category.UI, "RecipeDetailScreen - ${recipe.title}")
 
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showOverflowMenu by remember { mutableStateOf(false) }
 
     // Handle system back button
     BackHandler {
@@ -59,8 +60,30 @@ fun RecipeDetailScreen(
                     IconButton(onClick = onEdit) {
                         Icon(Icons.Default.Edit, "Edit")
                     }
-                    IconButton(onClick = { showDeleteDialog = true }) {
-                        Icon(Icons.Default.Delete, "Delete")
+                    // Overflow menu with delete option
+                    Box {
+                        IconButton(onClick = { showOverflowMenu = true }) {
+                            Icon(Icons.Default.MoreVert, "More options")
+                        }
+                        DropdownMenu(
+                            expanded = showOverflowMenu,
+                            onDismissRequest = { showOverflowMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Delete recipe") },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    showDeleteDialog = true
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             )

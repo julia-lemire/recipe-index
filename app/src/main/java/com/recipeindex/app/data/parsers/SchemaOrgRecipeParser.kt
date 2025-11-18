@@ -234,12 +234,30 @@ class SchemaOrgRecipeParser(
      * Parse image - can be string URL or ImageObject
      */
     private fun parseImage(element: JsonElement?): String? {
-        return when (element) {
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "Parsing image, element type: ${element?.javaClass?.simpleName}"
+        )
+
+        val imageUrl = when (element) {
             is JsonPrimitive -> element.contentOrNull
             is JsonObject -> element["url"]?.jsonPrimitive?.contentOrNull
-            is JsonArray -> element.firstOrNull()?.let { parseImage(it) }
+            is JsonArray -> {
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "Image is array with ${element.size} items"
+                )
+                element.firstOrNull()?.let { parseImage(it) }
+            }
             else -> null
         }
+
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "Extracted image URL: ${imageUrl ?: "none"}"
+        )
+
+        return imageUrl
     }
 
     /**
@@ -285,6 +303,11 @@ class SchemaOrgRecipeParser(
  */
 private fun ParsedRecipeData.toRecipe(sourceUrl: String): Recipe {
     val now = System.currentTimeMillis()
+
+    DebugConfig.debugLog(
+        DebugConfig.Category.IMPORT,
+        "Creating recipe with photo: ${imageUrl ?: "none"}"
+    )
 
     return Recipe(
         id = 0,
