@@ -75,6 +75,10 @@ dependencies {
     // Image Loading
     implementation(libs.coil.compose)
 
+    // PDF & OCR
+    implementation(libs.pdfbox.android)
+    implementation(libs.mlkit.text.recognition)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
