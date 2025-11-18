@@ -187,6 +187,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [x] URL import (Schema.org)
 - [x] PDF import (PdfBox-Android)
 - [x] Photo-to-recipe (ML Kit OCR, multiple photos)
+- [ ] **More testing needed**: PDF and Photo import with diverse recipe formats
 - [ ] Instructional photos import
 - [ ] Recipe videos import
 
