@@ -14,6 +14,7 @@ import com.recipeindex.app.ui.screens.*
 import com.recipeindex.app.ui.viewmodels.ImportPdfViewModel
 import com.recipeindex.app.ui.viewmodels.ImportPhotoViewModel
 import com.recipeindex.app.ui.viewmodels.ImportViewModel
+import com.recipeindex.app.ui.viewmodels.MealPlanViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.ui.viewmodels.ViewModelFactory
 import com.recipeindex.app.utils.DebugConfig
@@ -31,6 +32,7 @@ fun RecipeIndexNavigation(
     onMenuClick: () -> Unit
 ) {
     val recipeViewModel: RecipeViewModel = viewModel(factory = viewModelFactory)
+    val mealPlanViewModel: MealPlanViewModel = viewModel(factory = viewModelFactory)
     val importViewModel: ImportViewModel = viewModel(factory = viewModelFactory)
 
     NavHost(
@@ -145,7 +147,70 @@ fun RecipeIndexNavigation(
 
         // Meal Planning
         composable(Screen.MealPlanning.route) {
-            MealPlanningScreen(onMenuClick = onMenuClick)
+            MealPlanningScreen(
+                mealPlanViewModel = mealPlanViewModel,
+                recipeViewModel = recipeViewModel,
+                onAddMealPlan = {
+                    navController.navigate(Screen.AddMealPlan.route)
+                },
+                onEditMealPlan = { planId ->
+                    navController.navigate(Screen.EditMealPlan.createRoute(planId))
+                },
+                onMenuClick = onMenuClick
+            )
+        }
+
+        // Add Meal Plan
+        composable(Screen.AddMealPlan.route) {
+            val recipes by recipeViewModel.recipes.collectAsState()
+
+            AddEditMealPlanScreen(
+                mealPlan = null,
+                availableRecipes = recipes,
+                onSave = { mealPlan ->
+                    mealPlanViewModel.createMealPlan(mealPlan) { planId ->
+                        DebugConfig.debugLog(
+                            DebugConfig.Category.NAVIGATION,
+                            "Meal plan created: $planId"
+                        )
+                        navController.popBackStack()
+                    }
+                },
+                onCancel = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // Edit Meal Plan
+        composable(
+            route = Screen.EditMealPlan.route,
+            arguments = listOf(navArgument("planId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val planId = backStackEntry.arguments?.getLong("planId") ?: return@composable
+
+            mealPlanViewModel.loadMealPlan(planId)
+            val currentPlan by mealPlanViewModel.currentMealPlan.collectAsState()
+            val recipes by recipeViewModel.recipes.collectAsState()
+
+            currentPlan?.let { plan ->
+                AddEditMealPlanScreen(
+                    mealPlan = plan,
+                    availableRecipes = recipes,
+                    onSave = { updatedPlan ->
+                        mealPlanViewModel.updateMealPlan(updatedPlan) {
+                            DebugConfig.debugLog(
+                                DebugConfig.Category.NAVIGATION,
+                                "Meal plan updated"
+                            )
+                            navController.popBackStack()
+                        }
+                    },
+                    onCancel = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
 
         // Grocery Lists
