@@ -13,10 +13,13 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.utils.DebugConfig
@@ -193,31 +196,45 @@ private fun RecipeCard(
         )
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = recipe.title,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
-                IconButton(onClick = onToggleFavorite) {
-                    Icon(
-                        imageVector = if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Favorite",
-                        tint = if (recipe.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            // Recipe Photo
+            recipe.photoPath?.let { photoUrl ->
+                AsyncImage(
+                    model = photoUrl,
+                    contentDescription = "Recipe photo for ${recipe.title}",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                    contentScale = ContentScale.Crop
+                )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // Card Content
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = recipe.title,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
+                    IconButton(onClick = onToggleFavorite) {
+                        Icon(
+                            imageVector = if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "Favorite",
+                            tint = if (recipe.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
 
             // Info row: Servings, Prep, Cook
             Row(
@@ -267,6 +284,7 @@ private fun RecipeCard(
                         )
                     }
                 }
+            }
             }
         }
     }

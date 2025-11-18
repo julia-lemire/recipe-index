@@ -8,8 +8,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.utils.DebugConfig
 
@@ -70,6 +74,19 @@ fun RecipeDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // Recipe Photo
+            recipe.photoPath?.let { photoUrl ->
+                AsyncImage(
+                    model = photoUrl,
+                    contentDescription = "Recipe photo for ${recipe.title}",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp)
+                        .clip(MaterialTheme.shapes.large),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
             // Servings and Time Info Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -122,32 +139,8 @@ fun RecipeDetailScreen(
                 }
             }
 
-            // Instructions
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "Instructions",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                recipe.instructions.forEachIndexed { index, instruction ->
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                    ) {
-                        Text(
-                            text = "Step ${index + 1}",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = instruction,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                }
-            }
+            // Instructions (with sections if present)
+            InstructionsSection(instructions = recipe.instructions)
 
             // Tags
             if (recipe.tags.isNotEmpty()) {
@@ -226,5 +219,130 @@ private fun InfoItem(label: String, value: String) {
             text = value,
             style = MaterialTheme.typography.bodyLarge
         )
+    }
+}
+
+/**
+ * Parse instructions into sections
+ * Sections are detected by lines ending with ":"
+ */
+private data class InstructionSection(
+    val name: String,
+    val steps: List<String>
+)
+
+private fun parseInstructionSections(instructions: List<String>): List<InstructionSection> {
+    val sections = mutableListOf<InstructionSection>()
+    var currentSection: String? = null
+    var currentSteps = mutableListOf<String>()
+
+    instructions.forEach { instruction ->
+        if (instruction.endsWith(":")) {
+            // Save previous section if exists
+            if (currentSection != null && currentSteps.isNotEmpty()) {
+                sections.add(InstructionSection(currentSection, currentSteps.toList()))
+                currentSteps.clear()
+            }
+            // Start new section
+            currentSection = instruction.removeSuffix(":")
+        } else {
+            // Add to current section
+            currentSteps.add(instruction)
+        }
+    }
+
+    // Add final section
+    if (currentSection != null && currentSteps.isNotEmpty()) {
+        sections.add(InstructionSection(currentSection, currentSteps.toList()))
+    } else if (sections.isEmpty() && currentSteps.isNotEmpty()) {
+        // No sections found, treat all as default section
+        sections.add(InstructionSection("Instructions", currentSteps.toList()))
+    }
+
+    // If no sections detected and we still have instructions, use all instructions
+    if (sections.isEmpty() && instructions.isNotEmpty()) {
+        sections.add(InstructionSection("Instructions", instructions))
+    }
+
+    return sections
+}
+
+@Composable
+private fun InstructionsSection(instructions: List<String>) {
+    val sections = remember(instructions) { parseInstructionSections(instructions) }
+
+    if (sections.isEmpty()) return
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Instructions",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        if (sections.size > 1) {
+            // Multiple sections - use tabs
+            var selectedTabIndex by remember { mutableIntStateOf(0) }
+
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    // Tab Row
+                    TabRow(selectedTabIndex = selectedTabIndex) {
+                        sections.forEachIndexed { index, section ->
+                            Tab(
+                                selected = selectedTabIndex == index,
+                                onClick = { selectedTabIndex = index },
+                                text = { Text(section.name) }
+                            )
+                        }
+                    }
+
+                    // Tab Content
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        sections[selectedTabIndex].steps.forEachIndexed { index, step ->
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "Step ${index + 1}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                                Text(
+                                    text = step,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // Single section - simple list
+            sections.first().steps.forEachIndexed { index, step ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Text(
+                        text = "Step ${index + 1}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = step,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+        }
     }
 }
