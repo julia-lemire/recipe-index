@@ -129,7 +129,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Navigation structure with Screen sealed class
 - ✅ MainActivity as orchestrator pattern (setup dependencies, wire components only)
 - ✅ Navigation.kt with all NavHost logic separated from MainActivity
-- ✅ Screen placeholders (Home, Meal Planning, Grocery Lists, Settings)
+- ✅ All drawer screens with TopAppBar and menu button for navigation (Home, Meal Planning, Grocery Lists, Settings, Recipe Index)
 
 ### Recipe Management (Phase 1)
 - ✅ Recipe entity with Room (title, ingredients, instructions, servings, times, tags, source, photos, notes, behavioral flags)

@@ -167,5 +167,15 @@
 
 **Example**: AddEditRecipeScreen handleBack() checks `hasContent`, validates fields, saves if valid, or shows error and stays on screen
 
+### Flow Loading State Pattern
+**Use when**: Loading data from Room database using Flow
+**Structure**:
+- Set `_isLoading.value = true` before collecting Flow
+- Set `_isLoading.value = false` INSIDE collect block after first emission
+- Also set false in catch block to handle errors
+- Flow.collect() never completes (keeps listening), so finally block never executes
+
+**Example**: RecipeViewModel loadRecipes() sets loading false inside collect block, not in finally
+
 
 ---
