@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 18, 2025: Flow Loading State Inside Collect Block
+- **Decision**: Set isLoading=false INSIDE Flow.collect() block after first emission, not in finally block
+- **Rationale**: Flow.collect() never completes (keeps listening for DB updates), so finally block never executes; caused perpetual loading spinner
+- **Implementation**: RecipeViewModel sets _isLoading.value=false inside collect block and in catch block; pattern added to DEVELOPER_GUIDE.md
+
 #### Nov 18, 2025: Auto-Save on Back Navigation
 - **Decision**: Auto-save form data when navigating back instead of manual save button; skip save if form is empty, validate before saving
 - **Rationale**: Reduces friction by eliminating manual save step while preventing data loss; aligns with modern mobile UX patterns
