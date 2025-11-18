@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.recipeindex.app.navigation.Screen
 import com.recipeindex.app.ui.screens.*
+import com.recipeindex.app.ui.viewmodels.ImportViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.ui.viewmodels.ViewModelFactory
 import com.recipeindex.app.utils.DebugConfig
@@ -28,6 +29,7 @@ fun RecipeIndexNavigation(
     onMenuClick: () -> Unit
 ) {
     val recipeViewModel: RecipeViewModel = viewModel(factory = viewModelFactory)
+    val importViewModel: ImportViewModel = viewModel(factory = viewModelFactory)
 
     NavHost(
         navController = navController,
@@ -44,6 +46,9 @@ fun RecipeIndexNavigation(
                 viewModel = recipeViewModel,
                 onAddRecipe = {
                     navController.navigate(Screen.AddRecipe.route)
+                },
+                onImportRecipe = {
+                    navController.navigate(Screen.ImportSourceSelection.route)
                 },
                 onRecipeClick = { recipeId ->
                     navController.navigate(Screen.RecipeDetail.createRoute(recipeId))
@@ -149,6 +154,48 @@ fun RecipeIndexNavigation(
         // Settings
         composable(Screen.Settings.route) {
             SettingsScreen(onMenuClick = onMenuClick)
+        }
+
+        // Import Source Selection
+        composable(Screen.ImportSourceSelection.route) {
+            ImportSourceSelectionScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onSourceSelected = { importSource ->
+                    when (importSource) {
+                        ImportSource.URL -> {
+                            navController.navigate(Screen.ImportUrl.route)
+                        }
+                        ImportSource.PDF -> {
+                            // TODO: Implement PDF import
+                        }
+                        ImportSource.PHOTO -> {
+                            // TODO: Implement photo import
+                        }
+                    }
+                }
+            )
+        }
+
+        // Import from URL
+        composable(Screen.ImportUrl.route) {
+            ImportUrlScreen(
+                viewModel = importViewModel,
+                onNavigateBack = {
+                    importViewModel.reset()
+                    navController.popBackStack()
+                },
+                onSaveComplete = {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.NAVIGATION,
+                        "Recipe imported, navigating to recipe list"
+                    )
+                    importViewModel.reset()
+                    // Pop back to recipe list, clearing import screens from stack
+                    navController.popBackStack(Screen.RecipeIndex.route, inclusive = false)
+                }
+            )
         }
     }
 }
