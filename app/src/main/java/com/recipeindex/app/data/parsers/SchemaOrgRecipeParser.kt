@@ -2,6 +2,7 @@ package com.recipeindex.app.data.parsers
 
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.data.entities.RecipeSource
+import com.recipeindex.app.utils.DebugConfig
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -99,24 +100,97 @@ class SchemaOrgRecipeParser(
     }
 
     /**
-     * Parse instructions - can be array of strings or HowToStep objects
+     * Parse instructions - can be array of strings, HowToStep objects, or HowToSection objects
      */
     private fun parseInstructions(element: JsonElement?): List<String> {
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "Parsing instructions, element type: ${element?.javaClass?.simpleName}"
+        )
+
         return when (element) {
             is JsonArray -> {
-                element.mapNotNull { item ->
+                val instructions = mutableListOf<String>()
+
+                element.forEach { item ->
                     when (item) {
-                        is JsonPrimitive -> item.contentOrNull
-                        is JsonObject -> {
-                            // HowToStep format
-                            item["text"]?.jsonPrimitive?.contentOrNull
+                        is JsonPrimitive -> {
+                            item.contentOrNull?.let { instructions.add(it) }
                         }
-                        else -> null
+                        is JsonObject -> {
+                            val type = item["@type"]?.jsonPrimitive?.contentOrNull
+                            DebugConfig.debugLog(
+                                DebugConfig.Category.IMPORT,
+                                "Instruction item @type: $type"
+                            )
+
+                            when (type) {
+                                "HowToStep" -> {
+                                    // Single step with text
+                                    val text = item["text"]?.jsonPrimitive?.contentOrNull
+                                        ?: item["name"]?.jsonPrimitive?.contentOrNull
+                                    text?.let { instructions.add(it) }
+                                }
+                                "HowToSection" -> {
+                                    // Section containing multiple steps
+                                    val steps = item["itemListElement"]
+                                    if (steps is JsonArray) {
+                                        steps.forEach { step ->
+                                            if (step is JsonObject) {
+                                                val text = step["text"]?.jsonPrimitive?.contentOrNull
+                                                    ?: step["name"]?.jsonPrimitive?.contentOrNull
+                                                text?.let { instructions.add(it) }
+                                            }
+                                        }
+                                    }
+                                }
+                                else -> {
+                                    // Fallback: try to get text or name field
+                                    val text = item["text"]?.jsonPrimitive?.contentOrNull
+                                        ?: item["name"]?.jsonPrimitive?.contentOrNull
+                                    text?.let { instructions.add(it) }
+                                }
+                            }
+                        }
+                        else -> {
+                            DebugConfig.debugLog(
+                                DebugConfig.Category.IMPORT,
+                                "Unknown instruction item type: ${item?.javaClass?.simpleName}"
+                            )
+                        }
                     }
-                }.filter { it.isNotBlank() }
+                }
+
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "Parsed ${instructions.size} instruction steps"
+                )
+
+                instructions.filter { it.isNotBlank() }
             }
-            is JsonPrimitive -> listOf(element.content)
-            else -> emptyList()
+            is JsonPrimitive -> {
+                listOf(element.content)
+            }
+            is JsonObject -> {
+                // Single HowToStep or HowToSection
+                val type = element["@type"]?.jsonPrimitive?.contentOrNull
+                when (type) {
+                    "HowToStep" -> {
+                        listOfNotNull(
+                            element["text"]?.jsonPrimitive?.contentOrNull
+                                ?: element["name"]?.jsonPrimitive?.contentOrNull
+                        )
+                    }
+                    else -> emptyList()
+                }
+            }
+            else -> {
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "No instructions found or unknown format"
+                )
+                emptyList()
+            }
         }
     }
 

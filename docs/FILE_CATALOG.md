@@ -168,7 +168,7 @@ com.recipeindex.app/
 
 ### Data - Parsers
 - **RecipeParser.kt** - Recipe parser interface: parse(source: String): Result<Recipe> for URL/PDF/Photo parsers
-- **SchemaOrgRecipeParser.kt** - Schema.org JSON-LD parser: Jsoup HTML parsing, Schema.org Recipe extraction, ISO 8601 duration conversion, Open Graph fallback
+- **SchemaOrgRecipeParser.kt** - Schema.org JSON-LD parser: Jsoup HTML parsing, Schema.org Recipe extraction (HowToStep/HowToSection instructions), ISO 8601 duration conversion, Open Graph fallback, debug logging
 
 ### Data - Database
 - **AppDatabase.kt** - Room database singleton: Recipe table, version 1, Converters for List<String> and RecipeSource
