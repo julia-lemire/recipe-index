@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 18, 2025: Intelligent Content Filtering for PDF Extraction
+- **Decision**: TextRecipeParser filters extracted content with isWebsiteNoise(), looksLikeIngredient(), and looksLikeInstruction() before returning ingredients/instructions
+- **Rationale**: PDF text extraction from web pages includes navigation, CTAs, and footer text mixed with recipe content due to non-visual extraction order
+- **Implementation**: Regex patterns detect website noise (save/shop CTAs, ratings prompts, spaced letters), validate ingredients (measurements, food words), validate instructions (cooking verbs, temps/times)
+
 #### Nov 18, 2025: Multiple Photo Support for Recipe Import
 - **Decision**: PhotoRecipeParser supports multiple photos via parseMultiple(List<Uri>) that combines OCR text from all images before parsing
 - **Rationale**: Recipes often span multiple photos (ingredient lists, instruction steps); combining text improves parsing accuracy and UX vs forcing single photo
