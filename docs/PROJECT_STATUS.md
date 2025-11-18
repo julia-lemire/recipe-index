@@ -192,14 +192,18 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [ ] Recipe videos import
 
 ### Phase 3: Meal Planning
-- [ ] Meal plan entity/manager
-- [ ] Weekly planning UI
-- [ ] Special event planning
+- [x] Meal plan entity/manager
+- [x] Weekly planning UI
+- [x] Special event planning
+- [ ] **More testing needed**: Meal planning with various scenarios (date ranges, multiple recipes, tag aggregation)
 
 ### Phase 4: Grocery Lists
 - [ ] List generation from meal plans
+- [ ] List generation from recipes
+- [ ] Manual list creation and editing
 - [ ] Ingredient consolidation
 - [ ] Shopping UI with check-off
+- [ ] Context menu actions (generate from meal plan, add from recipe)
 
 ### Phase 5: Advanced
 - [ ] Portion scaling
