@@ -53,8 +53,8 @@
 
 ## 1. Project Overview
 
-**Current Phase:** Setup & Foundation
-**Current Focus:** Basic navigation structure and UI foundation complete, ready for recipe management implementation
+**Current Phase:** Recipe Management (Phase 1)
+**Current Focus:** Recipe CRUD complete with full navigation, ready for recipe import features (Phase 2)
 
 Recipe Index: Offline-first Android app for home cooks to store, organize, and plan meals with recipes from URLs/PDFs/photos.
 
@@ -127,8 +127,20 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Hearth theme implementation (Color.kt, Type.kt, HearthTheme.kt)
 - ✅ Responsive navigation drawer (modal for phone, permanent for tablet)
 - ✅ Navigation structure with Screen sealed class
-- ✅ MainActivity with WindowSizeClass support
-- ✅ Screen placeholders (Home, Recipe Index, Meal Planning, Grocery Lists, Settings)
+- ✅ MainActivity as orchestrator pattern (setup dependencies, wire components only)
+- ✅ Navigation.kt with all NavHost logic separated from MainActivity
+- ✅ Screen placeholders (Home, Meal Planning, Grocery Lists, Settings)
+
+### Recipe Management (Phase 1)
+- ✅ Recipe entity with Room (title, ingredients, instructions, servings, times, tags, source, photos, notes, behavioral flags)
+- ✅ RecipeDao with Flow-based queries (CRUD, search, favorites)
+- ✅ RecipeManager for business logic (validation, CRUD, favorite toggle)
+- ✅ RecipeViewModel with StateFlow (delegates to Manager)
+- ✅ ViewModelFactory for dependency injection
+- ✅ RecipeListScreen with cards (servings/times above ingredients per request, favorite toggle, FAB)
+- ✅ RecipeDetailScreen (view recipe, edit/delete/favorite actions)
+- ✅ AddEditRecipeScreen (single screen form with validation)
+- ✅ Full navigation integration (add, edit, detail, list)
 
 ---
 
@@ -144,11 +156,13 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [ ] AppSettings with StateFlow
 
 ### Phase 1: Recipe Management
-- [ ] Recipe entity/DAO
-- [ ] RecipeManager
-- [ ] Recipe CRUD
-- [ ] Recipe list/detail screens
-- [ ] Manual entry
+- [x] Recipe entity/DAO
+- [x] RecipeManager
+- [x] Recipe CRUD
+- [x] Recipe list/detail screens
+- [x] Manual entry
+- [ ] Recipe search functionality
+- [ ] Recipe tags/categories filtering
 
 ### Phase 2: Import
 - [ ] URL import
