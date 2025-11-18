@@ -45,6 +45,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 18, 2025: Responsive Navigation Drawer
+- **Decision**: Modal drawer for phones (Samsung S23 Ultra), permanent drawer for tablets (Samsung Galaxy Tab S10+) using WindowSizeClass
+- **Rationale**: Tablet's larger screen benefits from always-visible navigation, phone needs max content space with drawer overlay
+- **Implementation**: AppNavigationDrawer checks WindowWidthSizeClass.Expanded for drawer type, NavGraph sealed class with routes/icons
+
 #### Nov 18, 2025: Never Use BottomNavigation
 - **Decision**: TopAppBar or NavigationDrawer only - BottomNavigation prohibited
 - **Rationale**: Screen space critical for recipe content (ingredient lists, instructions, images)

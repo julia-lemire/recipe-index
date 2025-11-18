@@ -64,49 +64,26 @@
 
 ```
 com.recipeindex.app/
-├── data/
-│   ├── ContentManagers/
-│   │   ├── RecipeManager.kt
-│   │   ├── MealPlanManager.kt
-│   │   └── GroceryListManager.kt
-│   │
-│   ├── dao/
-│   │   ├── RecipeDao.kt
-│   │   ├── MealPlanDao.kt
-│   │   └── GroceryListDao.kt
-│   │
-│   ├── entities/
-│   │   ├── Recipe.kt
-│   │   ├── MealPlan.kt
-│   │   └── GroceryList.kt
-│   │
-│   ├── importers/
-│   │   ├── UrlRecipeImporter.kt
-│   │   ├── PdfRecipeImporter.kt
-│   │   └── PhotoRecipeImporter.kt
-│   │
-│   ├── AppDatabase.kt
-│   └── AppSettings.kt
+├── navigation/
+│   └── NavGraph.kt
 │
 ├── ui/
 │   ├── components/
-│   │   ├── RecipeCard.kt
-│   │   └── IngredientList.kt
+│   │   └── AppNavigationDrawer.kt
 │   │
 │   ├── screens/
-│   │   ├── RecipeListScreen.kt
-│   │   ├── RecipeDetailScreen.kt
+│   │   ├── GroceryListScreen.kt
+│   │   ├── HomeScreen.kt
 │   │   ├── MealPlanningScreen.kt
-│   │   └── GroceryListScreen.kt
+│   │   ├── RecipeListScreen.kt
+│   │   └── SettingsScreen.kt
 │   │
 │   ├── theme/
+│   │   ├── Color.kt
 │   │   ├── HearthTheme.kt
-│   │   └── Color.kt
+│   │   └── Type.kt
 │   │
 │   └── MainActivity.kt
-│
-├── navigation/
-│   └── NavGraph.kt
 │
 └── utils/
     └── DebugConfig.kt
@@ -125,29 +102,44 @@ com.recipeindex.app/
 > - When understanding one file requires knowing about another
 > - Format: `FileA.kt → FileB.kt, FileC.kt` (A uses/depends on B and C)
 
-### Recipe Management Flow
-- RecipeListScreen → RecipeViewModel → RecipeManager → RecipeDao → AppDatabase
-- RecipeDetailScreen → RecipeViewModel → RecipeManager
-- RecipeCard → RecipeListScreen
-
-### Meal Planning Flow
-- MealPlanningScreen → MealPlanViewModel → MealPlanManager → MealPlanDao, RecipeDao
-- MealPlanManager → RecipeManager (get recipes for meal slots)
-
-### Grocery List Flow
-- GroceryListScreen → GroceryListViewModel → GroceryListManager → MealPlanManager, RecipeManager
-- GroceryListManager → MealPlanManager (extract ingredients from planned meals)
-
-### Import Flow
-- RecipeDetailScreen → UrlRecipeImporter/PdfRecipeImporter/PhotoRecipeImporter → RecipeManager
-- Importers → RecipeManager (save imported recipe)
+### Navigation Flow
+- MainActivity → AppNavigationDrawer → NavGraph → All Screens
+- AppNavigationDrawer → Screen sealed class for routes
+- Uses WindowSizeClass for responsive drawer (modal/permanent)
 
 ---
 
 ## Component Details by Layer
 
-> **Organization**: Components grouped by package/layer (data/, ui/, utils/, cpp/)
+> **Organization**: Components grouped by package/layer (navigation/, ui/, utils/)
 >
+> Using simple one-liner format for all files
+
+### Navigation
+- **NavGraph.kt** - Navigation routes sealed class: Home, RecipeIndex, MealPlanning, GroceryLists, Settings with icons
+
+### UI - MainActivity
+- **MainActivity.kt** - App entry point: EdgeToEdge, WindowSizeClass calculation, Hearth theme initialization
+
+### UI - Screens
+- **HomeScreen.kt** - Landing page: This week's meal plans, recipe suggestions
+- **RecipeListScreen.kt** - Recipe browsing: FAB for adding recipes, empty state placeholder
+- **MealPlanningScreen.kt** - Weekly meal planning: Placeholder for future implementation
+- **GroceryListScreen.kt** - Shopping lists: Placeholder for future implementation
+- **SettingsScreen.kt** - App preferences: Placeholder for future implementation
+
+### UI - Components
+- **AppNavigationDrawer.kt** - Responsive navigation: Modal drawer for phones, permanent for tablets, drawer header with logo/name
+
+### UI - Theme
+- **Color.kt** - Hearth color palette: Terracotta, Clay, SageGreen, Cream neutrals, cooking mode high-contrast colors
+- **Type.kt** - Hearth typography: Material 3 type scale with readable fonts for recipe content
+- **HearthTheme.kt** - Theme composable: Light/dark color schemes, dynamic color support, typography integration
+
+### Utils
+- **DebugConfig.kt** - Centralized logging: Category-based filtering (NAVIGATION, DATABASE, IMPORT, UI, MANAGER, GENERAL), replaces android.util.Log
+
+---
 > **Format Guidelines**:
 > - **Simple one-liner format** (for MOST files): `**FileName.kt** - Purpose: key capabilities`
 >   - Example: `**BPMAnalyzer.kt** - BPM detection via Essentia RhythmExtractor2013: 80-90% accuracy, 15-song validation library, ±10 BPM target`
