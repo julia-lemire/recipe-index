@@ -1,5 +1,6 @@
 package com.recipeindex.app.ui.screens
 
+import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
@@ -38,6 +40,7 @@ fun ImportPhotoScreen(
     onNavigateBack: () -> Unit,
     onSaveComplete: () -> Unit
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     var selectedPhotoUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
 
@@ -106,9 +109,8 @@ fun ImportPhotoScreen(
                         .padding(paddingValues),
                     selectedPhotoUris = selectedPhotoUris,
                     onTakePhoto = {
-                        // Create temp file for camera
-                        // Note: In production, use proper file provider setup
-                        val photoUri = Uri.parse("content://temp/photo_${System.currentTimeMillis()}.jpg")
+                        // Create temp file for camera using FileProvider
+                        val photoUri = createTempPhotoUri(context)
                         tempPhotoUri = photoUri
                         cameraLauncher.launch(photoUri)
                     },
@@ -511,4 +513,30 @@ private fun EditRecipeContent(
             Text("Save Recipe")
         }
     }
+}
+
+/**
+ * Create a temporary photo URI using FileProvider
+ * This creates a real file that the camera can save to
+ */
+private fun createTempPhotoUri(context: Context): Uri {
+    // Create temp directory if it doesn't exist
+    val tempDir = File(context.cacheDir, "camera")
+    if (!tempDir.exists()) {
+        tempDir.mkdirs()
+    }
+
+    // Create temp file
+    val tempFile = File.createTempFile(
+        "recipe_photo_${System.currentTimeMillis()}",
+        ".jpg",
+        tempDir
+    )
+
+    // Get content URI using FileProvider
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        tempFile
+    )
 }
