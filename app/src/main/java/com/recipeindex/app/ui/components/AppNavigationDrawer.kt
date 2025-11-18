@@ -30,7 +30,7 @@ fun AppNavigationDrawer(
     navController: NavHostController,
     currentRoute: String?,
     windowSizeClass: WindowSizeClass,
-    content: @Composable (PaddingValues) -> Unit
+    content: @Composable (PaddingValues, () -> Unit) -> Unit
 ) {
     DebugConfig.debugLog(
         DebugConfig.Category.NAVIGATION,
@@ -67,12 +67,8 @@ fun AppNavigationDrawer(
                 }
             }
         ) {
-            MainContent(
-                navController = navController,
-                showMenuButton = false,
-                onMenuClick = {},
-                content = content
-            )
+            // Permanent drawer doesn't need menu button
+            content(PaddingValues(0.dp), {})
         }
     } else {
         // Modal drawer for phones
@@ -100,16 +96,13 @@ fun AppNavigationDrawer(
                 }
             }
         ) {
-            MainContent(
-                navController = navController,
-                showMenuButton = true,
-                onMenuClick = {
-                    scope.launch {
-                        drawerState.open()
-                    }
-                },
-                content = content
-            )
+            // Modal drawer needs menu button - pass it to content
+            val onMenuClick: () -> Unit = {
+                scope.launch {
+                    drawerState.open()
+                }
+            }
+            content(PaddingValues(0.dp), onMenuClick)
         }
     }
 }
@@ -170,40 +163,3 @@ private fun DrawerContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MainContent(
-    navController: NavHostController,
-    showMenuButton: Boolean,
-    onMenuClick: () -> Unit,
-    content: @Composable (PaddingValues) -> Unit
-) {
-    Scaffold(
-        topBar = {
-            if (showMenuButton) {
-                TopAppBar(
-                    title = {
-                        // Title updates based on current route
-                        val currentRoute = navController.currentBackStackEntry?.destination?.route
-                        val currentScreen = Screen.drawerScreens.find { it.route == currentRoute }
-                        Text(text = currentScreen?.title ?: "Recipe Index")
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onMenuClick) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Menu"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface
-                    )
-                )
-            }
-        }
-    ) { paddingValues ->
-        content(paddingValues)
-    }
-}

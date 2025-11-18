@@ -24,7 +24,8 @@ import com.recipeindex.app.utils.DebugConfig
 @Composable
 fun RecipeIndexNavigation(
     navController: NavHostController,
-    viewModelFactory: ViewModelFactory
+    viewModelFactory: ViewModelFactory,
+    onMenuClick: () -> Unit
 ) {
     val recipeViewModel: RecipeViewModel = viewModel(factory = viewModelFactory)
 
@@ -46,7 +47,8 @@ fun RecipeIndexNavigation(
                 },
                 onRecipeClick = { recipeId ->
                     navController.navigate(Screen.RecipeDetail.createRoute(recipeId))
-                }
+                },
+                onMenuClick = onMenuClick
             )
         }
 
