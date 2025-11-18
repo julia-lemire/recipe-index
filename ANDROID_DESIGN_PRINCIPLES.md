@@ -17,11 +17,13 @@
 7. **NEVER use BottomNavigation** → Use TopAppBar or NavigationDrawer only
 
 ### 🏗️ Architecture Rules
-1. **Manager Pattern**: Complex business logic → `data/ContentManagers/` or `data/Playback/`
-2. **Single Source of Truth**: Each piece of data has exactly ONE authoritative source
-3. **Config Over Code**: User preferences → Settings classes, not hardcoded behavior
-4. **Unified Entities**: Single data class with behavioral flags vs. separate entity classes
-5. **Thin Repositories**: Simple CRUD only; complex operations → Managers
+1. **MainActivity Orchestrator**: MainActivity sets up dependencies and wires components, NO business/navigation logic
+2. **Manager Pattern**: Complex business logic → `data/ContentManagers/` or `data/Playback/`
+3. **Single Source of Truth**: Each piece of data has exactly ONE authoritative source
+4. **Config Over Code**: User preferences → Settings classes, not hardcoded behavior
+5. **Unified Entities**: Single data class with behavioral flags vs. separate entity classes
+6. **Thin Repositories**: Simple CRUD only; complex operations → Managers
+7. **Navigation Separation**: Navigation logic in separate `Navigation.kt`, not in MainActivity or drawer components
 
 ### 📊 State Management Rules
 1. **StateFlow for all observable state** (settings, ViewModels, managers)
@@ -91,6 +93,64 @@ class FilterScreen {
 - Canonical genre lists → `GenreNormalizer.kt`
 - User settings → `AppSettings.kt`, `[Feature]Settings.kt`
 - Persisted data → Room DAOs
+
+---
+
+### MainActivity as Orchestrator
+
+**Intent:** Keep MainActivity clean and focused on wiring components. NO business logic, NO navigation logic.
+
+**Pattern:**
+```kotlin
+// GOOD: MainActivity orchestrates only
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        // Setup dependencies
+        val database = AppDatabase.getDatabase(applicationContext)
+        val recipeManager = RecipeManager(database.recipeDao())
+        val viewModelFactory = ViewModelFactory(recipeManager)
+
+        setContent {
+            HearthTheme {
+                val navController = rememberNavController()
+                AppNavigationDrawer(...) { paddingValues ->
+                    RecipeIndexNavigation(navController, viewModelFactory)
+                }
+            }
+        }
+    }
+}
+
+// Navigation logic in separate file (ui/Navigation.kt)
+@Composable
+fun RecipeIndexNavigation(
+    navController: NavHostController,
+    viewModelFactory: ViewModelFactory
+) {
+    NavHost(navController, startDestination = Screen.Home.route) {
+        composable(Screen.Home.route) { HomeScreen() }
+        composable(Screen.RecipeIndex.route) { RecipeListScreen(...) }
+        // ... all routes here
+    }
+}
+
+// BAD: Navigation logic mixed into MainActivity
+class MainActivity {
+    setContent {
+        NavHost(...) {
+            composable(...) { /* routes here */ }
+        }
+    }
+}
+```
+
+**Responsibilities:**
+- **MainActivity**: Setup (database, managers, factory), wire theme + navigation
+- **Navigation.kt**: All NavHost, routes, screen composition
+- **AppNavigationDrawer**: UI only (drawer, TopAppBar), accepts content parameter
 
 ---
 
