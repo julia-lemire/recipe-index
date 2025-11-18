@@ -46,6 +46,26 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 18, 2025: Tabbed Instruction Sections for Multi-Method Recipes
+- **Decision**: Parse instruction sections (detected by lines ending with ":") and display as tabs within instructions card when multiple sections exist
+- **Rationale**: Recipes with multiple cooking methods (Slow Cooker, Instant Pot, etc.) need clear separation; users select one method and tabs prevent scrolling through irrelevant instructions
+- **Implementation**: RecipeDetailScreen parseInstructionSections() detects section headers, InstructionsSection composable shows TabRow for multi-section recipes, simple list for single-section
+
+#### Nov 18, 2025: Coil for Async Image Loading
+- **Decision**: Use Coil Compose library (2.7.0) for loading recipe photos from URLs
+- **Rationale**: Coil is the recommended image loading library for Jetpack Compose with native coroutines support, efficient caching, and composable-first API
+- **Implementation**: AsyncImage composable in RecipeDetailScreen (240dp) and RecipeListScreen cards (180dp) with ContentScale.Crop
+
+#### Nov 18, 2025: Recipe Photo Import and Display
+- **Decision**: Extract main recipe photo from Schema.org image field, save URL to Recipe.photoPath, display in list cards and detail screen
+- **Rationale**: Visual recipe identification improves browsing UX; Schema.org provides standardized image field; storing URL avoids local storage complexity
+- **Implementation**: SchemaOrgRecipeParser parseImage() extracts URL from string/object/array, toRecipe() saves to photoPath, AsyncImage displays in UI
+
+#### Nov 18, 2025: Comma-Separated Tag Parsing
+- **Decision**: Split Schema.org keywords field by comma when it's a single string instead of array
+- **Rationale**: Schema.org allows keywords as either array ["tag1", "tag2"] or comma-separated string "tag1, tag2"; must handle both formats to parse all sites correctly
+- **Implementation**: parseJsonArrayToStrings() splits JsonPrimitive content by comma, trims whitespace, filters blanks
+
 #### Nov 18, 2025: Expandable FAB Menu for Create and Import
 - **Decision**: Expandable FAB on RecipeListScreen with "Create" and "Import" options, main FAB rotates 45° when expanded
 - **Rationale**: Provides two primary actions without cluttering UI; rotating + icon communicates expandability and doubles as close affordance
