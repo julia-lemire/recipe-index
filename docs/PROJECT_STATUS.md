@@ -53,8 +53,8 @@
 
 ## 1. Project Overview
 
-**Current Phase:** Recipe Management (Phase 1)
-**Current Focus:** Recipe CRUD complete with full navigation, ready for recipe import features (Phase 2)
+**Current Phase:** Recipe Import (Phase 2)
+**Current Focus:** URL import complete with Schema.org parsing, expandable FAB menu; ready for PDF and photo import
 
 Recipe Index: Offline-first Android app for home cooks to store, organize, and plan meals with recipes from URLs/PDFs/photos.
 
@@ -137,10 +137,19 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ RecipeManager for business logic (validation, CRUD, favorite toggle)
 - ✅ RecipeViewModel with StateFlow (delegates to Manager)
 - ✅ ViewModelFactory for dependency injection
-- ✅ RecipeListScreen with cards (servings/times above ingredients per request, favorite toggle, FAB)
+- ✅ RecipeListScreen with cards (servings/times above ingredients per request, favorite toggle, expandable FAB menu for create/import)
 - ✅ RecipeDetailScreen (view recipe, edit/delete/favorite actions, BackHandler)
 - ✅ AddEditRecipeScreen (single screen form with validation, auto-save on back navigation)
 - ✅ Full navigation integration (add, edit, detail, list)
+
+### Recipe Import (Phase 2)
+- ✅ RecipeParser interface for extensible parsing (URL/PDF/Photo support)
+- ✅ SchemaOrgRecipeParser with Jsoup and Ktor (parses Schema.org JSON-LD markup, ISO 8601 durations, Open Graph fallback)
+- ✅ ImportSourceSelectionScreen (choose URL/PDF/Photo import source)
+- ✅ ImportUrlScreen (URL input, loading state, recipe preview/edit before save, auto-save on back)
+- ✅ ImportViewModel with UI states (Input → Loading → Editing → Saved)
+- ✅ Import navigation routes (ImportSourceSelection, ImportUrl)
+- ✅ HTTP client setup (Ktor with OkHttp engine, logging)
 
 ---
 
@@ -165,7 +174,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [ ] Recipe tags/categories filtering
 
 ### Phase 2: Import
-- [ ] URL import
+- [x] URL import (Schema.org)
 - [ ] PDF import
 - [ ] Photo-to-recipe (OCR)
 

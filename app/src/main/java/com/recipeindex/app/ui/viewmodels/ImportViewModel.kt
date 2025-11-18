@@ -30,19 +30,19 @@ class ImportViewModel(
             _uiState.value = UiState.Loading
 
             try {
-                DebugConfig.debugLog(DebugConfig.Category.DATA, "Fetching recipe from URL: $url")
+                DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Fetching recipe from URL: $url")
 
                 val result = recipeParser.parse(url)
 
                 result.onSuccess { recipe ->
                     DebugConfig.debugLog(
-                        DebugConfig.Category.DATA,
+                        DebugConfig.Category.IMPORT,
                         "Successfully parsed recipe: ${recipe.title}"
                     )
                     _uiState.value = UiState.Editing(recipe = recipe)
                 }.onFailure { error ->
                     DebugConfig.debugLog(
-                        DebugConfig.Category.DATA,
+                        DebugConfig.Category.IMPORT,
                         "Failed to parse recipe: ${error.message}"
                     )
                     _uiState.value = UiState.Input(
@@ -51,7 +51,7 @@ class ImportViewModel(
                 }
             } catch (e: Exception) {
                 DebugConfig.debugLog(
-                    DebugConfig.Category.DATA,
+                    DebugConfig.Category.IMPORT,
                     "Exception fetching recipe: ${e.message}"
                 )
                 _uiState.value = UiState.Input(
@@ -75,14 +75,22 @@ class ImportViewModel(
         viewModelScope.launch {
             try {
                 DebugConfig.debugLog(
-                    DebugConfig.Category.DATA,
+                    DebugConfig.Category.IMPORT,
                     "Saving imported recipe: ${recipe.title}"
                 )
-                recipeManager.saveRecipe(recipe)
-                _uiState.value = UiState.Saved
+                // Save recipe using RecipeManager (inserts or updates based on ID)
+                if (recipe.id == 0L) {
+                    recipeManager.createRecipe(recipe) { _ ->
+                        _uiState.value = UiState.Saved
+                    }
+                } else {
+                    recipeManager.updateRecipe(recipe) {
+                        _uiState.value = UiState.Saved
+                    }
+                }
             } catch (e: Exception) {
                 DebugConfig.debugLog(
-                    DebugConfig.Category.DATA,
+                    DebugConfig.Category.IMPORT,
                     "Failed to save recipe: ${e.message}"
                 )
                 _uiState.value = UiState.Editing(

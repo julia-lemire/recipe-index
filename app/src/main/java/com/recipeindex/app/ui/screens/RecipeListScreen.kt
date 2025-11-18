@@ -6,7 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -75,7 +75,7 @@ fun RecipeListScreen(
                         ) {
                             Text("Import")
                             Icon(
-                                imageVector = Icons.Default.Download,
+                                imageVector = Icons.Default.CloudDownload,
                                 contentDescription = "Import Recipe"
                             )
                         }

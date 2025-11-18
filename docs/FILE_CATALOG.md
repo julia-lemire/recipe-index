@@ -75,6 +75,10 @@ com.recipeindex.app/
 │   ├── managers/
 │   │   └── RecipeManager.kt
 │   │
+│   ├── parsers/
+│   │   ├── RecipeParser.kt
+│   │   └── SchemaOrgRecipeParser.kt
+│   │
 │   ├── AppDatabase.kt
 │   └── Converters.kt
 │
@@ -89,6 +93,8 @@ com.recipeindex.app/
 │   │   ├── AddEditRecipeScreen.kt
 │   │   ├── GroceryListScreen.kt
 │   │   ├── HomeScreen.kt
+│   │   ├── ImportSourceSelectionScreen.kt
+│   │   ├── ImportUrlScreen.kt
 │   │   ├── MealPlanningScreen.kt
 │   │   ├── RecipeDetailScreen.kt
 │   │   ├── RecipeListScreen.kt
@@ -100,6 +106,7 @@ com.recipeindex.app/
 │   │   └── Type.kt
 │   │
 │   ├── viewmodels/
+│   │   ├── ImportViewModel.kt
 │   │   ├── RecipeViewModel.kt
 │   │   └── ViewModelFactory.kt
 │   │
@@ -135,6 +142,13 @@ com.recipeindex.app/
 - RecipeDetailScreen → RecipeViewModel → RecipeManager (delete, favorite toggle)
 - Navigation.kt orchestrates screen transitions with navController
 
+### Import Flow
+- MainActivity → HttpClient (Ktor) → SchemaOrgRecipeParser → ViewModelFactory
+- ImportSourceSelectionScreen → Navigation.kt (route to ImportUrl)
+- ImportUrlScreen → ImportViewModel → SchemaOrgRecipeParser → RecipeManager
+- SchemaOrgRecipeParser → Jsoup (HTML parsing), kotlinx-serialization (JSON parsing)
+- ImportViewModel UI states: Input → Loading → Editing → Saved
+
 ---
 
 ## Component Details by Layer
@@ -152,22 +166,28 @@ com.recipeindex.app/
 ### Data - Managers
 - **RecipeManager.kt** - Recipe business logic: validation, CRUD operations, favorite toggle, recipe scaling stub (delegates to RecipeDao)
 
+### Data - Parsers
+- **RecipeParser.kt** - Recipe parser interface: parse(source: String): Result<Recipe> for URL/PDF/Photo parsers
+- **SchemaOrgRecipeParser.kt** - Schema.org JSON-LD parser: Jsoup HTML parsing, Schema.org Recipe extraction, ISO 8601 duration conversion, Open Graph fallback
+
 ### Data - Database
 - **AppDatabase.kt** - Room database singleton: Recipe table, version 1, Converters for List<String> and RecipeSource
 - **Converters.kt** - Room type converters: List<String> ↔ delimited string, RecipeSource ↔ string
 
 ### Navigation
-- **NavGraph.kt** - Navigation routes sealed class: Home, RecipeIndex, MealPlanning, GroceryLists, Settings (drawer), AddRecipe, EditRecipe, RecipeDetail (recipe screens with createRoute helpers)
+- **NavGraph.kt** - Navigation routes sealed class: Home, RecipeIndex, MealPlanning, GroceryLists, Settings (drawer), AddRecipe, EditRecipe, RecipeDetail, ImportSourceSelection, ImportUrl (import screens)
 
 ### UI - MainActivity
-- **MainActivity.kt** - Orchestrator only: Setup dependencies (AppDatabase, RecipeManager, ViewModelFactory), wire theme and navigation, NO business/navigation logic
-- **Navigation.kt** - All navigation logic: NavHost with routes for Home, RecipeIndex, AddRecipe, EditRecipe, RecipeDetail, MealPlanning, GroceryLists, Settings
+- **MainActivity.kt** - Orchestrator only: Setup dependencies (AppDatabase, RecipeManager, HttpClient, SchemaOrgRecipeParser, ViewModelFactory), wire theme and navigation, NO business/navigation logic
+- **Navigation.kt** - All navigation logic: NavHost with routes for Home, RecipeIndex, AddRecipe, EditRecipe, RecipeDetail, MealPlanning, GroceryLists, Settings, ImportSourceSelection, ImportUrl
 
 ### UI - Screens
 - **HomeScreen.kt** - Landing page: This week's meal plans, recipe suggestions
-- **RecipeListScreen.kt** - Recipe browsing: LazyColumn with RecipeCards, FAB for add, search, favorite toggle, empty state, ViewModel integration
-- **AddEditRecipeScreen.kt** - Recipe add/edit form: Single screen with title, servings, times, ingredients, instructions, tags, notes, validation
+- **RecipeListScreen.kt** - Recipe browsing: LazyColumn with RecipeCards, expandable FAB menu (create/import), favorite toggle, empty state, ViewModel integration
+- **AddEditRecipeScreen.kt** - Recipe add/edit form: Single screen with title, servings, times, ingredients, instructions, tags, notes, validation, auto-save on back
 - **RecipeDetailScreen.kt** - Recipe detail view: Servings/time card, ingredients list, numbered instructions, tags, notes, favorite/edit/delete actions, delete confirmation dialog
+- **ImportSourceSelectionScreen.kt** - Import source selection: Choose URL/PDF/Photo import source with cards, PDF/Photo coming soon
+- **ImportUrlScreen.kt** - URL import flow: URL input → loading → recipe preview/edit → save, auto-save on back navigation
 - **MealPlanningScreen.kt** - Weekly meal planning: Placeholder for future implementation
 - **GroceryListScreen.kt** - Shopping lists: Placeholder for future implementation
 - **SettingsScreen.kt** - App preferences: Placeholder for future implementation
@@ -177,7 +197,8 @@ com.recipeindex.app/
 
 ### UI - ViewModels
 - **RecipeViewModel.kt** - Recipe UI state: StateFlow for recipes/currentRecipe/isLoading/error, delegates all business logic to RecipeManager, event functions (loadRecipes, createRecipe, updateRecipe, deleteRecipe, toggleFavorite, searchRecipes)
-- **ViewModelFactory.kt** - ViewModel dependency injection: Creates RecipeViewModel with RecipeManager dependency
+- **ImportViewModel.kt** - Import UI state: StateFlow<UiState> (Input → Loading → Editing → Saved), fetchRecipeFromUrl(), updateRecipe(), saveRecipe(), reset()
+- **ViewModelFactory.kt** - ViewModel dependency injection: Creates RecipeViewModel, ImportViewModel with RecipeManager and RecipeParser dependencies
 
 ### UI - Theme
 - **Color.kt** - Hearth color palette: Terracotta, Clay, SageGreen, Cream neutrals, cooking mode high-contrast colors

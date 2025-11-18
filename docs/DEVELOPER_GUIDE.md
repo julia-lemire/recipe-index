@@ -83,9 +83,10 @@
 - **Screen**: `ui/screens/GroceryListScreen.kt`
 
 ### Import Recipes
-- **URL Import**: `data/importers/UrlRecipeImporter.kt`
-- **PDF Import**: `data/importers/PdfRecipeImporter.kt`
-- **Photo Import**: `data/importers/PhotoRecipeImporter.kt` (OCR)
+- **Parser Interface**: `data/parsers/RecipeParser.kt`
+- **URL Import**: `data/parsers/SchemaOrgRecipeParser.kt`
+- **Import Screens**: `ui/screens/ImportSourceSelectionScreen.kt`, `ui/screens/ImportUrlScreen.kt`
+- **ViewModel**: `ui/viewmodels/ImportViewModel.kt`
 
 ### Handle App Settings
 - **Settings**: `data/AppSettings.kt`
