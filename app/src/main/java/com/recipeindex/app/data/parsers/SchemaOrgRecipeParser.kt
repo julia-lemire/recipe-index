@@ -133,6 +133,12 @@ class SchemaOrgRecipeParser(
                                 }
                                 "HowToSection" -> {
                                     // Section containing multiple steps
+                                    // Add section name as header if present
+                                    val sectionName = item["name"]?.jsonPrimitive?.contentOrNull
+                                    if (!sectionName.isNullOrBlank()) {
+                                        instructions.add("$sectionName:")
+                                    }
+
                                     val steps = item["itemListElement"]
                                     if (steps is JsonArray) {
                                         steps.forEach { step ->
@@ -238,11 +244,17 @@ class SchemaOrgRecipeParser(
 
     /**
      * Parse JSON array to list of strings
+     * Handles comma-separated strings (e.g., "tag1, tag2, tag3")
      */
     private fun parseJsonArrayToStrings(element: JsonElement?): List<String> {
         return when (element) {
-            is JsonArray -> element.mapNotNull { it.jsonPrimitive.contentOrNull }
-            is JsonPrimitive -> listOf(element.content)
+            is JsonArray -> element.mapNotNull { it.jsonPrimitive?.contentOrNull }
+            is JsonPrimitive -> {
+                // Split comma-separated values and trim whitespace
+                element.content.split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+            }
             else -> emptyList()
         }
     }
@@ -286,7 +298,7 @@ private fun ParsedRecipeData.toRecipe(sourceUrl: String): Recipe {
         notes = description,
         source = RecipeSource.URL,
         sourceUrl = sourceUrl,
-        photoPath = null, // Image URL not saved to local photoPath yet
+        photoPath = imageUrl, // Save image URL to photoPath
         isFavorite = false,
         isTemplate = false,
         createdAt = now,
