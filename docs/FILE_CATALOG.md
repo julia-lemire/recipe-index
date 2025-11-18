@@ -187,7 +187,7 @@ com.recipeindex.app/
 - **AddEditRecipeScreen.kt** - Recipe add/edit form: Single screen with title, servings, times, ingredients, instructions, tags, notes, validation, auto-save on back
 - **RecipeDetailScreen.kt** - Recipe detail view: Photo (240dp), servings/time card, ingredients list, tabbed instruction sections (detected by ":" suffix), tags, notes, favorite/edit/delete actions, Coil AsyncImage
 - **ImportSourceSelectionScreen.kt** - Import source selection: Choose URL/PDF/Photo import source with cards, PDF/Photo coming soon
-- **ImportUrlScreen.kt** - URL import flow: URL input → loading → recipe preview/edit → save, auto-save on back navigation
+- **ImportUrlScreen.kt** - URL import flow: URL input → loading → recipe preview/edit with photo → save, auto-save on back navigation, Coil AsyncImage
 - **MealPlanningScreen.kt** - Weekly meal planning: Placeholder for future implementation
 - **GroceryListScreen.kt** - Shopping lists: Placeholder for future implementation
 - **SettingsScreen.kt** - App preferences: Placeholder for future implementation
