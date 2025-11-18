@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
  * PhotoRecipeParser - Uses ML Kit OCR to extract text from photos and parses recipe
  *
  * Extracts text from recipe photos/screenshots using Google ML Kit Text Recognition
+ * Supports multiple photos - combines text from all images
  */
 class PhotoRecipeParser(
     private val context: Context
@@ -24,23 +25,13 @@ class PhotoRecipeParser(
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
     /**
-     * Parse recipe from photo using OCR
+     * Parse recipe from single photo using OCR
      * @param source URI string of the photo/image file
      */
     override suspend fun parse(source: String): Result<Recipe> = withContext(Dispatchers.IO) {
         try {
-            DebugConfig.debugLog(
-                DebugConfig.Category.IMPORT,
-                "Parsing photo from: $source"
-            )
-
             val uri = Uri.parse(source)
             val text = extractTextFromPhoto(uri)
-
-            DebugConfig.debugLog(
-                DebugConfig.Category.IMPORT,
-                "Extracted ${text.length} characters from photo via OCR"
-            )
 
             if (text.isBlank()) {
                 return@withContext Result.failure(Exception("No text found in image. Please ensure the image contains readable recipe text."))
@@ -54,6 +45,52 @@ class PhotoRecipeParser(
                 "Failed to parse photo: ${e.message}"
             )
             Result.failure(Exception("Failed to parse recipe from photo: ${e.message}", e))
+        }
+    }
+
+    /**
+     * Parse recipe from multiple photos using OCR
+     * Combines text from all photos before parsing
+     * @param uris List of photo URIs
+     */
+    suspend fun parseMultiple(uris: List<Uri>): Result<Recipe> = withContext(Dispatchers.IO) {
+        try {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "Parsing ${uris.size} photos"
+            )
+
+            // Extract text from all photos
+            val allText = StringBuilder()
+            uris.forEachIndexed { index, uri ->
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "Processing photo ${index + 1}/${uris.size}"
+                )
+                val text = extractTextFromPhoto(uri)
+                allText.append(text)
+                allText.append("\n\n") // Separate photos with blank lines
+            }
+
+            val combinedText = allText.toString().trim()
+
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "Extracted ${combinedText.length} characters from ${uris.size} photos via OCR"
+            )
+
+            if (combinedText.isBlank()) {
+                return@withContext Result.failure(Exception("No text found in images. Please ensure the images contain readable recipe text."))
+            }
+
+            // Use TextRecipeParser to parse the combined text
+            TextRecipeParser.parseText(combinedText, RecipeSource.PHOTO, "multiple_photos")
+        } catch (e: Exception) {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "Failed to parse photos: ${e.message}"
+            )
+            Result.failure(Exception("Failed to parse recipe from photos: ${e.message}", e))
         }
     }
 
