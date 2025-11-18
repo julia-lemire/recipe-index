@@ -143,8 +143,13 @@ private fun DrawerContent(
         HorizontalDivider()
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Navigation items
-        Screen.drawerScreens.forEach { screen ->
+        // Navigation items - with null safety check
+        DebugConfig.debugLog(
+            DebugConfig.Category.NAVIGATION,
+            "DrawerScreens size: ${Screen.drawerScreens.size}, contains null: ${Screen.drawerScreens.any { it == null }}"
+        )
+
+        Screen.drawerScreens.filterNotNull().forEach { screen ->
             NavigationDrawerItem(
                 icon = {
                     Icon(
