@@ -73,29 +73,32 @@ class ImportViewModel(
      */
     fun saveRecipe(recipe: Recipe) {
         viewModelScope.launch {
-            try {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "Saving imported recipe: ${recipe.title}"
+            )
+
+            // Save recipe using RecipeManager (inserts or updates based on ID)
+            val result = if (recipe.id == 0L) {
+                recipeManager.createRecipe(recipe)
+            } else {
+                recipeManager.updateRecipe(recipe)
+            }
+
+            result.onSuccess {
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
-                    "Saving imported recipe: ${recipe.title}"
+                    "Successfully saved recipe: ${recipe.title}"
                 )
-                // Save recipe using RecipeManager (inserts or updates based on ID)
-                if (recipe.id == 0L) {
-                    recipeManager.createRecipe(recipe) { _ ->
-                        _uiState.value = UiState.Saved
-                    }
-                } else {
-                    recipeManager.updateRecipe(recipe) {
-                        _uiState.value = UiState.Saved
-                    }
-                }
-            } catch (e: Exception) {
+                _uiState.value = UiState.Saved
+            }.onFailure { error ->
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
-                    "Failed to save recipe: ${e.message}"
+                    "Failed to save recipe: ${error.message}"
                 )
                 _uiState.value = UiState.Editing(
                     recipe = recipe,
-                    errorMessage = "Failed to save recipe: ${e.message}"
+                    errorMessage = "Failed to save recipe: ${error.message}"
                 )
             }
         }
