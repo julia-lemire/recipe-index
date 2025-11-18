@@ -9,6 +9,35 @@
 - [PROJECT_STATUS.md](./PROJECT_STATUS.md) - Current status, core principles, completed features, and backlog
 - [TEST_SCENARIOS.md](./TEST_SCENARIOS.md) - Test coverage and scenarios to implement for automated testing
 
+**Quick Navigation:** [How to Update](#how-to-update-this-file) | [Decision Records](#architectural-decision-records)
+
+---
+
+## How to Update This File
+
+### When you make an architectural decision:
+1. **Add new ADR** at top of [Architectural Decision Records](#architectural-decision-records) (reverse chronological)
+2. **Format:** `#### MMM DD, YYYY: [Title]` with Decision/Rationale/Implementation bullets (1 sentence each)
+3. **Update PROJECT_STATUS.md** §3 Core Principles if new pattern introduced
+4. **Add to DEVELOPER_GUIDE.md** if decision establishes reusable HOW-TO pattern
+
+### What goes in an ADR:
+- ✅ Architectural choices (Manager pattern, StateFlow vs LiveData, navigation approach)
+- ✅ Design system decisions (Hearth theme, color palette)
+- ✅ Technology selections (Room, Compose, no cloud sync)
+- ✅ Structural patterns (Config Over Code, Unified Entities)
+
+### What does NOT go here:
+- ❌ Feature implementations (those go in PROJECT_STATUS.md §4 Completed Features)
+- ❌ Bug fixes (unless architecturally significant)
+- ❌ Implementation details (those go in code comments)
+- ❌ File creation logs (those go in FILE_CATALOG.md)
+
+### Format Guidelines:
+- Keep each bullet to 1 sentence maximum
+- Date format: `MMM DD, YYYY` (e.g., Nov 18, 2025)
+- Newest entries first
+
 ---
 
 ## Architectural Decision Records
