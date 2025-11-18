@@ -145,7 +145,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 ### Recipe Import (Phase 2)
 - ✅ RecipeParser interface for extensible parsing (URL/PDF/Photo support)
 - ✅ SchemaOrgRecipeParser with Jsoup and Ktor (parses Schema.org JSON-LD markup, HowToStep/HowToSection instructions, ISO 8601 durations, Open Graph fallback, debug logging, main photo extraction, comma-separated tags)
-- ✅ TextRecipeParser with smart pattern matching (detects ingredients/instructions sections, parses times/servings, cleans formatting)
+- ✅ TextRecipeParser with smart pattern matching (detects ingredients/instructions sections, filters website noise, validates content, parses times/servings, cleans formatting)
 - ✅ PdfRecipeParser with PdfBox-Android (extracts text from PDFs, delegates to TextRecipeParser)
 - ✅ PhotoRecipeParser with ML Kit OCR (extracts text from photos/camera, supports multiple images, delegates to TextRecipeParser)
 - ✅ ImportSourceSelectionScreen (choose URL/PDF/Photo import source)

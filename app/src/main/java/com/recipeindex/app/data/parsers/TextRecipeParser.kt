@@ -182,6 +182,8 @@ object TextRecipeParser {
 
         val extracted = lines.subList(startIndex + 1, endIndex.coerceAtMost(lines.size))
             .filter { it.isNotBlank() }
+            .filter { !isWebsiteNoise(it) }
+            .filter { looksLikeIngredient(it) }
             .map { cleanIngredient(it) }
 
         DebugConfig.debugLog(
@@ -214,6 +216,8 @@ object TextRecipeParser {
 
         val extracted = lines.subList(startIndex + 1, endIndex.coerceAtMost(lines.size))
             .filter { it.isNotBlank() }
+            .filter { !isWebsiteNoise(it) }
+            .filter { looksLikeInstruction(it) }
             .map { cleanInstruction(it) }
 
         DebugConfig.debugLog(
@@ -291,6 +295,65 @@ object TextRecipeParser {
         return sections.values
             .filter { it > currentIndex }
             .minOrNull() ?: Int.MAX_VALUE
+    }
+
+    /**
+     * Check if a line is website noise (navigation, CTA, footer text)
+     */
+    private fun isWebsiteNoise(line: String): Boolean {
+        val lower = line.lowercase()
+
+        // Common website CTAs and navigation
+        val noisyPatterns = listOf(
+            Regex("\\b(save|shop|get|view|see|click|subscribe|sign\\s*up|log\\s*in|create|download)\\b.*\\b(recipe|ingredient|meal|plan|list)"),
+            Regex("\\b(rating|comment|review|feedback)\\b.*\\b(let|know|help|business|thrive)"),
+            Regex("\\b(free|high[\\s-]quality|continue|providing)\\b"),
+            Regex("^\\s*[a-z]\\s+[a-z]\\s+[a-z]"), // Spaced out letters like "S H O P"
+            Regex("\\b(newsletter|social|follow|share|pin|tweet)\\b"),
+            Regex("\\b(privacy|policy|terms|conditions|copyright)\\b"),
+            Regex("^(home|about|contact|blog|search)$", RegexOption.IGNORE_CASE)
+        )
+
+        return noisyPatterns.any { it.containsMatchIn(lower) }
+    }
+
+    /**
+     * Check if a line looks like an ingredient
+     */
+    private fun looksLikeIngredient(line: String): Boolean {
+        val lower = line.lowercase()
+
+        // Too short to be an ingredient
+        if (line.length < 3) return false
+
+        // Contains common ingredient indicators
+        val hasQuantity = Regex("\\d+\\s*(cup|tablespoon|teaspoon|tbsp|tsp|oz|pound|lb|gram|ml|liter|inch)").containsMatchIn(lower)
+        val hasCommonWords = Regex("\\b(cup|teaspoon|tablespoon|ounce|pound|slice|dice|chop|mince|fresh|dried)").containsMatchIn(lower)
+        val hasIngredientName = Regex("\\b(chicken|beef|pork|fish|egg|milk|cheese|butter|oil|flour|sugar|salt|pepper|onion|garlic|tomato|potato|rice|pasta)").containsMatchIn(lower)
+
+        // Looks like ingredient if it has measurements OR common food words
+        return hasQuantity || hasCommonWords || hasIngredientName
+    }
+
+    /**
+     * Check if a line looks like an instruction
+     */
+    private fun looksLikeInstruction(line: String): Boolean {
+        val lower = line.lowercase()
+
+        // Too short to be a useful instruction
+        if (line.length < 10) return false
+
+        // Contains cooking verbs
+        val hasCookingVerb = Regex("\\b(preheat|heat|cook|bake|boil|simmer|fry|saute|stir|mix|combine|add|remove|place|transfer|turn|flip|season|serve)").containsMatchIn(lower)
+
+        // Has temperature or time indicators
+        val hasTemperatureOrTime = Regex("\\b(\\d+\\s*°?[fc]|\\d+\\s*(minute|hour|second|min|hr))").containsMatchIn(lower)
+
+        // Avoid footer text patterns
+        val isFooter = Regex("\\b(rate|rating|comment|review|subscribe|newsletter|business|website)").containsMatchIn(lower)
+
+        return (hasCookingVerb || hasTemperatureOrTime) && !isFooter
     }
 
     /**

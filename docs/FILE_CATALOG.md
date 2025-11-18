@@ -158,7 +158,7 @@ com.recipeindex.app/
 - SchemaOrgRecipeParser → Jsoup (HTML parsing), kotlinx-serialization (JSON parsing)
 - PdfRecipeParser → PdfBox-Android (PDF text extraction)
 - PhotoRecipeParser → ML Kit Text Recognition (OCR), supports multiple photos
-- TextRecipeParser → Smart pattern matching (detects sections, parses times/servings)
+- TextRecipeParser → Smart pattern matching (detects sections, filters website noise, validates content, parses times/servings)
 - ImportViewModel UI states: Input → Loading → Editing → Saved
 - ImportPdfViewModel UI states: SelectFile → Loading → Editing → Saved
 - ImportPhotoViewModel UI states: SelectPhoto → Loading → Editing → Saved
@@ -183,7 +183,7 @@ com.recipeindex.app/
 ### Data - Parsers
 - **RecipeParser.kt** - Recipe parser interface: parse(source: String): Result<Recipe> for URL/PDF/Photo parsers
 - **SchemaOrgRecipeParser.kt** - Schema.org JSON-LD parser: Jsoup HTML parsing, Schema.org Recipe extraction (HowToStep/HowToSection instructions), ISO 8601 duration conversion, Open Graph fallback, debug logging
-- **TextRecipeParser.kt** - Smart pattern matching parser: detects ingredients/instructions sections via regex, parses time strings ("1h 30min"), extracts servings, cleans bullets/numbering from unstructured text
+- **TextRecipeParser.kt** - Smart pattern matching parser: detects ingredients/instructions sections via regex, filters website noise (CTAs/footers), validates ingredient/instruction content, parses time strings ("1h 30min"), extracts servings, cleans bullets/numbering from unstructured text
 - **PdfRecipeParser.kt** - PDF text extraction parser: Uses PdfBox-Android PDFTextStripper to extract all text from PDF files, delegates to TextRecipeParser for recipe parsing
 - **PhotoRecipeParser.kt** - OCR-based parser: Uses ML Kit Text Recognition to extract text from photos/camera, supports multiple photos via parseMultiple(List<Uri>), combines OCR results, delegates to TextRecipeParser
 
