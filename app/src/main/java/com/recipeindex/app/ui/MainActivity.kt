@@ -57,10 +57,11 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     currentRoute = currentRoute,
                     windowSizeClass = windowSizeClass
-                ) { paddingValues ->
+                ) { paddingValues, onMenuClick ->
                     RecipeIndexNavigation(
                         navController = navController,
-                        viewModelFactory = viewModelFactory
+                        viewModelFactory = viewModelFactory,
+                        onMenuClick = onMenuClick
                     )
                 }
             }
