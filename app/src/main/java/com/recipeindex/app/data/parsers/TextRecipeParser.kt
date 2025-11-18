@@ -92,15 +92,53 @@ object TextRecipeParser {
 
         lines.forEachIndexed { index, line ->
             val lowerLine = line.lowercase()
+            // Remove extra spaces and special characters for matching
+            val normalized = lowerLine.replace(Regex("\\s+"), " ").trim()
+
+            // Skip lines that look like footers/CTAs (contain "save", "shop", "get", etc. with ingredients)
+            val isFooterOrCTA = normalized.contains(Regex("\\b(save|shop|get|view|see|more|click)\\b")) &&
+                               normalized.contains(Regex("\\bingredients?\\b"))
 
             when {
-                lowerLine.matches(Regex("ingredients?:?\\s*$")) -> sections["ingredients"] = index
-                lowerLine.matches(Regex("(instructions?|directions?|steps?|method):?\\s*$")) -> sections["instructions"] = index
-                lowerLine.matches(Regex("(servings?|yield|serves):?\\s*.*")) -> sections["servings"] = index
-                lowerLine.matches(Regex("prep\\s*time:?\\s*.*")) -> sections["prepTime"] = index
-                lowerLine.matches(Regex("cook\\s*time:?\\s*.*")) -> sections["cookTime"] = index
-                lowerLine.matches(Regex("total\\s*time:?\\s*.*")) -> sections["totalTime"] = index
-                lowerLine.matches(Regex("(tags?|categories?|cuisine):?\\s*.*")) -> sections["tags"] = index
+                // Ingredients - be flexible about surrounding text, but skip footers
+                normalized.contains(Regex("\\bingredients?\\b")) &&
+                !sections.containsKey("ingredients") &&
+                !isFooterOrCTA -> {
+                    DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Found ingredients at line $index: $line")
+                    sections["ingredients"] = index
+                }
+                // Instructions - multiple common names
+                (normalized.contains(Regex("\\binstructions?\\b")) ||
+                 normalized.contains(Regex("\\bdirections?\\b")) ||
+                 normalized.contains(Regex("\\bsteps?\\b")) ||
+                 normalized.contains(Regex("\\bmethod\\b"))) && !sections.containsKey("instructions") -> {
+                    DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Found instructions at line $index: $line")
+                    sections["instructions"] = index
+                }
+                // Servings
+                (normalized.contains(Regex("\\bservings?\\b")) ||
+                 normalized.contains(Regex("\\byield\\b")) ||
+                 normalized.contains(Regex("\\bserves\\b"))) && !sections.containsKey("servings") -> {
+                    sections["servings"] = index
+                }
+                // Prep time
+                normalized.contains(Regex("\\bprep\\s*time\\b")) && !sections.containsKey("prepTime") -> {
+                    sections["prepTime"] = index
+                }
+                // Cook time
+                normalized.contains(Regex("\\bcook\\s*time\\b")) && !sections.containsKey("cookTime") -> {
+                    sections["cookTime"] = index
+                }
+                // Total time
+                normalized.contains(Regex("\\btotal\\s*time\\b")) && !sections.containsKey("totalTime") -> {
+                    sections["totalTime"] = index
+                }
+                // Tags
+                (normalized.contains(Regex("\\btags?\\b")) ||
+                 normalized.contains(Regex("\\bcategories\\b")) ||
+                 normalized.contains(Regex("\\bcuisine\\b"))) && !sections.containsKey("tags") -> {
+                    sections["tags"] = index
+                }
             }
         }
 
