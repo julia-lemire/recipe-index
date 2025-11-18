@@ -6,7 +6,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.InsertLink
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -59,7 +59,7 @@ fun ImportSourceSelectionScreen(
 
             // URL Import Option
             ImportSourceCard(
-                icon = Icons.Default.Link,
+                icon = Icons.Default.InsertLink,
                 title = "From URL",
                 description = "Import from recipe websites like Skinnytaste, AllRecipes, etc.",
                 onClick = { onSourceSelected(ImportSource.URL) }

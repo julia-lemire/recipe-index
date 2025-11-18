@@ -46,6 +46,21 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 18, 2025: Expandable FAB Menu for Create and Import
+- **Decision**: Expandable FAB on RecipeListScreen with "Create" and "Import" options, main FAB rotates 45° when expanded
+- **Rationale**: Provides two primary actions without cluttering UI; rotating + icon communicates expandability and doubles as close affordance
+- **Implementation**: RecipeListScreen uses Column with SmallFloatingActionButton for each option, fabExpanded state controls visibility
+
+#### Nov 18, 2025: Schema.org JSON-LD for Recipe Parsing
+- **Decision**: Parse Schema.org Recipe JSON-LD markup with Jsoup, support multiple formats (@type, @graph, arrays), fall back to Open Graph meta tags
+- **Rationale**: Most modern recipe sites use Schema.org markup for SEO; standardized format reduces parsing complexity vs HTML scraping
+- **Implementation**: SchemaOrgRecipeParser extracts JSON-LD scripts, parses with kotlinx-serialization, converts ISO 8601 durations to minutes
+
+#### Nov 18, 2025: RecipeParser Interface for Extensible Import
+- **Decision**: RecipeParser interface with parse(source: String): Result<Recipe> method; implementations for URL/PDF/Photo
+- **Rationale**: Enables adding new import sources without modifying existing code; single interface for ViewModels to depend on
+- **Implementation**: RecipeParser interface in data/parsers/, SchemaOrgRecipeParser first implementation, ViewModelFactory injects parser dependency
+
 #### Nov 18, 2025: Flow Loading State Inside Collect Block
 - **Decision**: Set isLoading=false INSIDE Flow.collect() block after first emission, not in finally block
 - **Rationale**: Flow.collect() never completes (keeps listening for DB updates), so finally block never executes; caused perpetual loading spinner
