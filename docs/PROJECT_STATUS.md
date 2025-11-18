@@ -53,8 +53,8 @@
 
 ## 1. Project Overview
 
-**Current Phase:** Recipe Import (Phase 2)
-**Current Focus:** URL import complete with Schema.org parsing, expandable FAB menu; ready for PDF and photo import
+**Current Phase:** Recipe Import (Phase 2) - COMPLETE
+**Current Focus:** Phase 2 completed with all three import sources (URL, PDF, Photo)
 
 Recipe Index: Offline-first Android app for home cooks to store, organize, and plan meals with recipes from URLs/PDFs/photos.
 
@@ -145,10 +145,17 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 ### Recipe Import (Phase 2)
 - ✅ RecipeParser interface for extensible parsing (URL/PDF/Photo support)
 - ✅ SchemaOrgRecipeParser with Jsoup and Ktor (parses Schema.org JSON-LD markup, HowToStep/HowToSection instructions, ISO 8601 durations, Open Graph fallback, debug logging, main photo extraction, comma-separated tags)
+- ✅ TextRecipeParser with smart pattern matching (detects ingredients/instructions sections, parses times/servings, cleans formatting)
+- ✅ PdfRecipeParser with PdfBox-Android (extracts text from PDFs, delegates to TextRecipeParser)
+- ✅ PhotoRecipeParser with ML Kit OCR (extracts text from photos/camera, supports multiple images, delegates to TextRecipeParser)
 - ✅ ImportSourceSelectionScreen (choose URL/PDF/Photo import source)
 - ✅ ImportUrlScreen (URL input, loading state, recipe preview/edit before save, auto-save on back)
+- ✅ ImportPdfScreen (file picker, loading state, recipe preview/edit before save)
+- ✅ ImportPhotoScreen (camera/gallery pickers, multiple photo support, photo preview, recipe preview/edit before save)
 - ✅ ImportViewModel with UI states (Input → Loading → Editing → Saved)
-- ✅ Import navigation routes (ImportSourceSelection, ImportUrl)
+- ✅ ImportPdfViewModel with UI states (SelectFile → Loading → Editing → Saved)
+- ✅ ImportPhotoViewModel with UI states (SelectPhoto → Loading → Editing → Saved)
+- ✅ Import navigation routes (ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto)
 - ✅ HTTP client setup (Ktor with OkHttp engine, logging)
 - ✅ Coil library for async image loading
 - ✅ Recipe photo display (list cards and detail screen)
@@ -178,8 +185,8 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 
 ### Phase 2: Import
 - [x] URL import (Schema.org)
-- [ ] PDF import
-- [ ] Photo-to-recipe (OCR)
+- [x] PDF import (PdfBox-Android)
+- [x] Photo-to-recipe (ML Kit OCR, multiple photos)
 - [ ] Instructional photos import
 - [ ] Recipe videos import
 

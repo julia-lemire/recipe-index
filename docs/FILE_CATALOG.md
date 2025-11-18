@@ -76,8 +76,11 @@ com.recipeindex.app/
 │   │   └── RecipeManager.kt
 │   │
 │   ├── parsers/
+│   │   ├── PdfRecipeParser.kt
+│   │   ├── PhotoRecipeParser.kt
 │   │   ├── RecipeParser.kt
-│   │   └── SchemaOrgRecipeParser.kt
+│   │   ├── SchemaOrgRecipeParser.kt
+│   │   └── TextRecipeParser.kt
 │   │
 │   ├── AppDatabase.kt
 │   └── Converters.kt
@@ -93,6 +96,8 @@ com.recipeindex.app/
 │   │   ├── AddEditRecipeScreen.kt
 │   │   ├── GroceryListScreen.kt
 │   │   ├── HomeScreen.kt
+│   │   ├── ImportPdfScreen.kt
+│   │   ├── ImportPhotoScreen.kt
 │   │   ├── ImportSourceSelectionScreen.kt
 │   │   ├── ImportUrlScreen.kt
 │   │   ├── MealPlanningScreen.kt
@@ -106,6 +111,8 @@ com.recipeindex.app/
 │   │   └── Type.kt
 │   │
 │   ├── viewmodels/
+│   │   ├── ImportPdfViewModel.kt
+│   │   ├── ImportPhotoViewModel.kt
 │   │   ├── ImportViewModel.kt
 │   │   ├── RecipeViewModel.kt
 │   │   └── ViewModelFactory.kt
@@ -143,11 +150,18 @@ com.recipeindex.app/
 - Navigation.kt orchestrates screen transitions with navController
 
 ### Import Flow
-- MainActivity → HttpClient (Ktor) → SchemaOrgRecipeParser → ViewModelFactory
-- ImportSourceSelectionScreen → Navigation.kt (route to ImportUrl)
+- MainActivity → HttpClient (Ktor), PdfRecipeParser, PhotoRecipeParser → ViewModelFactory
+- ImportSourceSelectionScreen → Navigation.kt (route to ImportUrl/ImportPdf/ImportPhoto)
 - ImportUrlScreen → ImportViewModel → SchemaOrgRecipeParser → RecipeManager
+- ImportPdfScreen → ImportPdfViewModel → PdfRecipeParser → TextRecipeParser → RecipeManager
+- ImportPhotoScreen → ImportPhotoViewModel → PhotoRecipeParser → TextRecipeParser → RecipeManager
 - SchemaOrgRecipeParser → Jsoup (HTML parsing), kotlinx-serialization (JSON parsing)
+- PdfRecipeParser → PdfBox-Android (PDF text extraction)
+- PhotoRecipeParser → ML Kit Text Recognition (OCR), supports multiple photos
+- TextRecipeParser → Smart pattern matching (detects sections, parses times/servings)
 - ImportViewModel UI states: Input → Loading → Editing → Saved
+- ImportPdfViewModel UI states: SelectFile → Loading → Editing → Saved
+- ImportPhotoViewModel UI states: SelectPhoto → Loading → Editing → Saved
 
 ---
 
@@ -169,25 +183,30 @@ com.recipeindex.app/
 ### Data - Parsers
 - **RecipeParser.kt** - Recipe parser interface: parse(source: String): Result<Recipe> for URL/PDF/Photo parsers
 - **SchemaOrgRecipeParser.kt** - Schema.org JSON-LD parser: Jsoup HTML parsing, Schema.org Recipe extraction (HowToStep/HowToSection instructions), ISO 8601 duration conversion, Open Graph fallback, debug logging
+- **TextRecipeParser.kt** - Smart pattern matching parser: detects ingredients/instructions sections via regex, parses time strings ("1h 30min"), extracts servings, cleans bullets/numbering from unstructured text
+- **PdfRecipeParser.kt** - PDF text extraction parser: Uses PdfBox-Android PDFTextStripper to extract all text from PDF files, delegates to TextRecipeParser for recipe parsing
+- **PhotoRecipeParser.kt** - OCR-based parser: Uses ML Kit Text Recognition to extract text from photos/camera, supports multiple photos via parseMultiple(List<Uri>), combines OCR results, delegates to TextRecipeParser
 
 ### Data - Database
 - **AppDatabase.kt** - Room database singleton: Recipe table, version 1, Converters for List<String> and RecipeSource
 - **Converters.kt** - Room type converters: List<String> ↔ delimited string, RecipeSource ↔ string
 
 ### Navigation
-- **NavGraph.kt** - Navigation routes sealed class: Home, RecipeIndex, MealPlanning, GroceryLists, Settings (drawer), AddRecipe, EditRecipe, RecipeDetail, ImportSourceSelection, ImportUrl (import screens)
+- **NavGraph.kt** - Navigation routes sealed class: Home, RecipeIndex, MealPlanning, GroceryLists, Settings (drawer), AddRecipe, EditRecipe, RecipeDetail, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto (import screens)
 
 ### UI - MainActivity
-- **MainActivity.kt** - Orchestrator only: Setup dependencies (AppDatabase, RecipeManager, HttpClient, SchemaOrgRecipeParser, ViewModelFactory), wire theme and navigation, NO business/navigation logic
-- **Navigation.kt** - All navigation logic: NavHost with routes for Home, RecipeIndex, AddRecipe, EditRecipe, RecipeDetail, MealPlanning, GroceryLists, Settings, ImportSourceSelection, ImportUrl
+- **MainActivity.kt** - Orchestrator only: Setup dependencies (AppDatabase, RecipeManager, HttpClient, SchemaOrgRecipeParser, PdfRecipeParser, PhotoRecipeParser, ViewModelFactory), wire theme and navigation, NO business/navigation logic
+- **Navigation.kt** - All navigation logic: NavHost with routes for Home, RecipeIndex, AddRecipe, EditRecipe, RecipeDetail, MealPlanning, GroceryLists, Settings, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto
 
 ### UI - Screens
 - **HomeScreen.kt** - Landing page: This week's meal plans, recipe suggestions
 - **RecipeListScreen.kt** - Recipe browsing: LazyColumn with RecipeCards (photo, title, servings/times, tags), expandable FAB menu (create/import), favorite toggle, empty state, Coil AsyncImage for photos (180dp)
 - **AddEditRecipeScreen.kt** - Recipe add/edit form: Single screen with title, servings, times, ingredients, instructions, tags, notes, validation, auto-save on back
 - **RecipeDetailScreen.kt** - Recipe detail view: Photo (240dp), servings/time card, ingredients list, tabbed instruction sections (detected by ":" suffix), tags, notes, favorite/edit/delete actions, Coil AsyncImage
-- **ImportSourceSelectionScreen.kt** - Import source selection: Choose URL/PDF/Photo import source with cards, PDF/Photo coming soon
+- **ImportSourceSelectionScreen.kt** - Import source selection: Choose URL/PDF/Photo import source with cards (all three enabled)
 - **ImportUrlScreen.kt** - URL import flow: URL input → loading → recipe preview/edit with photo → save, auto-save on back navigation, Coil AsyncImage
+- **ImportPdfScreen.kt** - PDF import flow: File picker (ActivityResultContracts.GetContent) → loading → recipe preview/edit → save, auto-save on back navigation
+- **ImportPhotoScreen.kt** - Photo import flow: Camera/gallery pickers (GetMultipleContents for multiple photos) → photo preview grid → loading → recipe preview/edit → save, auto-save on back navigation
 - **MealPlanningScreen.kt** - Weekly meal planning: Placeholder for future implementation
 - **GroceryListScreen.kt** - Shopping lists: Placeholder for future implementation
 - **SettingsScreen.kt** - App preferences: Placeholder for future implementation
@@ -197,8 +216,10 @@ com.recipeindex.app/
 
 ### UI - ViewModels
 - **RecipeViewModel.kt** - Recipe UI state: StateFlow for recipes/currentRecipe/isLoading/error, delegates all business logic to RecipeManager, event functions (loadRecipes, createRecipe, updateRecipe, deleteRecipe, toggleFavorite, searchRecipes)
-- **ImportViewModel.kt** - Import UI state: StateFlow<UiState> (Input → Loading → Editing → Saved), fetchRecipeFromUrl(), updateRecipe(), saveRecipe(), reset()
-- **ViewModelFactory.kt** - ViewModel dependency injection: Creates RecipeViewModel, ImportViewModel with RecipeManager and RecipeParser dependencies
+- **ImportViewModel.kt** - URL import UI state: StateFlow<UiState> (Input → Loading → Editing → Saved), fetchRecipeFromUrl(), updateRecipe(), saveRecipe(), reset()
+- **ImportPdfViewModel.kt** - PDF import UI state: StateFlow<UiState> (SelectFile → Loading → Editing → Saved), fetchRecipeFromPdf(Uri), updateRecipe(), saveRecipe(), reset()
+- **ImportPhotoViewModel.kt** - Photo import UI state: StateFlow<UiState> (SelectPhoto → Loading → Editing → Saved), fetchRecipeFromPhoto(Uri), fetchRecipeFromPhotos(List<Uri>), updateRecipe(), saveRecipe(), reset()
+- **ViewModelFactory.kt** - ViewModel dependency injection: Creates RecipeViewModel, ImportViewModel, ImportPdfViewModel, ImportPhotoViewModel with RecipeManager and parser dependencies (SchemaOrgRecipeParser, PdfRecipeParser, PhotoRecipeParser)
 
 ### UI - Theme
 - **Color.kt** - Hearth color palette: Terracotta, Clay, SageGreen, Cream neutrals, cooking mode high-contrast colors
