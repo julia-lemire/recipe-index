@@ -8,6 +8,7 @@
 - [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) - Quick lookup ("I need to...") and architecture patterns (HOW to implement)
 - [FILE_CATALOG.md](./FILE_CATALOG.md) - Complete file tree, system relationships, and component descriptions
 - [PROJECT_STATUS.md](./PROJECT_STATUS.md) - Current status, core principles, completed features, and backlog
+- [PROJECT_CONVENTIONS.md](../PROJECT_CONVENTIONS.md) - How to maintain documentation
 
 **Quick Navigation:** [How to Update](#how-to-update-this-file) | [Coverage Summary](#test-coverage-summary) | [Scenarios](#test-scenarios-by-feature)
 
