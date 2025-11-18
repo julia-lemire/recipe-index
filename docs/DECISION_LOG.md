@@ -8,6 +8,7 @@
 - [FILE_CATALOG.md](./FILE_CATALOG.md) - Complete file tree, system relationships, and component descriptions
 - [PROJECT_STATUS.md](./PROJECT_STATUS.md) - Current status, core principles, completed features, and backlog
 - [TEST_SCENARIOS.md](./TEST_SCENARIOS.md) - Test coverage and scenarios to implement for automated testing
+- [PROJECT_CONVENTIONS.md](../PROJECT_CONVENTIONS.md) - How to maintain documentation
 
 **Quick Navigation:** [How to Update](#how-to-update-this-file) | [Decision Records](#architectural-decision-records)
 
@@ -53,7 +54,7 @@
 #### Nov 18, 2025: Never Use BottomNavigation
 - **Decision**: TopAppBar or NavigationDrawer only - BottomNavigation prohibited
 - **Rationale**: Screen space critical for recipe content (ingredient lists, instructions, images)
-- **Implementation**: Navigation rule added to ANDROID_DESIGN_PRINCIPLES.md with code examples
+- **Implementation**: Navigation rule added to ../ANDROID_DESIGN_PRINCIPLES.md with code examples
 
 #### Nov 18, 2025: Offline-First Architecture with Local Storage Only
 - **Decision**: Room database, no cloud sync, Samsung Quick Share for recipe sharing
@@ -73,7 +74,7 @@
 #### Nov 18, 2025: Extract Components Proactively
 - **Decision**: Extract when >50 lines, self-contained, or might be reused (not just 2+ uses)
 - **Rationale**: Keeps files small from start, reduces need for future refactoring
-- **Implementation**: Component extraction rule in ANDROID_DESIGN_PRINCIPLES.md
+- **Implementation**: Component extraction rule in ../ANDROID_DESIGN_PRINCIPLES.md
 
 #### Nov 18, 2025: Hearth Design System
 - **Decision**: Terracotta/clay tones (#E8997A, #2C1810), dark cards for browsing, light for cooking

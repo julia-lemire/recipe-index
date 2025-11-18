@@ -8,6 +8,7 @@
 - [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) - Quick lookup ("I need to...") and architecture patterns (HOW to implement)
 - [FILE_CATALOG.md](./FILE_CATALOG.md) - Complete file tree, system relationships, and component descriptions
 - [TEST_SCENARIOS.md](./TEST_SCENARIOS.md) - Test coverage and scenarios
+- [PROJECT_CONVENTIONS.md](../PROJECT_CONVENTIONS.md) - How to maintain documentation
 
 **Quick Navigation:** [How to Update](#how-to-update-this-file) | [Overview](#1-project-overview) | [References](#2-reference-files) | [Principles](#3-core-principles) | [Completed](#4-completed-features) | [Backlog](#5-active-backlog)
 
@@ -114,10 +115,10 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 ## 4. Completed Features
 
 ### Planning & Documentation
-- ✅ Product brief
-- ✅ Design principles (ANDROID_DESIGN_PRINCIPLES.md)
+- ✅ Product brief (PRODUCT_BRIEF.md)
+- ✅ Design principles (../ANDROID_DESIGN_PRINCIPLES.md)
 - ✅ Hearth design system (DESIGN_SYSTEM.md)
-- ✅ 5-document system
+- ✅ 5-document system (docs/)
 - ✅ Git workflow
 
 ### Foundation

@@ -8,6 +8,7 @@
 - [FILE_CATALOG.md](./FILE_CATALOG.md) - Complete file tree, system relationships, and component descriptions
 - [PROJECT_STATUS.md](./PROJECT_STATUS.md) - Current status, core principles, completed features, and backlog
 - [TEST_SCENARIOS.md](./TEST_SCENARIOS.md) - Test coverage and scenarios to implement for automated testing
+- [PROJECT_CONVENTIONS.md](../PROJECT_CONVENTIONS.md) - How to maintain documentation
 
 **Quick Navigation:** [How to Update](#how-to-update-this-file) | [Quick Lookup](#quick-lookup-i-need-to) | [Patterns](#architecture-patterns) | [New Screen Guide](#new-screen-creation-guide) | [Back Button](#system-back-button-pattern) | [Debug Logging](#debug-logging-pattern)
 
