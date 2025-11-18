@@ -85,7 +85,8 @@ fun ImportPdfScreen(
                         .padding(paddingValues),
                     onSelectPdf = {
                         pdfPickerLauncher.launch("application/pdf")
-                    }
+                    },
+                    errorMessage = state.errorMessage
                 )
             }
 
@@ -128,7 +129,8 @@ fun ImportPdfScreen(
 @Composable
 private fun SelectPdfContent(
     modifier: Modifier = Modifier,
-    onSelectPdf: () -> Unit
+    onSelectPdf: () -> Unit,
+    errorMessage: String? = null
 ) {
     Column(
         modifier = modifier
@@ -146,6 +148,23 @@ private fun SelectPdfContent(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        // Error message
+        if (errorMessage != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Text(
+                    text = errorMessage,
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
