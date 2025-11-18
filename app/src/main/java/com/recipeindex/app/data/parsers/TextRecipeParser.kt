@@ -171,6 +171,14 @@ object TextRecipeParser {
             DebugConfig.Category.IMPORT,
             "Extracting ingredients from line $startIndex to $endIndex (${endIndex - startIndex - 1} lines)"
         )
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "  Header line: '${lines.getOrNull(startIndex)}'"
+        )
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "  First content lines: '${lines.getOrNull(startIndex + 1)}', '${lines.getOrNull(startIndex + 2)}'"
+        )
 
         val extracted = lines.subList(startIndex + 1, endIndex.coerceAtMost(lines.size))
             .filter { it.isNotBlank() }
@@ -194,6 +202,14 @@ object TextRecipeParser {
         DebugConfig.debugLog(
             DebugConfig.Category.IMPORT,
             "Extracting instructions from line $startIndex to $endIndex (${endIndex - startIndex - 1} lines)"
+        )
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "  Header line: '${lines.getOrNull(startIndex)}'"
+        )
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "  First content lines: '${lines.getOrNull(startIndex + 1)}', '${lines.getOrNull(startIndex + 2)}'"
         )
 
         val extracted = lines.subList(startIndex + 1, endIndex.coerceAtMost(lines.size))
