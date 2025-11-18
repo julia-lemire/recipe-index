@@ -48,13 +48,13 @@ class RecipeViewModel(
             try {
                 recipeManager.getAllRecipes().collect { recipeList ->
                     _recipes.value = recipeList
+                    _isLoading.value = false  // Set to false after first emission
                     DebugConfig.debugLog(DebugConfig.Category.UI, "Loaded ${recipeList.size} recipes")
                 }
             } catch (e: Exception) {
                 _error.value = "Failed to load recipes: ${e.message}"
-                DebugConfig.error(DebugConfig.Category.UI, "loadRecipes failed", e)
-            } finally {
                 _isLoading.value = false
+                DebugConfig.error(DebugConfig.Category.UI, "loadRecipes failed", e)
             }
         }
     }
@@ -68,13 +68,13 @@ class RecipeViewModel(
             try {
                 recipeManager.getRecipeById(recipeId).collect { recipe ->
                     _currentRecipe.value = recipe
+                    _isLoading.value = false  // Set to false after first emission
                     DebugConfig.debugLog(DebugConfig.Category.UI, "Loaded recipe: ${recipe?.title}")
                 }
             } catch (e: Exception) {
                 _error.value = "Failed to load recipe: ${e.message}"
-                DebugConfig.error(DebugConfig.Category.UI, "loadRecipe failed", e)
-            } finally {
                 _isLoading.value = false
+                DebugConfig.error(DebugConfig.Category.UI, "loadRecipe failed", e)
             }
         }
     }
