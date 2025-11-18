@@ -1,0 +1,119 @@
+package com.recipeindex.app.ui.viewmodels
+
+import android.net.Uri
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.recipeindex.app.data.entities.Recipe
+import com.recipeindex.app.data.managers.RecipeManager
+import com.recipeindex.app.data.parsers.PdfRecipeParser
+import com.recipeindex.app.utils.DebugConfig
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+/**
+ * ImportPdfViewModel - Handles PDF recipe import flow
+ */
+class ImportPdfViewModel(
+    private val pdfParser: PdfRecipeParser,
+    private val recipeManager: RecipeManager
+) : ViewModel() {
+
+    sealed class UiState {
+        data object SelectFile : UiState()
+        data object Loading : UiState()
+        data class Editing(val recipe: Recipe, val errorMessage: String? = null) : UiState()
+        data object Saved : UiState()
+    }
+
+    private val _uiState = MutableStateFlow<UiState>(UiState.SelectFile)
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+
+    fun fetchRecipeFromPdf(uri: Uri) {
+        viewModelScope.launch {
+            _uiState.value = UiState.Loading
+
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "Fetching recipe from PDF: $uri"
+            )
+
+            val result = pdfParser.parse(uri.toString())
+
+            result.onSuccess { recipe ->
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "Successfully parsed PDF recipe: ${recipe.title}"
+                )
+                _uiState.value = UiState.Editing(recipe)
+            }.onFailure { error ->
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "Failed to parse PDF: ${error.message}"
+                )
+                _uiState.value = UiState.SelectFile
+                showError("Failed to parse PDF: ${error.message}")
+            }
+        }
+    }
+
+    fun updateRecipe(recipe: Recipe) {
+        val currentState = _uiState.value
+        if (currentState is UiState.Editing) {
+            _uiState.value = currentState.copy(recipe = recipe, errorMessage = null)
+        }
+    }
+
+    fun saveRecipe(recipe: Recipe) {
+        viewModelScope.launch {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "Saving imported PDF recipe: ${recipe.title}"
+            )
+
+            val result = if (recipe.id == 0L) {
+                recipeManager.createRecipe(recipe)
+            } else {
+                recipeManager.updateRecipe(recipe)
+            }
+
+            result.onSuccess {
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "Successfully saved PDF recipe: ${recipe.title}"
+                )
+                _uiState.value = UiState.Saved
+            }.onFailure { error ->
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "Failed to save PDF recipe: ${error.message}"
+                )
+                val currentState = _uiState.value
+                if (currentState is UiState.Editing) {
+                    _uiState.value = currentState.copy(
+                        errorMessage = "Failed to save recipe: ${error.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun showError(message: String) {
+        val currentState = _uiState.value
+        when (currentState) {
+            is UiState.Editing -> {
+                _uiState.value = currentState.copy(errorMessage = message)
+            }
+            else -> {
+                // For SelectFile state, we'd need to add error field
+                // For now, log it
+                DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Error: $message")
+            }
+        }
+    }
+
+    fun reset() {
+        _uiState.value = UiState.SelectFile
+    }
+}
