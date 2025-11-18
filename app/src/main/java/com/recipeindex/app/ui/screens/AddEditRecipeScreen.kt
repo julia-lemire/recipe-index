@@ -1,5 +1,6 @@
 package com.recipeindex.app.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -41,17 +42,22 @@ fun AddEditRecipeScreen(
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
+    // Handle system back button
+    BackHandler {
+        onCancel()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(if (recipe == null) "Add Recipe" else "Edit Recipe") },
                 navigationIcon = {
                     IconButton(onClick = onCancel) {
-                        Icon(Icons.Default.Close, "Cancel")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
-                    IconButton(
+                    TextButton(
                         onClick = {
                             // Validate
                             when {
@@ -95,7 +101,7 @@ fun AddEditRecipeScreen(
                             }
                         }
                     ) {
-                        Icon(Icons.Default.Check, "Save")
+                        Text("SAVE", style = MaterialTheme.typography.labelLarge)
                     }
                 }
             )

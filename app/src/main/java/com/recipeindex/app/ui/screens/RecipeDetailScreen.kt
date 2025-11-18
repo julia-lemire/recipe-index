@@ -1,5 +1,6 @@
 package com.recipeindex.app.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -29,6 +30,11 @@ fun RecipeDetailScreen(
     DebugConfig.debugLog(DebugConfig.Category.UI, "RecipeDetailScreen - ${recipe.title}")
 
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // Handle system back button
+    BackHandler {
+        onBack()
+    }
 
     Scaffold(
         topBar = {
