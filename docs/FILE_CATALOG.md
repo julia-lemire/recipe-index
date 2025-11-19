@@ -102,7 +102,8 @@ com.recipeindex.app/
 ├── ui/
 │   ├── components/
 │   │   ├── AppNavigationDrawer.kt
-│   │   └── GroceryListPickerDialog.kt
+│   │   ├── GroceryListPickerDialog.kt
+│   │   └── MealPlanPickerDialog.kt
 │   │
 │   ├── screens/
 │   │   ├── AddEditMealPlanScreen.kt
@@ -140,6 +141,7 @@ com.recipeindex.app/
 └── utils/
     ├── DebugConfig.kt
     ├── ErrorHandler.kt
+    ├── TagStandardizer.kt
     └── UnitConverter.kt
 
 ```
@@ -180,6 +182,9 @@ com.recipeindex.app/
 ### Meal Planning Flow
 - MealPlanningScreen → MealPlanViewModel, RecipeViewModel, GroceryListViewModel
 - MealPlanningScreen → GroceryListPickerDialog (for "Generate List" action)
+- RecipeListScreen → Calendar icon → MealPlanPickerDialog → MealPlanViewModel.addRecipeToPlan()
+- RecipeDetailScreen → "Add to Meal Plan" menu → MealPlanPickerDialog → MealPlanViewModel.addRecipeToPlan()
+- MealPlanPickerDialog → Used by RecipeListScreen, RecipeDetailScreen (reusable component)
 - AddEditMealPlanScreen → MealPlanViewModel → MealPlanManager → MealPlanDao, RecipeDao
 - MealPlanManager → RecipeTags (for auto-tag aggregation and special event detection)
 - Navigation.kt → AddMealPlan, EditMealPlan screens with ViewModel integration
@@ -194,7 +199,8 @@ com.recipeindex.app/
 - MealPlanningScreen → "Generate List" button → GroceryListPickerDialog
 - Navigation.kt → GroceryListDetail route with ViewModel integration
 - PhotoRecipeParser → ML Kit Text Recognition (OCR), supports multiple photos
-- TextRecipeParser → Smart pattern matching (detects sections, filters website noise, validates content, parses times/servings)
+- TextRecipeParser → Smart pattern matching (detects sections, filters website noise, validates content, parses times/servings), uses TagStandardizer for tag cleanup
+- TagStandardizer → Normalizes imported tags (removes noise words, maps variations, deduplicates)
 - ImportViewModel UI states: Input → Loading → Editing → Saved
 - ImportPdfViewModel UI states: SelectFile → Loading → Editing → Saved
 - ImportPhotoViewModel UI states: SelectPhoto → Loading → Editing → Saved
@@ -248,7 +254,9 @@ com.recipeindex.app/
 - **SettingsScreen.kt** - App preferences: Placeholder for future implementation
 
 ### UI - Components
-- **AppNavigationDrawer.kt** - Responsive navigation drawer: Modal for phones, permanent for tablets, accepts content parameter, drawer header with logo/name, UI only
+- **AppNavigationDrawer.kt** - Responsive navigation drawer: Modal for phones, permanent for tablets with collapse button, accepts content parameter, drawer header with logo/name, UI only
+- **GroceryListPickerDialog.kt** - Reusable grocery list picker dialog: Select existing list or create new, used by RecipeListScreen/RecipeDetailScreen/MealPlanningScreen for "Add to Grocery List" actions
+- **MealPlanPickerDialog.kt** - Reusable meal plan picker dialog: Select existing plan or create new, used by RecipeListScreen/RecipeDetailScreen for "Add to Meal Plan" actions from calendar icon
 
 ### UI - ViewModels
 - **RecipeViewModel.kt** - Recipe UI state: StateFlow for recipes/currentRecipe/isLoading/error, delegates all business logic to RecipeManager, event functions (loadRecipes, createRecipe, updateRecipe, deleteRecipe, toggleFavorite, searchRecipes)
@@ -267,11 +275,12 @@ com.recipeindex.app/
 - **SettingsManager.kt** - Settings persistence with StateFlow reactivity: SharedPreferences storage, exposes StateFlow<AppSettings>, setter methods for each preference with DebugConfig logging
 - **SettingsViewModel.kt** - Settings UI state: Delegates all operations to SettingsManager, exposes settings StateFlow
 - **SettingsScreen.kt** - Settings UI: Unit system radio buttons, temperature radio buttons, display preferences switches, recipe defaults filter chips, reset button
-- **UnitConverter.kt** - Cooking unit conversions: Imperial↔Metric (volume: cups/tbsp/tsp↔ml/L, weight: oz/lb↔g/kg, temperature: F↔C), smart helpers (volumeToMetric choosesml/L), formatNumber
 
 ### Utils
 - **DebugConfig.kt** - Centralized logging: Category-based filtering (NAVIGATION, DATABASE, IMPORT, UI, MANAGER, SETTINGS, GENERAL), replaces android.util.Log
 - **ErrorHandler.kt** - Error handling utility: User-friendly error messages (network, validation, state errors), handleResult() for Result<T> processing, executeSafely() and executeWithRetry() for suspending operations
+- **TagStandardizer.kt** - Tag normalization utility: Converts tag variations to standard forms (e.g., "italian food" → "italian"), removes noise words ("recipe", "food"), maps common patterns, deduplicates, used by TextRecipeParser during import
+- **UnitConverter.kt** - Cooking unit conversions: Imperial↔Metric (volume: cups/tbsp/tsp↔ml/L, weight: oz/lb↔g/kg, temperature: F↔C), smart helpers (volumeToMetric chooses ml/L), formatNumber
 
 ---
 > **Format Guidelines**:

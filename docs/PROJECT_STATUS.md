@@ -197,14 +197,19 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 
 ### UX Improvements (Phase 5)
 - ✅ Recipe cards: Reduced size (image 180dp→140dp, padding 16dp→12dp), smaller typography (titleLarge→titleMedium, bodyMedium→bodySmall)
-- ✅ Recipe cards: Tags wrap to multiple lines with custom FlowRow implementation
-- ✅ Recipe cards: Favorite icon only shows when favorited, new "Add to Meal Plan" calendar button
+- ✅ Recipe cards: Tags wrap to multiple lines with custom FlowRow implementation, calendar icon for "Add to Meal Plan", favorite icon only when favorited
+- ✅ Recipe cards: Limited to max 3 tags with smart prioritization (cook method > cuisine > ingredients > meal type)
 - ✅ Recipe cards: "Add to Grocery List" moved to context menu (3-dot dropdown)
-- ✅ Recipe detail: Context menu with "Add to Grocery List" and "Add to Meal Plan" actions
+- ✅ Recipe detail: Tags now wrap properly (was squishing horizontally, now uses FlowRow like cards)
+- ✅ Recipe detail: Context menu with "Add to Grocery List" and "Add to Meal Plan" actions (now fully wired with picker dialogs)
+- ✅ Recipe editor: Chip-based tag UI replacing comma-separated input (removable chips + add field for mobile-friendly editing)
 - ✅ Meal plan cards: Icon-only buttons (Edit, Generate List), context menu for Duplicate/Delete
 - ✅ Meal plan: Auto-populate name from selected dates ("Nov 18-22" format)
-- ✅ Import screens: Discard button with confirmation dialog for escaping auto-save
-- ✅ Landscape mode: Recipe and meal plan cards display in 2-column grid on landscape orientation
+- ✅ Meal plan picker: Reusable dialog for adding recipes to plans from cards/detail screen (select existing or create new)
+- ✅ Import: Tag standardization during parsing (normalizes "italian food"→"italian", removes noise words, deduplicates)
+- ✅ Import: Discard button with confirmation dialog for escaping auto-save
+- ✅ Navigation drawer: Collapse button even in landscape/tablet mode for more screen space (FloatingActionButton to re-expand)
+- ✅ Landscape mode: Recipe and meal plan cards display in 2-column grid
 - ✅ Error handling: ErrorHandler utility, SnackbarHost for error display, BackHandler for system back button
 
 ---

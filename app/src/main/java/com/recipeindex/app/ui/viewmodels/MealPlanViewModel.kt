@@ -245,6 +245,29 @@ class MealPlanViewModel(
     }
 
     /**
+     * Add recipe to existing meal plan
+     */
+    fun addRecipeToPlan(planId: Long, recipeId: Long) {
+        viewModelScope.launch {
+            try {
+                val plan = mealPlanManager.getMealPlanById(planId)
+                if (plan != null) {
+                    val updatedRecipeIds = plan.recipeIds + recipeId
+                    val updatedPlan = plan.copy(recipeIds = updatedRecipeIds)
+                    updateMealPlan(updatedPlan)
+                    DebugConfig.debugLog(DebugConfig.Category.UI, "Added recipe $recipeId to plan $planId")
+                } else {
+                    _error.value = "Meal plan not found"
+                    DebugConfig.debugLog(DebugConfig.Category.UI, "addRecipeToPlan: Plan $planId not found")
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to add recipe to plan: ${e.message}"
+                DebugConfig.error(DebugConfig.Category.UI, "addRecipeToPlan failed", e)
+            }
+        }
+    }
+
+    /**
      * Clear error message
      */
     fun clearError() {
