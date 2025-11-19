@@ -347,6 +347,25 @@ class GroceryListManager(
             remaining = remaining.replace(Regex("\\b$modifier\\b", RegexOption.IGNORE_CASE), "")
         }
 
+        // Check for canned/packaged items pattern: "9 oz can of tomatoes" or "14.5 oz can tomatoes"
+        val cannedItemPattern = Regex("^([\\d./]+)\\s+(oz|g|ml|lb)\\s+(can|jar|bottle|pack|package)s?\\s+(?:of\\s+)?(.+)", RegexOption.IGNORE_CASE)
+        val cannedMatch = cannedItemPattern.find(remaining)
+
+        if (cannedMatch != null) {
+            val sizeQuantity = cannedMatch.groupValues[1]
+            val sizeUnit = cannedMatch.groupValues[2]
+            val containerType = cannedMatch.groupValues[3].lowercase()
+            val itemName = cannedMatch.groupValues[4].trim()
+
+            return ParsedIngredient(
+                name = itemName,
+                quantity = 1.0,
+                unit = containerType,
+                recipeId = recipeId,
+                notes = "$sizeQuantity $sizeUnit"
+            )
+        }
+
         // Extract quantity and unit
         val quantityPattern = Regex("^([\\d./]+)\\s*([a-zA-Z]+)?\\s+(.*)")
         val match = quantityPattern.find(remaining)
@@ -399,6 +418,9 @@ class GroceryListManager(
             val totalQuantity = items.mapNotNull { it.quantity }.sum()
             val sourceRecipes = items.mapNotNull { it.recipeId }.distinct()
 
+            // Combine notes from all items (e.g., multiple cans with different sizes)
+            val combinedNotes = items.mapNotNull { it.notes }.distinct().joinToString(", ")
+
             GroceryItem(
                 listId = 0, // Will be set when inserted
                 name = items.first().name, // Use original casing from first item
@@ -406,7 +428,7 @@ class GroceryListManager(
                 unit = items.first().unit, // Use original casing from first item
                 isChecked = false,
                 sourceRecipeIds = sourceRecipes,
-                notes = null
+                notes = combinedNotes.ifBlank { null }
             )
         }
     }
@@ -418,6 +440,7 @@ class GroceryListManager(
         val name: String,
         val quantity: Double?,
         val unit: String?,
-        val recipeId: Long?
+        val recipeId: Long?,
+        val notes: String? = null
     )
 }
