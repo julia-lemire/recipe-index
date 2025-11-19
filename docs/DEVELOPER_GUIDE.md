@@ -1,7 +1,7 @@
 # Recipe Index Developer Guide
 
 > **Purpose**: Quick lookup ("I need to...") and architecture patterns (HOW to implement)
-> **Last Updated**: 2025-11-18
+> **Last Updated**: 2025-11-19
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -92,6 +92,11 @@
 - **Settings**: `data/AppSettings.kt`
 - **StateFlow-based**: Exposes preferences as StateFlow for reactive UI
 
+### Handle Errors and User Messages
+- **Utility**: `utils/ErrorHandler.kt`
+- **Pattern**: See [Error Handling with Snackbar Pattern](#error-handling-with-snackbar-pattern)
+- **Components**: SnackbarHostState, SnackbarHost (Material 3), LaunchedEffect for monitoring
+
 
 ---
 
@@ -177,6 +182,17 @@
 - Flow.collect() never completes (keeps listening), so finally block never executes
 
 **Example**: RecipeViewModel loadRecipes() sets loading false inside collect block, not in finally
+
+### Error Handling with Snackbar Pattern
+**Use when**: Any screen that needs to display errors or messages to the user
+**Structure**:
+- Create `val snackbarHostState = remember { SnackbarHostState() }` at composable top level
+- Add `LaunchedEffect(uiState)` to monitor ViewModel error states and call `snackbarHostState.showSnackbar()`
+- Add `snackbarHost = { SnackbarHost(snackbarHostState) }` parameter to Scaffold
+- Use `ErrorHandler.getErrorMessage(throwable)` for user-friendly error text
+- Combine with BackHandler for validation errors that should prevent navigation
+
+**Example**: ImportUrlScreen monitors `ImportViewModel.UiState` with LaunchedEffect, shows errors via SnackbarHost at bottom of screen, BackHandler validates before navigating back
 
 
 ---

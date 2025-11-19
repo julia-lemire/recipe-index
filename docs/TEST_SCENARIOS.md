@@ -1,7 +1,7 @@
 # Recipe Index Test Scenarios
 
 > **Purpose**: Test coverage and scenarios to implement for automated testing
-> **Last Updated**: 2025-11-18
+> **Last Updated**: 2025-11-19
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -229,5 +229,30 @@
 - [ ] MealPlan foreign key to Recipe enforces referential integrity (planned)
 - [ ] GroceryItem foreign key to GroceryList enforces referential integrity (planned)
 - [ ] Cascade delete: deleting GroceryList deletes all GroceryItems (planned)
+
+### Error Handling
+
+#### ErrorHandler Utility
+- [ ] getErrorMessage() returns user-friendly message for UnknownHostException (planned)
+- [ ] getErrorMessage() returns user-friendly message for SocketTimeoutException (planned)
+- [ ] getErrorMessage() returns user-friendly message for IOException (planned)
+- [ ] getErrorMessage() returns user-friendly message for IllegalArgumentException (planned)
+- [ ] getErrorMessage() returns user-friendly message for IllegalStateException (planned)
+- [ ] getErrorMessage() returns generic message for unknown exceptions (planned)
+- [ ] handleResult() calls onSuccess callback for successful Result (planned)
+- [ ] handleResult() calls onError callback for failed Result (planned)
+- [ ] handleResult() uses custom error message when provided (planned)
+- [ ] executeSafely() returns success Result when operation succeeds (planned)
+- [ ] executeSafely() returns failure Result when operation throws exception (planned)
+- [ ] executeWithRetry() succeeds on first attempt when operation succeeds (planned)
+- [ ] executeWithRetry() retries on failure and succeeds on retry (planned)
+- [ ] executeWithRetry() exhausts retries and returns final failure (planned)
+
+#### UI Error Display
+- [ ] SnackbarHost displays error message from ViewModel state (planned - UI test)
+- [ ] BackHandler validates data before navigating back (planned - UI test)
+- [ ] BackHandler shows error via Snackbar and prevents navigation when validation fails (planned - UI test)
+- [ ] Import screens show network errors via Snackbar (planned - UI test)
+- [ ] Import screens show parsing errors via Snackbar (planned - UI test)
 
 ---

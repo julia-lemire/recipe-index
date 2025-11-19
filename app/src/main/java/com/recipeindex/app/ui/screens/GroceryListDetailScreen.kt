@@ -1,5 +1,6 @@
 package com.recipeindex.app.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -43,6 +44,7 @@ fun GroceryListDetailScreen(
 
     val groceryList by groceryListViewModel.getCurrentList(listId).collectAsState(initial = null)
     val items by groceryListViewModel.getItems(listId).collectAsState(initial = emptyList())
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var manualEntryText by remember { mutableStateOf("") }
     var showItemDetailDialog by remember { mutableStateOf(false) }
@@ -50,6 +52,11 @@ fun GroceryListDetailScreen(
     var showRecipePicker by remember { mutableStateOf(false) }
     var showMealPlanPicker by remember { mutableStateOf(false) }
     var showClearCheckedDialog by remember { mutableStateOf(false) }
+
+    // Handle system back button
+    BackHandler {
+        onBack()
+    }
 
     if (groceryList == null) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -59,6 +66,7 @@ fun GroceryListDetailScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(groceryList!!.name) },

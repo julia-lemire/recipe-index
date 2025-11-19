@@ -2,6 +2,7 @@ package com.recipeindex.app.ui.screens
 
 import android.content.Context
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -45,6 +46,30 @@ fun ImportPhotoScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedPhotoUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var showDiscardDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show error messages via Snackbar
+    LaunchedEffect(uiState) {
+        when (val state = uiState) {
+            is ImportPhotoViewModel.UiState.SelectPhoto -> {
+                state.errorMessage?.let { error ->
+                    snackbarHostState.showSnackbar(
+                        message = error,
+                        duration = SnackbarDuration.Long
+                    )
+                }
+            }
+            is ImportPhotoViewModel.UiState.Editing -> {
+                state.errorMessage?.let { error ->
+                    snackbarHostState.showSnackbar(
+                        message = error,
+                        duration = SnackbarDuration.Long
+                    )
+                }
+            }
+            else -> { /* No error to show */ }
+        }
+    }
 
     // Camera launcher
     var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
@@ -91,6 +116,11 @@ fun ImportPhotoScreen(
         }
     }
 
+    // Handle system back button
+    BackHandler {
+        handleBack()
+    }
+
     // Discard confirmation dialog
     if (showDiscardDialog) {
         AlertDialog(
@@ -117,6 +147,7 @@ fun ImportPhotoScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Import from Photo") },
