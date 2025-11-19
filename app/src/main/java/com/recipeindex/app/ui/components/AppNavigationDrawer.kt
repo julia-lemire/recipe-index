@@ -149,7 +149,7 @@ private fun DrawerContent(
             "DrawerScreens size: ${Screen.drawerScreens.size}, currentRoute: $currentRoute"
         )
 
-        Screen.drawerScreens.forEach { screen ->
+        Screen.drawerScreens.filterNotNull().forEach { screen ->
             DebugConfig.debugLog(
                 DebugConfig.Category.NAVIGATION,
                 "Rendering drawer item: ${screen.title} (route: ${screen.route}), selected: ${currentRoute == screen.route}"
