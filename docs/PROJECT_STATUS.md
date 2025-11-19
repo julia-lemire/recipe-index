@@ -53,8 +53,8 @@
 
 ## 1. Project Overview
 
-**Current Phase:** Grocery Lists (Phase 4) - COMPLETE
-**Current Focus:** Phase 4 completed with grocery list generation, manual entry, intelligent consolidation, and shopping UI
+**Current Phase:** Advanced Features (Phase 5) - IN PROGRESS
+**Current Focus:** UX improvements (card compaction, icon buttons, context menus), intelligent parsing (canned items), meal plan auto-naming from dates, settings infrastructure
 
 Recipe Index: Offline-first Android app for home cooks to store, organize, and plan meals with recipes from URLs/PDFs/photos.
 
@@ -183,6 +183,27 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Recipe-to-list integration ("Add to Grocery List" button on recipe cards)
 - ✅ Meal plan-to-list integration ("Generate List" button on meal plan cards)
 - ✅ Full navigation integration (list of lists, detail view with all functionality)
+- ✅ Canned/packaged items parsing ("9 oz can of tomatoes" → qty:1, unit:"can", name:"tomatoes", notes:"9 oz")
+- ✅ Item interaction: click to toggle checkbox, long-press for detail dialog
+- ✅ Units dropdown in detail dialog (none, cup, tbsp, tsp, oz, lb, g, kg, ml, L, can, pack, bottle, jar)
+
+### User Settings (Phase 5)
+- ✅ AppSettings data class with UnitSystem and TemperatureUnit enums
+- ✅ SettingsManager with SharedPreferences persistence and StateFlow reactivity
+- ✅ UnitConverter utility with volume/weight/temperature conversions (imperial ↔ metric)
+- ✅ SettingsViewModel delegates to SettingsManager
+- ✅ SettingsScreen with unit system, temperature, display preferences, recipe defaults
+- ✅ Full integration into MainActivity and Navigation
+
+### UX Improvements (Phase 5)
+- ✅ Recipe cards: Reduced size (image 180dp→140dp, padding 16dp→12dp), smaller typography (titleLarge→titleMedium, bodyMedium→bodySmall)
+- ✅ Recipe cards: Tags wrap to multiple lines with custom FlowRow implementation
+- ✅ Recipe cards: Favorite icon only shows when favorited, new "Add to Meal Plan" calendar button
+- ✅ Recipe cards: "Add to Grocery List" moved to context menu (3-dot dropdown)
+- ✅ Recipe detail: Context menu with "Add to Grocery List" and "Add to Meal Plan" actions
+- ✅ Meal plan cards: Icon-only buttons (Edit, Generate List), context menu for Duplicate/Delete
+- ✅ Meal plan: Auto-populate name from selected dates ("Nov 18-22" format)
+- ✅ Import screens: Discard button with confirmation dialog for escaping auto-save
 
 ---
 
@@ -195,7 +216,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [x] DebugConfig utility
 - [x] Navigation drawer (responsive)
 - [x] Screen scaffolding
-- [ ] AppSettings with StateFlow
+- [x] AppSettings with SettingsManager (StateFlow + SharedPreferences)
 
 ### Phase 1: Recipe Management
 - [x] Recipe entity/DAO
@@ -230,8 +251,16 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [ ] **More testing needed**: Grocery lists with various recipes (different units, fraction parsing, edge cases)
 
 ### Phase 5: Advanced
-- [ ] Portion scaling
-- [ ] Unit conversion
+- [x] Settings infrastructure (AppSettings, SettingsManager, SettingsScreen)
+- [x] Unit converter utility
+- [x] Canned items intelligent parsing
+- [x] UX improvements (card compaction, icon buttons, context menus)
+- [x] Meal plan auto-naming from dates
+- [ ] Portion scaling with servings dropdown
+- [ ] Unit conversion display in recipes (with toggle for original units)
+- [ ] Granular unit preferences by category (weight, liquid)
+- [ ] Full-screen recipe selection for meal plans (grid layout, 2/row on phone)
+- [ ] Landscape mode: 2 cards per row (recipes/meal plans)
 - [ ] Nutritional info
 - [ ] Recipe suggestions
 - [ ] Cooking mode
