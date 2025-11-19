@@ -265,8 +265,10 @@ fun MealPlanningScreen(
                 planForGroceryList = null
             },
             onCreateNew = { listName ->
-                val newListId = groceryListViewModel.createListAndReturn(listName)
-                groceryListViewModel.addMealPlanToList(newListId, planForGroceryList!!.id)
+                // Create list first, then add meal plan in the success callback
+                groceryListViewModel.createList(listName) { newListId ->
+                    groceryListViewModel.addMealPlanToList(newListId, planForGroceryList!!.id)
+                }
                 showListPicker = false
                 planForGroceryList = null
             }
