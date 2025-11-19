@@ -204,6 +204,8 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Meal plan cards: Icon-only buttons (Edit, Generate List), context menu for Duplicate/Delete
 - ✅ Meal plan: Auto-populate name from selected dates ("Nov 18-22" format)
 - ✅ Import screens: Discard button with confirmation dialog for escaping auto-save
+- ✅ Landscape mode: Recipe and meal plan cards display in 2-column grid on landscape orientation
+- ✅ Error handling: ErrorHandler utility, SnackbarHost for error display, BackHandler for system back button
 
 ---
 
@@ -260,7 +262,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [ ] Unit conversion display in recipes (with toggle for original units)
 - [ ] Granular unit preferences by category (weight, liquid)
 - [ ] Full-screen recipe selection for meal plans (grid layout, 2/row on phone)
-- [ ] Landscape mode: 2 cards per row (recipes/meal plans)
+- [x] Landscape mode: 2 cards per row (recipes/meal plans)
 - [ ] Nutritional info
 - [ ] Recipe suggestions
 - [ ] Cooking mode
