@@ -3,9 +3,12 @@ package com.recipeindex.app.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
@@ -305,6 +310,8 @@ private fun EditRecipeContent(
     onSave: () -> Unit,
     errorMessage: String?
 ) {
+    var tagInput by remember { mutableStateOf("") }
+
     Column(
         modifier = modifier
             .padding(16.dp)
@@ -419,26 +426,72 @@ private fun EditRecipeContent(
             )
         }
 
-        // Tags
-        OutlinedTextField(
-            value = recipe.tags.joinToString(", "),
-            onValueChange = {
-                val tags = it.split(",").map { tag -> tag.trim() }.filter { tag -> tag.isNotBlank() }
-                onRecipeChange(recipe.copy(tags = tags))
-            },
-            label = { Text("Tags (comma separated)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Notes
-        OutlinedTextField(
-            value = recipe.notes ?: "",
-            onValueChange = { onRecipeChange(recipe.copy(notes = it.ifBlank { null })) },
-            label = { Text("Notes") },
+        // Tags (chip-based)
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            minLines = 3,
-            maxLines = 6
-        )
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Tags",
+                style = MaterialTheme.typography.labelLarge
+            )
+
+            // Display existing tags as removable chips
+            if (recipe.tags.isNotEmpty()) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalSpacing = 6.dp,
+                    verticalSpacing = 6.dp
+                ) {
+                    recipe.tags.forEach { tag ->
+                        InputChip(
+                            selected = false,
+                            onClick = {
+                                val updatedTags = recipe.tags.filter { it != tag }
+                                onRecipeChange(recipe.copy(tags = updatedTags))
+                            },
+                            label = { Text(tag) },
+                            trailingIcon = {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Remove $tag",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Input field to add new tags
+            OutlinedTextField(
+                value = tagInput,
+                onValueChange = { tagInput = it },
+                label = { Text("Add tag") },
+                placeholder = { Text("e.g., italian, quick") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                ),
+                trailingIcon = {
+                    if (tagInput.isNotBlank()) {
+                        IconButton(
+                            onClick = {
+                                val newTag = tagInput.trim()
+                                if (newTag.isNotBlank() && !recipe.tags.contains(newTag)) {
+                                    val updatedTags = recipe.tags + newTag
+                                    onRecipeChange(recipe.copy(tags = updatedTags))
+                                }
+                                tagInput = ""
+                            }
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Add tag")
+                        }
+                    }
+                }
+            )
+        }
 
         // Save button
         Button(
@@ -449,6 +502,69 @@ private fun EditRecipeContent(
                     recipe.instructions.isNotEmpty()
         ) {
             Text("Save Recipe")
+        }
+    }
+}
+
+/**
+ * Custom FlowRow implementation for wrapping tags
+ */
+@Composable
+private fun FlowRow(
+    modifier: Modifier = Modifier,
+    horizontalSpacing: androidx.compose.ui.unit.Dp = 0.dp,
+    verticalSpacing: androidx.compose.ui.unit.Dp = 0.dp,
+    content: @Composable () -> Unit
+) {
+    Layout(
+        content = content,
+        modifier = modifier
+    ) { measurables, constraints ->
+        val hSpacing = horizontalSpacing.roundToPx()
+        val vSpacing = verticalSpacing.roundToPx()
+
+        val placeables = measurables.map { measurable ->
+            measurable.measure(constraints.copy(minWidth = 0))
+        }
+
+        val rows = mutableListOf<MutableList<androidx.compose.ui.layout.Placeable>>()
+        var currentRow = mutableListOf<androidx.compose.ui.layout.Placeable>()
+        var currentRowWidth = 0
+
+        placeables.forEach { placeable ->
+            val itemWidth = placeable.width + hSpacing
+
+            if (currentRowWidth + placeable.width > constraints.maxWidth && currentRow.isNotEmpty()) {
+                rows.add(currentRow)
+                currentRow = mutableListOf()
+                currentRowWidth = 0
+            }
+
+            currentRow.add(placeable)
+            currentRowWidth += itemWidth
+        }
+
+        if (currentRow.isNotEmpty()) {
+            rows.add(currentRow)
+        }
+
+        val height = rows.mapIndexed { index, row ->
+            row.maxOf { it.height } + if (index < rows.size - 1) vSpacing else 0
+        }.sum()
+
+        layout(constraints.maxWidth, height) {
+            var yPosition = 0
+            rows.forEach { row ->
+                var xPosition = 0
+                val rowHeight = row.maxOf { it.height }
+
+                row.forEach { placeable ->
+                    placeable.placeRelative(xPosition, yPosition)
+                    xPosition += placeable.width + hSpacing
+                }
+
+                yPosition += rowHeight + vSpacing
+            }
         }
     }
 }
