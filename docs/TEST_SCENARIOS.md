@@ -53,46 +53,111 @@
 > **Status**: Initial tests implemented for Phases 3-4
 
 ### Current Coverage
-- **Unit Tests**: 38 tests in 2 files (~8% file coverage, untested: RecipeManager, all parsers, DAOs)
+- **Unit Tests**: 146 tests in 6 files (~25% file coverage, untested: DAOs, PhotoRecipeParser, PdfRecipeParser)
+  - ✅ RecipeManagerTest.kt (28 tests)
+  - ✅ TextRecipeParserTest.kt (31 tests)
+  - ✅ SchemaOrgRecipeParserTest.kt (25 tests)
+  - ✅ ConvertersTest.kt (24 tests)
   - ✅ GroceryListManagerTest.kt (22 tests)
   - ✅ MealPlanManagerTest.kt (16 tests)
 - **Integration Tests**: 0 (planned: DAO tests, database migrations)
 - **UI Tests**: 0 (planned: screen interactions, navigation flows)
-- **Total Scenarios**: 38 implemented, 50+ planned
+- **Total Scenarios**: 146 implemented, 30+ planned
 
 ### Coverage Gaps (Priority Order)
-1. **CRITICAL**: TextRecipeParser (PDF/Photo import depends on this)
-2. **CRITICAL**: RecipeManager (core CRUD operations)
-3. **HIGH**: SchemaOrgRecipeParser (URL import)
-4. **HIGH**: Database migrations (v1→v2→v3)
-5. **MEDIUM**: DAOs (RecipeDao, MealPlanDao, GroceryListDao, GroceryItemDao)
-6. **MEDIUM**: PdfRecipeParser, PhotoRecipeParser
-7. **LOW**: ViewModels (mostly delegation, integration tests preferred)
-8. **LOW**: UI screens (manual testing acceptable for MVP)
+1. ~~**CRITICAL**: TextRecipeParser~~ ✅ COMPLETED (31 tests)
+2. ~~**CRITICAL**: RecipeManager~~ ✅ COMPLETED (28 tests)
+3. ~~**CRITICAL**: TypeConverters~~ ✅ COMPLETED (24 tests)
+4. ~~**HIGH**: SchemaOrgRecipeParser~~ ✅ COMPLETED (25 tests)
+5. **HIGH**: Database migrations (v1→v2→v3)
+6. **MEDIUM**: DAOs (RecipeDao, MealPlanDao, GroceryListDao, GroceryItemDao)
+7. **MEDIUM**: PdfRecipeParser, PhotoRecipeParser
+8. **LOW**: ViewModels (mostly delegation, integration tests preferred)
+9. **LOW**: UI screens (manual testing acceptable for MVP)
 
 ### Next Testing Priorities
-1. RecipeManager (create, update, delete, search, favorite toggle)
-2. TextRecipeParser (section detection, ingredient/instruction validation, noise filtering)
-3. SchemaOrgRecipeParser (Schema.org JSON-LD parsing, ISO 8601 durations, fallback handling)
-4. Database migration tests (Room v1→v2→v3 with data preservation)
+1. ~~RecipeManager~~ ✅ COMPLETED
+2. ~~TextRecipeParser~~ ✅ COMPLETED
+3. ~~SchemaOrgRecipeParser~~ ✅ COMPLETED
+4. ~~TypeConverters~~ ✅ COMPLETED
+5. Database migration tests (Room v1→v2→v3 with data preservation)
+6. DAOs (integration tests with in-memory database)
 
 ---
 
 ## Test Scenarios by Feature
 
 ### Recipe Management
-- [ ] Create recipe with all required fields (planned)
-- [ ] Update recipe preserves database ID (planned)
-- [ ] Delete recipe removes from database (planned)
-- [ ] Search recipes by title/ingredients (planned)
-- [ ] Scale recipe portions updates ingredient quantities (planned)
+- [x] Create recipe with valid data succeeds (RecipeManagerTest.kt:createRecipe succeeds with valid recipe)
+- [x] Create recipe fails with blank title (RecipeManagerTest.kt:createRecipe fails with blank title)
+- [x] Create recipe fails with empty ingredients (RecipeManagerTest.kt:createRecipe fails with empty ingredients)
+- [x] Create recipe fails with empty instructions (RecipeManagerTest.kt:createRecipe fails with empty instructions)
+- [x] Create recipe fails with zero servings (RecipeManagerTest.kt:createRecipe fails with zero servings)
+- [x] Create recipe fails with negative servings (RecipeManagerTest.kt:createRecipe with negative servings fails)
+- [x] Create recipe handles all optional fields (RecipeManagerTest.kt:createRecipe handles all optional fields)
+- [x] Create recipe allows minimal valid recipe (RecipeManagerTest.kt:validateRecipe allows single ingredient and instruction)
+- [x] Update recipe preserves database ID (RecipeManagerTest.kt:updateRecipe preserves database ID)
+- [x] Update recipe preserves createdAt timestamp (RecipeManagerTest.kt:updateRecipe succeeds with valid recipe)
+- [x] Update recipe validates same as create (RecipeManagerTest.kt:updateRecipe validates same as create)
+- [x] Delete recipe removes from database (RecipeManagerTest.kt:deleteRecipe removes recipe from database)
+- [x] Delete recipe handles DAO errors (RecipeManagerTest.kt:deleteRecipe handles DAO errors)
+- [x] Toggle favorite sets to true (RecipeManagerTest.kt:toggleFavorite sets favorite to true)
+- [x] Toggle favorite sets to false (RecipeManagerTest.kt:toggleFavorite sets favorite to false)
+- [x] Toggle favorite handles errors (RecipeManagerTest.kt:toggleFavorite handles DAO errors)
+- [x] getAllRecipes returns Flow from DAO (RecipeManagerTest.kt:getAllRecipes returns Flow from DAO)
+- [x] getRecipeById returns Flow from DAO (RecipeManagerTest.kt:getRecipeById returns Flow from DAO)
+- [x] getFavoriteRecipes returns Flow from DAO (RecipeManagerTest.kt:getFavoriteRecipes returns Flow from DAO)
+- [x] Search recipes passes query to DAO (RecipeManagerTest.kt:searchRecipes passes query to DAO)
+- [x] Scale recipe updates servings (RecipeManagerTest.kt:scaleRecipe updates servings)
+- [x] Scale recipe down preserves structure (RecipeManagerTest.kt:scaleRecipe down preserves recipe structure)
 
 ### Recipe Import
-- [ ] URL import extracts recipe from valid webpage (planned)
-- [ ] PDF import parses structured recipe document (planned)
-- [ ] Photo OCR import extracts text from image (planned)
-- [ ] Import validates required fields before saving (planned)
-- [ ] Import handles malformed/missing data gracefully (planned)
+
+#### URL Import (SchemaOrgRecipeParser)
+- [x] Parse Schema.org JSON-LD recipe (SchemaOrgRecipeParserTest.kt:parse extracts recipe from Schema org JSON-LD)
+- [x] Parse @graph array with Recipe (SchemaOrgRecipeParserTest.kt:parse handles @graph array with Recipe)
+- [x] Fallback to Open Graph when no Schema.org (SchemaOrgRecipeParserTest.kt:parse falls back to Open Graph)
+- [x] Fail when no recipe data found (SchemaOrgRecipeParserTest.kt:parse fails when no recipe data found)
+- [x] Default to 4 servings when not specified (SchemaOrgRecipeParserTest.kt:parse defaults to 4 servings)
+- [x] Parse ISO 8601 duration - minutes only (SchemaOrgRecipeParserTest.kt:parseIsoDuration handles minutes only)
+- [x] Parse ISO 8601 duration - hours only (SchemaOrgRecipeParserTest.kt:parseIsoDuration handles hours only)
+- [x] Parse ISO 8601 duration - hours and minutes (SchemaOrgRecipeParserTest.kt:parseIsoDuration handles hours and minutes)
+- [x] Parse servings from various formats (SchemaOrgRecipeParserTest.kt:parseServings extracts number from string)
+- [x] Parse image URL from string (SchemaOrgRecipeParserTest.kt:parseImage handles string URL)
+- [x] Parse image from ImageObject (SchemaOrgRecipeParserTest.kt:parseImage handles ImageObject)
+- [x] Parse image from array (SchemaOrgRecipeParserTest.kt:parseImage handles array of URLs)
+- [x] Parse HowToStep instructions (SchemaOrgRecipeParserTest.kt:parseInstructions handles HowToStep objects)
+- [x] Parse HowToSection with steps (SchemaOrgRecipeParserTest.kt:parseInstructions handles HowToSection)
+- [x] Parse comma-separated tags (SchemaOrgRecipeParserTest.kt:parseJsonArrayToStrings handles comma-separated string)
+
+#### Text Import (TextRecipeParser)
+- [x] Detect ingredients section (TextRecipeParserTest.kt:detectSections finds ingredients section)
+- [x] Detect instructions with variations (TextRecipeParserTest.kt:detectSections finds instructions with variations)
+- [x] Skip footer with ingredients keyword (TextRecipeParserTest.kt:detectSections skips footer with ingredients keyword)
+- [x] Detect servings variations (TextRecipeParserTest.kt:detectSections finds servings variations)
+- [x] Filter save recipe CTAs (TextRecipeParserTest.kt:isWebsiteNoise detects save recipe CTAs)
+- [x] Filter footer text (TextRecipeParserTest.kt:isWebsiteNoise detects footer text)
+- [x] Allow valid recipe content (TextRecipeParserTest.kt:isWebsiteNoise allows valid recipe content)
+- [x] Validate ingredient with quantities (TextRecipeParserTest.kt:looksLikeIngredient accepts lines with quantities)
+- [x] Validate ingredient with food words (TextRecipeParserTest.kt:looksLikeIngredient accepts common food words)
+- [x] Reject short lines as ingredients (TextRecipeParserTest.kt:looksLikeIngredient rejects very short lines)
+- [x] Validate instruction with cooking verbs (TextRecipeParserTest.kt:looksLikeInstruction accepts lines with cooking verbs)
+- [x] Validate instruction with temperature/time (TextRecipeParserTest.kt:looksLikeInstruction accepts lines with temperature or time)
+- [x] Reject footer patterns in instructions (TextRecipeParserTest.kt:looksLikeInstruction rejects footer patterns)
+- [x] Parse time - minutes only (TextRecipeParserTest.kt:parseTimeString handles minutes only)
+- [x] Parse time - hours only (TextRecipeParserTest.kt:parseTimeString handles hours only)
+- [x] Parse time - hours and minutes (TextRecipeParserTest.kt:parseTimeString handles hours and minutes)
+- [x] Clean ingredient removes bullets (TextRecipeParserTest.kt:cleanIngredient removes bullets and numbering)
+- [x] Clean instruction removes step numbers (TextRecipeParserTest.kt:cleanInstruction removes step numbers)
+- [x] Parse well-formed recipe (TextRecipeParserTest.kt:parseText succeeds with well-formed recipe)
+- [x] Filter noise from ingredients (TextRecipeParserTest.kt:parseText filters website noise from ingredients)
+- [x] Filter noise from instructions (TextRecipeParserTest.kt:parseText filters website noise from instructions)
+- [x] Fail with empty text (TextRecipeParserTest.kt:parseText fails with empty text)
+- [x] Set correct source (TextRecipeParserTest.kt:parseText sets correct source)
+
+#### PDF/Photo Import
+- [ ] PDF import parses structured recipe document (planned - PdfRecipeParser delegates to TextRecipeParser)
+- [ ] Photo OCR import extracts text from image (planned - PhotoRecipeParser delegates to TextRecipeParser)
 
 ### Meal Planning
 - [x] Create meal plan with flexible date range (Sun-Thu, single day) (MealPlanManagerTest.kt:createMealPlan accepts flexible date range)
@@ -139,12 +204,30 @@
 - [ ] getCheckedCount returns correct checked count (planned - DAO integration test)
 
 ### Database
+
+#### TypeConverters
+- [x] List<String> serializes to delimited string (ConvertersTest.kt:fromStringList serializes list to delimited string)
+- [x] List<String> deserializes from delimited string (ConvertersTest.kt:toStringList deserializes delimited string to list)
+- [x] List<String> handles empty list/string (ConvertersTest.kt:toStringList handles empty string, fromStringList handles empty list)
+- [x] List<String> handles single item (ConvertersTest.kt:fromStringList/toStringList handles single item)
+- [x] List<String> roundtrip preserves data (ConvertersTest.kt:stringList roundtrip preserves data)
+- [x] List<String> handles special characters (ConvertersTest.kt:stringList handles items with special characters)
+- [x] List<String> handles Unicode (ConvertersTest.kt:stringList handles Unicode characters)
+- [x] List<Long> serializes to comma-delimited string (ConvertersTest.kt:fromLongList serializes list to comma-delimited string)
+- [x] List<Long> deserializes from comma-delimited string (ConvertersTest.kt:toLongList deserializes comma-delimited string to list)
+- [x] List<Long> handles empty list/string (ConvertersTest.kt:toLongList handles empty string, fromLongList handles empty list)
+- [x] List<Long> handles single item (ConvertersTest.kt:fromLongList/toLongList handles single item)
+- [x] List<Long> roundtrip preserves data (ConvertersTest.kt:longList roundtrip preserves data)
+- [x] List<Long> handles large numbers (ConvertersTest.kt:longList handles large numbers)
+- [x] List<Long> handles many items (ConvertersTest.kt:longList handles many items)
+- [x] RecipeSource converts all enum values (ConvertersTest.kt:fromRecipeSource/toRecipeSource converts all values)
+- [x] RecipeSource roundtrip preserves data (ConvertersTest.kt:recipeSource roundtrip preserves data)
+
+#### Migrations
 - [ ] Room database migration v1→v2 adds MealPlan table (planned)
 - [ ] Room database migration v2→v3 adds GroceryList and GroceryItem tables (planned)
 - [ ] MealPlan foreign key to Recipe enforces referential integrity (planned)
 - [ ] GroceryItem foreign key to GroceryList enforces referential integrity (planned)
 - [ ] Cascade delete: deleting GroceryList deletes all GroceryItems (planned)
-- [ ] TypeConverters correctly serialize/deserialize List<Long> (planned)
-- [ ] TypeConverters correctly serialize/deserialize List<String> (planned)
 
 ---
