@@ -6,7 +6,8 @@ package com.recipeindex.app.data
  * Persisted using DataStore for type-safe settings management
  */
 data class AppSettings(
-    /** Preferred unit system for displaying recipes */
+    /** Preferred unit system for displaying recipes (deprecated - use granular preferences) */
+    @Deprecated("Use liquidVolumePreference and weightPreference for granular control")
     val unitSystem: UnitSystem = UnitSystem.IMPERIAL,
 
     /** Temperature display preference */
@@ -16,7 +17,13 @@ data class AppSettings(
     val showPhotosInList: Boolean = true,
 
     /** Default servings for new recipes */
-    val defaultServings: Int = 4
+    val defaultServings: Int = 4,
+
+    /** Liquid volume unit preference (cups, tbsp, tsp, fl oz vs ml, L) */
+    val liquidVolumePreference: UnitSystem = UnitSystem.IMPERIAL,
+
+    /** Weight unit preference (oz, lbs vs g, kg) */
+    val weightPreference: UnitSystem = UnitSystem.IMPERIAL
 )
 
 /**

@@ -73,25 +73,25 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Unit System Section
-            SettingsSection(title = "Unit System") {
+            // Liquid Volume Units Section
+            SettingsSection(title = "Liquid Volume Units") {
                 Text(
-                    text = "Choose how recipe measurements are displayed",
+                    text = "Choose how liquid measurements are displayed (cups, tbsp, tsp, fl oz)",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Unit System Radio Buttons
+                // Liquid Volume Radio Buttons
                 UnitSystem.values().forEach { unit ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = settings.unitSystem == unit,
-                            onClick = { viewModel.setUnitSystem(unit) }
+                            selected = settings.liquidVolumePreference == unit,
+                            onClick = { viewModel.setLiquidVolumePreference(unit) }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
@@ -99,15 +99,61 @@ fun SettingsScreen(
                                 text = when (unit) {
                                     UnitSystem.IMPERIAL -> "Imperial"
                                     UnitSystem.METRIC -> "Metric"
-                                    UnitSystem.BOTH -> "Both"
+                                    UnitSystem.BOTH -> "Show Both"
                                 },
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Text(
                                 text = when (unit) {
-                                    UnitSystem.IMPERIAL -> "Cups, tablespoons, ounces, pounds, °F"
-                                    UnitSystem.METRIC -> "Milliliters, grams, kilograms, °C"
-                                    UnitSystem.BOTH -> "Show both Imperial and Metric"
+                                    UnitSystem.IMPERIAL -> "Cups, tablespoons, teaspoons, fluid ounces"
+                                    UnitSystem.METRIC -> "Milliliters, liters"
+                                    UnitSystem.BOTH -> "Show both units (e.g., \"1 cup (237 ml)\")"
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            // Weight Units Section
+            SettingsSection(title = "Weight Units") {
+                Text(
+                    text = "Choose how weight measurements are displayed (oz, lbs)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Weight Radio Buttons
+                UnitSystem.values().forEach { unit ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = settings.weightPreference == unit,
+                            onClick = { viewModel.setWeightPreference(unit) }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = when (unit) {
+                                    UnitSystem.IMPERIAL -> "Imperial"
+                                    UnitSystem.METRIC -> "Metric"
+                                    UnitSystem.BOTH -> "Show Both"
+                                },
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Text(
+                                text = when (unit) {
+                                    UnitSystem.IMPERIAL -> "Ounces, pounds"
+                                    UnitSystem.METRIC -> "Grams, kilograms"
+                                    UnitSystem.BOTH -> "Show both units (e.g., \"1 lb (454 g)\")"
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant

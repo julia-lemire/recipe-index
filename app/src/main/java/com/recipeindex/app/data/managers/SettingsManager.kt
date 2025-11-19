@@ -37,7 +37,13 @@ class SettingsManager(context: Context) {
                 prefs.getString(KEY_TEMPERATURE_UNIT, TemperatureUnit.FAHRENHEIT.name) ?: TemperatureUnit.FAHRENHEIT.name
             ),
             showPhotosInList = prefs.getBoolean(KEY_SHOW_PHOTOS_IN_LIST, true),
-            defaultServings = prefs.getInt(KEY_DEFAULT_SERVINGS, 4)
+            defaultServings = prefs.getInt(KEY_DEFAULT_SERVINGS, 4),
+            liquidVolumePreference = UnitSystem.valueOf(
+                prefs.getString(KEY_LIQUID_VOLUME_PREFERENCE, UnitSystem.IMPERIAL.name) ?: UnitSystem.IMPERIAL.name
+            ),
+            weightPreference = UnitSystem.valueOf(
+                prefs.getString(KEY_WEIGHT_PREFERENCE, UnitSystem.IMPERIAL.name) ?: UnitSystem.IMPERIAL.name
+            )
         )
     }
 
@@ -78,6 +84,24 @@ class SettingsManager(context: Context) {
     }
 
     /**
+     * Update liquid volume unit preference
+     */
+    fun setLiquidVolumePreference(preference: UnitSystem) {
+        prefs.edit().putString(KEY_LIQUID_VOLUME_PREFERENCE, preference.name).apply()
+        _settings.value = _settings.value.copy(liquidVolumePreference = preference)
+        DebugConfig.debugLog(DebugConfig.Category.SETTINGS, "Liquid volume preference changed to: $preference")
+    }
+
+    /**
+     * Update weight unit preference
+     */
+    fun setWeightPreference(preference: UnitSystem) {
+        prefs.edit().putString(KEY_WEIGHT_PREFERENCE, preference.name).apply()
+        _settings.value = _settings.value.copy(weightPreference = preference)
+        DebugConfig.debugLog(DebugConfig.Category.SETTINGS, "Weight preference changed to: $preference")
+    }
+
+    /**
      * Reset all settings to defaults
      */
     fun resetToDefaults() {
@@ -91,5 +115,7 @@ class SettingsManager(context: Context) {
         private const val KEY_TEMPERATURE_UNIT = "temperature_unit"
         private const val KEY_SHOW_PHOTOS_IN_LIST = "show_photos_in_list"
         private const val KEY_DEFAULT_SERVINGS = "default_servings"
+        private const val KEY_LIQUID_VOLUME_PREFERENCE = "liquid_volume_preference"
+        private const val KEY_WEIGHT_PREFERENCE = "weight_preference"
     }
 }
