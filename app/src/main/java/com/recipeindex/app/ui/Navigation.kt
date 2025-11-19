@@ -145,6 +145,12 @@ fun RecipeIndexNavigation(
                     },
                     onToggleFavorite = { isFavorite ->
                         recipeViewModel.toggleFavorite(recipeId, isFavorite)
+                    },
+                    onAddToGroceryList = {
+                        // TODO: Show grocery list picker dialog
+                    },
+                    onAddToMealPlan = {
+                        // TODO: Navigate to meal plan selection
                     }
                 )
             }
