@@ -223,7 +223,9 @@ fun AddEditRecipeScreen(
                         tags.forEach { tag ->
                             InputChip(
                                 selected = false,
-                                onClick = { },
+                                onClick = {
+                                    tags = tags.filter { it != tag }
+                                },
                                 label = { Text(tag) },
                                 trailingIcon = {
                                     Icon(
@@ -231,9 +233,6 @@ fun AddEditRecipeScreen(
                                         contentDescription = "Remove $tag",
                                         modifier = Modifier.size(18.dp)
                                     )
-                                },
-                                onTrailingIconClick = {
-                                    tags = tags.filter { it != tag }
                                 }
                             )
                         }
