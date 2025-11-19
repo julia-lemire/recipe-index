@@ -5,20 +5,24 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.recipeindex.app.data.dao.GroceryItemDao
+import com.recipeindex.app.data.dao.GroceryListDao
 import com.recipeindex.app.data.dao.MealPlanDao
 import com.recipeindex.app.data.dao.RecipeDao
+import com.recipeindex.app.data.entities.GroceryItem
+import com.recipeindex.app.data.entities.GroceryList
 import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.data.entities.Recipe
 
 /**
  * AppDatabase - Single source of truth for offline-first storage
  *
- * Room database with Recipe and MealPlan tables
+ * Room database with Recipe, MealPlan, GroceryList, and GroceryItem tables
  * No cloud sync - fully local with Samsung Quick Share for sharing
  */
 @Database(
-    entities = [Recipe::class, MealPlan::class],
-    version = 2,
+    entities = [Recipe::class, MealPlan::class, GroceryList::class, GroceryItem::class],
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -27,6 +31,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun recipeDao(): RecipeDao
 
     abstract fun mealPlanDao(): MealPlanDao
+
+    abstract fun groceryListDao(): GroceryListDao
+
+    abstract fun groceryItemDao(): GroceryItemDao
 
     companion object {
         @Volatile
