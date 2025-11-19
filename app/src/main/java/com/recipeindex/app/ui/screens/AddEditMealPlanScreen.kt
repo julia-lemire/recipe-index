@@ -40,12 +40,20 @@ fun AddEditMealPlanScreen(
     var endDate by remember { mutableStateOf<Long?>(mealPlan?.endDate) }
     var selectedRecipeIds by remember { mutableStateOf(mealPlan?.recipeIds ?: emptyList()) }
     var notes by remember { mutableStateOf(mealPlan?.notes ?: "") }
+    var userHasEditedName by remember { mutableStateOf(mealPlan?.name?.isNotBlank() == true) }
 
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var showRecipePicker by remember { mutableStateOf(false) }
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
+
+    // Auto-set name from dates if user hasn't manually edited it
+    LaunchedEffect(startDate, endDate) {
+        if (!userHasEditedName && (startDate != null || endDate != null)) {
+            name = formatDateRange(startDate, endDate)
+        }
+    }
 
     // Auto-save logic when navigating back
     fun handleBack() {
@@ -114,7 +122,10 @@ fun AddEditMealPlanScreen(
             // Name field
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = {
+                    name = it
+                    userHasEditedName = true
+                },
                 label = { Text("Name *") },
                 placeholder = { Text("e.g., Nov 18-22, Thanksgiving Dinner") },
                 modifier = Modifier.fillMaxWidth(),
@@ -476,4 +487,44 @@ private fun SimpleDatePickerDialog(
 private fun formatDate(timestamp: Long): String {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     return dateFormat.format(Date(timestamp))
+}
+
+private fun formatDateRange(startDate: Long?, endDate: Long?): String {
+    if (startDate == null && endDate == null) return ""
+
+    if (startDate != null && endDate != null) {
+        val start = Date(startDate)
+        val end = Date(endDate)
+        val cal = Calendar.getInstance()
+
+        cal.time = start
+        val startMonth = SimpleDateFormat("MMM", Locale.getDefault()).format(start)
+        val startDay = cal.get(Calendar.DAY_OF_MONTH)
+        val startYear = cal.get(Calendar.YEAR)
+
+        cal.time = end
+        val endMonth = SimpleDateFormat("MMM", Locale.getDefault()).format(end)
+        val endDay = cal.get(Calendar.DAY_OF_MONTH)
+        val endYear = cal.get(Calendar.YEAR)
+
+        // Same month and year: "Nov 18-22"
+        if (startMonth == endMonth && startYear == endYear) {
+            return "$startMonth $startDay-$endDay"
+        }
+
+        // Same year, different months: "Nov 28 - Dec 5"
+        if (startYear == endYear) {
+            return "$startMonth $startDay - $endMonth $endDay"
+        }
+
+        // Different years: "Dec 28 - Jan 2"
+        return "$startMonth $startDay - $endMonth $endDay"
+    }
+
+    // Only one date set
+    if (startDate != null) {
+        return "From ${SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(startDate))}"
+    }
+
+    return "Until ${SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(endDate!!))}"
 }

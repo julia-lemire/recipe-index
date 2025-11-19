@@ -1,6 +1,8 @@
 package com.recipeindex.app.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -157,10 +159,12 @@ fun GroceryListDetailScreen(
                     items(items, key = { it.id }) { item ->
                         GroceryItemRow(
                             item = item,
-                            onCheckedChange = { checked ->
-                                groceryListViewModel.toggleItemChecked(item.id, checked)
-                            },
                             onClick = {
+                                // Short click: toggle checkbox
+                                groceryListViewModel.toggleItemChecked(item.id, !item.isChecked)
+                            },
+                            onLongClick = {
+                                // Long press: show detail dialog
                                 selectedItem = item
                                 showItemDetailDialog = true
                             }
@@ -289,23 +293,27 @@ fun GroceryListDetailScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun GroceryItemRow(
     item: GroceryItem,
-    onCheckedChange: (Boolean) -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
             .padding(vertical = 8.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Checkbox(
             checked = item.isChecked,
-            onCheckedChange = onCheckedChange
+            onCheckedChange = null // Read-only, controlled by row click
         )
 
         Column(modifier = Modifier.weight(1f)) {
@@ -355,6 +363,24 @@ private fun ItemDetailDialog(
     var quantity by remember { mutableStateOf(item.quantity?.toString() ?: "") }
     var unit by remember { mutableStateOf(item.unit ?: "") }
     var notes by remember { mutableStateOf(item.notes ?: "") }
+    var showUnitDropdown by remember { mutableStateOf(false) }
+
+    val availableUnits = listOf(
+        "" to "none",
+        "cup" to "cup",
+        "tbsp" to "tbsp",
+        "tsp" to "tsp",
+        "oz" to "oz",
+        "lb" to "lb",
+        "g" to "g",
+        "kg" to "kg",
+        "ml" to "ml",
+        "L" to "L",
+        "can" to "can",
+        "pack" to "pack",
+        "bottle" to "bottle",
+        "jar" to "jar"
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -370,14 +396,37 @@ private fun ItemDetailDialog(
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
-                    OutlinedTextField(
-                        value = unit,
-                        onValueChange = { unit = it },
-                        label = { Text("Unit") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        placeholder = { Text("lbs, cups...") }
-                    )
+
+                    // Unit dropdown
+                    ExposedDropdownMenuBox(
+                        expanded = showUnitDropdown,
+                        onExpandedChange = { showUnitDropdown = it },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        OutlinedTextField(
+                            value = availableUnits.find { it.first == unit }?.second ?: unit,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Unit") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showUnitDropdown) },
+                            modifier = Modifier.menuAnchor(),
+                            singleLine = true
+                        )
+                        ExposedDropdownMenu(
+                            expanded = showUnitDropdown,
+                            onDismissRequest = { showUnitDropdown = false }
+                        ) {
+                            availableUnits.forEach { (value, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(label) },
+                                    onClick = {
+                                        unit = value
+                                        showUnitDropdown = false
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
 
                 // Notes

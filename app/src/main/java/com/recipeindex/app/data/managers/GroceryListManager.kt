@@ -129,7 +129,7 @@ class GroceryListManager(
 
                 DebugConfig.debugLog(
                     DebugConfig.Category.MANAGER,
-                    "addRecipesToList: Processing recipe ${recipe.name} with ${recipe.ingredients.size} ingredients"
+                    "addRecipesToList: Processing recipe ${recipe.title} with ${recipe.ingredients.size} ingredients"
                 )
 
                 recipe.ingredients.forEach { ingredientStr ->
