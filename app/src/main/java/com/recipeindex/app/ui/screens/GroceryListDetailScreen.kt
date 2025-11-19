@@ -352,6 +352,7 @@ private fun GroceryItemRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ItemDetailDialog(
     item: GroceryItem,
