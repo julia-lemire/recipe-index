@@ -17,6 +17,7 @@ import com.recipeindex.app.ui.viewmodels.ImportPhotoViewModel
 import com.recipeindex.app.ui.viewmodels.ImportViewModel
 import com.recipeindex.app.ui.viewmodels.MealPlanViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
+import com.recipeindex.app.ui.viewmodels.SettingsViewModel
 import com.recipeindex.app.ui.viewmodels.ViewModelFactory
 import com.recipeindex.app.utils.DebugConfig
 
@@ -36,6 +37,7 @@ fun RecipeIndexNavigation(
     val mealPlanViewModel: MealPlanViewModel = viewModel(factory = viewModelFactory)
     val groceryListViewModel: GroceryListViewModel = viewModel(factory = viewModelFactory)
     val importViewModel: ImportViewModel = viewModel(factory = viewModelFactory)
+    val settingsViewModel: SettingsViewModel = viewModel(factory = viewModelFactory)
 
     NavHost(
         navController = navController,
@@ -251,7 +253,10 @@ fun RecipeIndexNavigation(
 
         // Settings
         composable(Screen.Settings.route) {
-            SettingsScreen(onMenuClick = onMenuClick)
+            SettingsScreen(
+                viewModel = settingsViewModel,
+                onMenuClick = onMenuClick
+            )
         }
 
         // Import Source Selection

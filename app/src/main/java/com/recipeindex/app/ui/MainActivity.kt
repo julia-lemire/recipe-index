@@ -13,6 +13,7 @@ import com.recipeindex.app.data.AppDatabase
 import com.recipeindex.app.data.managers.GroceryListManager
 import com.recipeindex.app.data.managers.MealPlanManager
 import com.recipeindex.app.data.managers.RecipeManager
+import com.recipeindex.app.data.managers.SettingsManager
 import com.recipeindex.app.data.parsers.PdfRecipeParser
 import com.recipeindex.app.data.parsers.PhotoRecipeParser
 import com.recipeindex.app.data.parsers.SchemaOrgRecipeParser
@@ -53,6 +54,7 @@ class MainActivity : ComponentActivity() {
             database.recipeDao(),
             database.mealPlanDao()
         )
+        val settingsManager = SettingsManager(applicationContext)
 
         // Setup HTTP client for URL recipe import
         val httpClient = HttpClient(OkHttp) {
@@ -71,6 +73,7 @@ class MainActivity : ComponentActivity() {
             recipeManager,
             mealPlanManager,
             groceryListManager,
+            settingsManager,
             urlRecipeParser,
             pdfRecipeParser,
             photoRecipeParser

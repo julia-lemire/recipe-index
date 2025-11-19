@@ -109,16 +109,39 @@ class GroceryListManager(
      */
     suspend fun addRecipesToList(listId: Long, recipeIds: List<Long>): Result<Unit> {
         return try {
+            DebugConfig.debugLog(
+                DebugConfig.Category.MANAGER,
+                "addRecipesToList: Starting with ${recipeIds.size} recipe IDs: $recipeIds"
+            )
+
             val ingredients = mutableListOf<ParsedIngredient>()
 
             // Collect all ingredients from recipes
             for (recipeId in recipeIds) {
-                val recipe = recipeDao.getRecipeById(recipeId).first() ?: continue
+                val recipe = recipeDao.getRecipeById(recipeId).first()
+                if (recipe == null) {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.MANAGER,
+                        "addRecipesToList: Recipe $recipeId not found, skipping"
+                    )
+                    continue
+                }
+
+                DebugConfig.debugLog(
+                    DebugConfig.Category.MANAGER,
+                    "addRecipesToList: Processing recipe ${recipe.name} with ${recipe.ingredients.size} ingredients"
+                )
+
                 recipe.ingredients.forEach { ingredientStr ->
                     val parsed = parseIngredient(ingredientStr, recipeId)
                     ingredients.add(parsed)
                 }
             }
+
+            DebugConfig.debugLog(
+                DebugConfig.Category.MANAGER,
+                "addRecipesToList: Collected ${ingredients.size} total ingredients"
+            )
 
             // Consolidate ingredients
             val consolidated = consolidateIngredients(ingredients)
@@ -298,6 +321,11 @@ class GroceryListManager(
             // Get the meal plan
             val mealPlan = mealPlanDao.getById(planId)
                 ?: return Result.failure(Exception("Meal plan not found"))
+
+            DebugConfig.debugLog(
+                DebugConfig.Category.MANAGER,
+                "addMealPlanToList: plan ${mealPlan.name} has ${mealPlan.recipeIds.size} recipes"
+            )
 
             // Add all recipes from the meal plan
             addRecipesToList(listId, mealPlan.recipeIds)
