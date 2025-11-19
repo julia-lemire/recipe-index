@@ -70,7 +70,14 @@ fun RecipeDetailScreen(
                     IconButton(onClick = onEdit) {
                         Icon(Icons.Default.Edit, "Edit")
                     }
-                    // Overflow menu with delete option
+                    // Inline buttons for Add to Grocery List and Add to Meal Plan
+                    IconButton(onClick = onAddToGroceryList) {
+                        Icon(Icons.Default.ShoppingCart, "Add to Grocery List")
+                    }
+                    IconButton(onClick = onAddToMealPlan) {
+                        Icon(Icons.Default.CalendarMonth, "Add to Meal Plan")
+                    }
+                    // Overflow menu with delete option only
                     Box {
                         IconButton(onClick = { showOverflowMenu = true }) {
                             Icon(Icons.Default.MoreVert, "More options")
@@ -79,27 +86,6 @@ fun RecipeDetailScreen(
                             expanded = showOverflowMenu,
                             onDismissRequest = { showOverflowMenu = false }
                         ) {
-                            DropdownMenuItem(
-                                text = { Text("Add to Grocery List") },
-                                onClick = {
-                                    showOverflowMenu = false
-                                    onAddToGroceryList()
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.ShoppingCart, contentDescription = null)
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Add to Meal Plan") },
-                                onClick = {
-                                    showOverflowMenu = false
-                                    onAddToMealPlan()
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.CalendarMonth, contentDescription = null)
-                                }
-                            )
-                            HorizontalDivider()
                             DropdownMenuItem(
                                 text = { Text("Delete recipe") },
                                 onClick = {

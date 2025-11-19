@@ -289,7 +289,8 @@ private fun MealPlanCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        onClick = onEdit // Make the entire card clickable to go to detail/edit screen
     ) {
         Column(
             modifier = Modifier
