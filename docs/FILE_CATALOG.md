@@ -81,7 +81,8 @@ com.recipeindex.app/
 │   ├── managers/
 │   │   ├── GroceryListManager.kt
 │   │   ├── MealPlanManager.kt
-│   │   └── RecipeManager.kt
+│   │   ├── RecipeManager.kt
+│   │   └── SettingsManager.kt
 │   │
 │   ├── parsers/
 │   │   ├── PdfRecipeParser.kt
@@ -91,6 +92,7 @@ com.recipeindex.app/
 │   │   └── TextRecipeParser.kt
 │   │
 │   ├── AppDatabase.kt
+│   ├── AppSettings.kt
 │   ├── Converters.kt
 │   └── RecipeTags.kt
 │
@@ -129,13 +131,15 @@ com.recipeindex.app/
 │   │   ├── ImportViewModel.kt
 │   │   ├── MealPlanViewModel.kt
 │   │   ├── RecipeViewModel.kt
+│   │   ├── SettingsViewModel.kt
 │   │   └── ViewModelFactory.kt
 │   │
 │   ├── MainActivity.kt
 │   └── Navigation.kt
 │
 └── utils/
-    └── DebugConfig.kt
+    ├── DebugConfig.kt
+    └── UnitConverter.kt
 
 ```
 
@@ -257,8 +261,15 @@ com.recipeindex.app/
 - **Type.kt** - Hearth typography: Material 3 type scale with readable fonts for recipe content
 - **HearthTheme.kt** - Theme composable: Light/dark color schemes, dynamic color support, typography integration
 
+### Settings
+- **AppSettings.kt** - User preferences data class: UnitSystem enum (IMPERIAL/METRIC/BOTH), TemperatureUnit enum (FAHRENHEIT/CELSIUS), showPhotosInList, defaultServings
+- **SettingsManager.kt** - Settings persistence with StateFlow reactivity: SharedPreferences storage, exposes StateFlow<AppSettings>, setter methods for each preference with DebugConfig logging
+- **SettingsViewModel.kt** - Settings UI state: Delegates all operations to SettingsManager, exposes settings StateFlow
+- **SettingsScreen.kt** - Settings UI: Unit system radio buttons, temperature radio buttons, display preferences switches, recipe defaults filter chips, reset button
+- **UnitConverter.kt** - Cooking unit conversions: Imperial↔Metric (volume: cups/tbsp/tsp↔ml/L, weight: oz/lb↔g/kg, temperature: F↔C), smart helpers (volumeToMetric choosesml/L), formatNumber
+
 ### Utils
-- **DebugConfig.kt** - Centralized logging: Category-based filtering (NAVIGATION, DATABASE, IMPORT, UI, MANAGER, GENERAL), replaces android.util.Log
+- **DebugConfig.kt** - Centralized logging: Category-based filtering (NAVIGATION, DATABASE, IMPORT, UI, MANAGER, SETTINGS, GENERAL), replaces android.util.Log
 
 ---
 > **Format Guidelines**:

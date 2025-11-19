@@ -46,6 +46,56 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 19, 2025: FlowRow Layout for Wrapping Tags
+- **Decision**: Implement custom FlowRow layout for recipe tags that measures children with minWidth=0 and wraps to next line when exceeding maxWidth
+- **Rationale**: Built-in Row doesn't wrap; LazyVerticalGrid doesn't preserve tag order or handle dynamic widths; custom layout provides natural wrapping like web flexbox
+- **Implementation**: Layout composable measures all children without minimum width constraint, builds rows by checking cumulative width, places items with proper spacing
+
+#### Nov 19, 2025: Context Menus for Less Common Actions
+- **Decision**: Move Duplicate/Delete (meal plans), "Add to Grocery List" (recipes) to DropdownMenu accessed via MoreVert icon button
+- **Rationale**: Reduces button clutter, reserves inline space for primary actions (Edit, Generate List, Add to Meal Plan), follows Material Design pattern for secondary actions
+- **Implementation**: IconButton with MoreVert icon, DropdownMenu with DropdownMenuItem components, separate destructive actions (Delete) with error color tint
+
+#### Nov 19, 2025: Icon-Only Buttons for Meal Plan Cards
+- **Decision**: Replace text buttons with icon-only IconButton components for Edit and Generate List actions on meal plan cards
+- **Rationale**: Saves vertical space in cards, allows more content (recipes, dates, tags) to be visible, aligns with app-wide pattern of preferring icons over text
+- **Implementation**: IconButton with primary color tint for enabled state, disabled tint for inactive state (no recipes), removed Text labels
+
+#### Nov 19, 2025: Auto-Name Meal Plans from Date Selection
+- **Decision**: AddEditMealPlanScreen auto-populates name field from selected dates using formatDateRange() only if user hasn't manually edited name
+- **Rationale**: Most users name plans by dates ("Nov 18-22"), auto-fill saves typing; tracking userHasEditedName prevents overwriting custom names
+- **Implementation**: LaunchedEffect monitors startDate/endDate changes, formatDateRange() generates "Nov 18-22" (same month) or "Nov 28 - Dec 5" (different months), userHasEditedName state set true on name TextField changes
+
+#### Nov 19, 2025: Canned Items Intelligent Parsing
+- **Decision**: GroceryListManager parseIngredient() detects "N oz/g/lb can/jar/bottle/pack of item" pattern and normalizes to qty=1, unit=container, name=item, notes=size
+- **Rationale**: Recipe ingredients list container sizes ("9 oz can") but shoppers buy by container count; normalizing to countable units simplifies shopping while preserving size info for verification
+- **Implementation**: Regex pattern `([\\d./]+)\\s+(oz|g|ml|lb)\\s+(can|jar|bottle|pack|package)s?\\s+(?:of\\s+)?(.+)` captures size+container, creates ParsedIngredient with container as unit and size in notes
+
+#### Nov 19, 2025: Units Dropdown for Grocery Items
+- **Decision**: Replace unit text field in GroceryItemDetailDialog with ExposedDropdownMenuBox containing predefined units (none, cup, tbsp, tsp, oz, lb, g, kg, ml, L, can, pack, bottle, jar)
+- **Rationale**: Prevents typos, ensures consistent unit naming for consolidation, provides better UX than keyboard entry for common units
+- **Implementation**: ExposedDropdownMenuBox with OutlinedTextField (readOnly), DropdownMenu with DropdownMenuItem for each unit, stores empty string for "none"
+
+#### Nov 19, 2025: Click/Long-Press Interactions for Grocery List Items
+- **Decision**: GroceryItemRow uses combinedClickable with onClick for checkbox toggle, onLongClick for detail dialog (replacing direct checkbox interaction and short-click detail)
+- **Rationale**: Faster shopping workflow - tap anywhere on item to check/uncheck without precise checkbox targeting; long-press for editing follows mobile conventions
+- **Implementation**: combinedClickable modifier on Row, checkbox with onCheckedChange=null (read-only), onClick toggles via viewModel, onLongClick shows dialog
+
+#### Nov 19, 2025: Discard Button for Import Screens
+- **Decision**: Add Delete icon button to ImportUrlScreen, ImportPdfScreen, ImportPhotoScreen TopAppBar that shows confirmation dialog then calls viewModel.reset() and onNavigateBack()
+- **Rationale**: Auto-save on back prevented escaping broken imports (failed parsing, partial data); explicit discard with confirmation provides escape hatch
+- **Implementation**: IconButton with Delete icon (error tint) in TopAppBar actions, AlertDialog for confirmation, button only shown in Editing state, discards without saving
+
+#### Nov 19, 2025: Settings Infrastructure with SettingsManager
+- **Decision**: Create SettingsManager class wrapping SharedPreferences with StateFlow exposure pattern (similar to existing Managers)
+- **Rationale**: Maintains architectural consistency with Manager pattern, provides reactive state for UI updates, centralizes settings logic away from ViewModels
+- **Implementation**: SettingsManager(Context) creates SharedPreferences, exposes StateFlow<AppSettings>, provides setter methods that update both prefs and StateFlow, DebugConfig logging for changes
+
+#### Nov 19, 2025: UnitConverter Utility Pattern
+- **Decision**: Create UnitConverter object with direct conversion functions (cupsToMl, fahrenheitToCelsius, etc.) and smart helpers (volumeToMetric, formatNumber)
+- **Rationale**: Cooking conversions are pure functions with no state, object singleton provides global access without dependency injection overhead
+- **Implementation**: Object with const conversion factors, smart helpers that choose ml/L based on quantity, formatNumber removes unnecessary decimals (1.0→"1", 1.33→"1.33")
+
 #### Nov 19, 2025: Intelligent Ingredient Consolidation for Grocery Lists
 - **Decision**: GroceryListManager consolidates ingredients by removing ignored modifiers (diced, chopped, shredded, sliced, cubed) and summing quantities for matching name+unit pairs
 - **Rationale**: Users transform ingredients at home (dicing, chopping), so modifiers don't affect shopping; consolidation reduces list length and simplifies shopping

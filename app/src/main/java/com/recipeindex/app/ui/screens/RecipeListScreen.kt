@@ -3,8 +3,12 @@ package com.recipeindex.app.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -141,6 +145,10 @@ fun RecipeListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Check orientation for layout choice
+            val configuration = LocalConfiguration.current
+            val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
             when {
                 isLoading -> {
                     CircularProgressIndicator(
@@ -150,7 +158,33 @@ fun RecipeListScreen(
                 recipes.isEmpty() -> {
                     EmptyState(modifier = Modifier.align(Alignment.Center))
                 }
+                isLandscape -> {
+                    // Grid layout for landscape (2 columns)
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(recipes, key = { it.id }) { recipe ->
+                            RecipeCard(
+                                recipe = recipe,
+                                onClick = { onRecipeClick(recipe.id) },
+                                onToggleFavorite = { viewModel.toggleFavorite(recipe.id, !recipe.isFavorite) },
+                                onAddToGroceryList = {
+                                    recipeForGroceryList = recipe
+                                    showListPicker = true
+                                },
+                                onAddToMealPlan = {
+                                    // TODO: Navigate to meal plan selection
+                                }
+                            )
+                        }
+                    }
+                }
                 else -> {
+                    // Column layout for portrait
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
@@ -375,6 +409,7 @@ private fun RecipeCard(
 
 /**
  * Custom FlowRow implementation for wrapping tags
+ * Tags are only as wide as their content, wrapping to next line when needed
  */
 @Composable
 private fun FlowRow(
@@ -390,41 +425,50 @@ private fun FlowRow(
         val hSpacing = horizontalSpacing.roundToPx()
         val vSpacing = verticalSpacing.roundToPx()
 
-        val rows = mutableListOf<List<Pair<androidx.compose.ui.layout.Placeable, Int>>>()
-        var currentRow = mutableListOf<Pair<androidx.compose.ui.layout.Placeable, Int>>()
+        // Measure each child with no minimum width constraint - only as wide as needed
+        val placeables = measurables.map { measurable ->
+            measurable.measure(constraints.copy(minWidth = 0))
+        }
+
+        // Build rows
+        val rows = mutableListOf<MutableList<androidx.compose.ui.layout.Placeable>>()
+        var currentRow = mutableListOf<androidx.compose.ui.layout.Placeable>()
         var currentRowWidth = 0
-        var maxWidth = 0
 
-        measurables.forEach { measurable ->
-            val placeable = measurable.measure(constraints)
+        placeables.forEach { placeable ->
+            val itemWidth = placeable.width + hSpacing
 
+            // Check if adding this item would exceed the max width
             if (currentRowWidth + placeable.width > constraints.maxWidth && currentRow.isNotEmpty()) {
                 rows.add(currentRow)
-                maxWidth = maxOf(maxWidth, currentRowWidth - hSpacing)
                 currentRow = mutableListOf()
                 currentRowWidth = 0
             }
 
-            currentRow.add(placeable to currentRowWidth)
-            currentRowWidth += placeable.width + hSpacing
+            currentRow.add(placeable)
+            currentRowWidth += itemWidth
         }
 
         if (currentRow.isNotEmpty()) {
             rows.add(currentRow)
-            maxWidth = maxOf(maxWidth, currentRowWidth - hSpacing)
         }
 
+        // Calculate total height
         val height = rows.mapIndexed { index, row ->
-            row.maxOf { it.first.height } + if (index < rows.size - 1) vSpacing else 0
+            row.maxOf { it.height } + if (index < rows.size - 1) vSpacing else 0
         }.sum()
 
         layout(constraints.maxWidth, height) {
             var yPosition = 0
             rows.forEach { row ->
-                val rowHeight = row.maxOf { it.first.height }
-                row.forEach { (placeable, x) ->
-                    placeable.placeRelative(x, yPosition)
+                var xPosition = 0
+                val rowHeight = row.maxOf { it.height }
+
+                row.forEach { placeable ->
+                    placeable.placeRelative(xPosition, yPosition)
+                    xPosition += placeable.width + hSpacing
                 }
+
                 yPosition += rowHeight + vSpacing
             }
         }
