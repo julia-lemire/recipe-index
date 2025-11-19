@@ -1,5 +1,6 @@
 package com.recipeindex.app.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -30,6 +31,30 @@ fun ImportUrlScreen(
     var url by remember { mutableStateOf("") }
     val uiState by viewModel.uiState.collectAsState()
     var showDiscardDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show error messages via Snackbar
+    LaunchedEffect(uiState) {
+        when (val state = uiState) {
+            is ImportViewModel.UiState.Input -> {
+                state.errorMessage?.let { error ->
+                    snackbarHostState.showSnackbar(
+                        message = error,
+                        duration = SnackbarDuration.Long
+                    )
+                }
+            }
+            is ImportViewModel.UiState.Editing -> {
+                state.errorMessage?.let { error ->
+                    snackbarHostState.showSnackbar(
+                        message = error,
+                        duration = SnackbarDuration.Long
+                    )
+                }
+            }
+            else -> { /* No error to show */ }
+        }
+    }
 
     // Auto-save when navigating back (if recipe was successfully parsed)
     fun handleBack() {
@@ -58,6 +83,11 @@ fun ImportUrlScreen(
         }
     }
 
+    // Handle system back button
+    BackHandler {
+        handleBack()
+    }
+
     // Discard confirmation dialog
     if (showDiscardDialog) {
         AlertDialog(
@@ -84,6 +114,7 @@ fun ImportUrlScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Import from URL") },
