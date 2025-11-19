@@ -56,13 +56,13 @@
 - **Unit Tests**: 0/0 (0%)
 - **Integration Tests**: 0/0 (0%)
 - **UI Tests**: 0/0 (0%)
-- **Total Scenarios**: 0 implemented, 15 planned
+- **Total Scenarios**: 0 implemented, 35+ planned
 
 ### Priority Areas
-1. Recipe Management (CRUD operations, import validation)
-2. Meal Planning (weekly planning, recipe assignment)
-3. Grocery Lists (ingredient extraction, aggregation)
-4. Database (migrations, entity relationships)
+1. Grocery List Ingredient Consolidation (quantity parsing, modifier removal, unit matching)
+2. Meal Planning (auto-tag aggregation, flexible date ranges)
+3. Recipe Management (CRUD operations, import validation)
+4. Database (migrations v1→v2→v3, entity relationships)
 
 ---
 
@@ -83,18 +83,55 @@
 - [ ] Import handles malformed/missing data gracefully (planned)
 
 ### Meal Planning
-- [ ] Create weekly meal plan with 7 days (planned)
-- [ ] Assign recipe to specific meal slot (planned)
-- [ ] Remove recipe from meal plan preserves recipe (planned)
+- [ ] Create meal plan with flexible date range (Sun-Thu, single day) (planned)
+- [ ] Create meal plan with no dates (indefinite/special event) (planned)
+- [ ] Add multiple recipes to meal plan (planned)
+- [ ] Auto-aggregate ingredient tags from recipes (planned)
+- [ ] Auto-aggregate special event tags from recipes (planned)
+- [ ] Detect special event from plan name ("Thanksgiving Dinner" → "Thanksgiving" tag) (planned)
+- [ ] Duplicate meal plan creates copy with "(Copy)" suffix (planned)
+- [ ] Delete meal plan preserves associated recipes (planned)
+- [ ] Search meal plans by name (planned)
+- [ ] RecipePickerBottomSheet filters recipes by search query (planned)
 - [ ] Meal plan persists across app restarts (planned)
 
-### Grocery Lists
-- [ ] Generate grocery list from meal plan aggregates ingredients (planned)
-- [ ] Duplicate ingredients combine quantities (planned)
-- [ ] Unit conversion handles metric/imperial (planned)
+### Grocery Lists - Ingredient Consolidation
+- [ ] Parse ingredient with quantity and unit (e.g., "2 lbs chicken breast") (planned)
+- [ ] Parse ingredient with fraction (e.g., "1/2 cup flour") (planned)
+- [ ] Parse ingredient with mixed number (e.g., "1 1/2 cups sugar") (planned)
+- [ ] Remove "diced" modifier when consolidating (planned)
+- [ ] Remove "chopped" modifier when consolidating (planned)
+- [ ] Remove "shredded" modifier when consolidating (planned)
+- [ ] Remove "sliced" modifier when consolidating (planned)
+- [ ] Keep "minced" separate from whole (different prep) (planned)
+- [ ] Consolidate matching name+unit pairs sums quantities (planned)
+- [ ] Different units remain separate (lbs vs cups) (planned)
+- [ ] Missing quantity creates item without quantity (planned)
+- [ ] Missing unit creates item with quantity only (planned)
+- [ ] Merge source recipe IDs when consolidating duplicates (planned)
+
+### Grocery Lists - List Management
+- [ ] Create grocery list with name (planned)
+- [ ] Add recipes to existing list consolidates with existing items (planned)
+- [ ] Add meal plan to list extracts all recipe ingredients (planned)
+- [ ] Add manual item via text field (planned)
+- [ ] Toggle item checked status (planned)
+- [ ] Clear checked items removes only checked (planned)
+- [ ] Item detail shows all source recipes (planned)
+- [ ] Update item quantity/unit/notes (planned)
+- [ ] Delete item removes from list (planned)
+- [ ] Delete list removes all items (cascade) (planned)
+- [ ] Search lists by name (planned)
+- [ ] getItemCount returns correct count (planned)
+- [ ] getCheckedCount returns correct checked count (planned)
 
 ### Database
-- [ ] Room database migration from v1 to v2 preserves data (planned)
-- [ ] Entity relationships maintain referential integrity (planned)
+- [ ] Room database migration v1→v2 adds MealPlan table (planned)
+- [ ] Room database migration v2→v3 adds GroceryList and GroceryItem tables (planned)
+- [ ] MealPlan foreign key to Recipe enforces referential integrity (planned)
+- [ ] GroceryItem foreign key to GroceryList enforces referential integrity (planned)
+- [ ] Cascade delete: deleting GroceryList deletes all GroceryItems (planned)
+- [ ] TypeConverters correctly serialize/deserialize List<Long> (planned)
+- [ ] TypeConverters correctly serialize/deserialize List<String> (planned)
 
 ---
