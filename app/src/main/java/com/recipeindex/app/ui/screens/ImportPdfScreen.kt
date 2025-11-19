@@ -7,6 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,6 +31,7 @@ fun ImportPdfScreen(
     onSaveComplete: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showDiscardDialog by remember { mutableStateOf(false) }
 
     // PDF file picker launcher
     val pdfPickerLauncher = rememberLauncherForActivityResult(
@@ -65,6 +67,31 @@ fun ImportPdfScreen(
         }
     }
 
+    // Discard confirmation dialog
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = { Text("Discard imported recipe?") },
+            text = { Text("Are you sure you want to discard this recipe? All changes will be lost.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDiscardDialog = false
+                        viewModel.reset()
+                        onNavigateBack()
+                    }
+                ) {
+                    Text("Discard")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -72,6 +99,18 @@ fun ImportPdfScreen(
                 navigationIcon = {
                     IconButton(onClick = { handleBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    // Show discard button when editing
+                    if (uiState is ImportPdfViewModel.UiState.Editing) {
+                        IconButton(onClick = { showDiscardDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Discard",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
             )
