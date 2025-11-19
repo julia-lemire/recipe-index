@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
@@ -172,6 +173,7 @@ fun RecipeDetailScreen(
             }
 
             // Ingredients
+            // TODO: Add "Cook Mode" feature with checkable ingredients to help track while cooking
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = "Ingredients",
@@ -202,9 +204,10 @@ fun RecipeDetailScreen(
                         text = "Tags",
                         style = MaterialTheme.typography.titleMedium
                     )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalSpacing = 8.dp,
+                        verticalSpacing = 8.dp
                     ) {
                         recipe.tags.forEach { tag ->
                             SuggestionChip(
@@ -395,6 +398,74 @@ private fun InstructionsSection(instructions: List<String>) {
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Custom FlowRow implementation for wrapping tags
+ * Tags are only as wide as their content, wrapping to next line when needed
+ */
+@Composable
+private fun FlowRow(
+    modifier: Modifier = Modifier,
+    horizontalSpacing: androidx.compose.ui.unit.Dp = 0.dp,
+    verticalSpacing: androidx.compose.ui.unit.Dp = 0.dp,
+    content: @Composable () -> Unit
+) {
+    Layout(
+        content = content,
+        modifier = modifier
+    ) { measurables, constraints ->
+        val hSpacing = horizontalSpacing.roundToPx()
+        val vSpacing = verticalSpacing.roundToPx()
+
+        // Measure each child with no minimum width constraint - only as wide as needed
+        val placeables = measurables.map { measurable ->
+            measurable.measure(constraints.copy(minWidth = 0))
+        }
+
+        // Build rows
+        val rows = mutableListOf<MutableList<androidx.compose.ui.layout.Placeable>>()
+        var currentRow = mutableListOf<androidx.compose.ui.layout.Placeable>()
+        var currentRowWidth = 0
+
+        placeables.forEach { placeable ->
+            val itemWidth = placeable.width + hSpacing
+
+            // Check if adding this item would exceed the max width
+            if (currentRowWidth + placeable.width > constraints.maxWidth && currentRow.isNotEmpty()) {
+                rows.add(currentRow)
+                currentRow = mutableListOf()
+                currentRowWidth = 0
+            }
+
+            currentRow.add(placeable)
+            currentRowWidth += itemWidth
+        }
+
+        if (currentRow.isNotEmpty()) {
+            rows.add(currentRow)
+        }
+
+        // Calculate total height
+        val height = rows.mapIndexed { index, row ->
+            row.maxOf { it.height } + if (index < rows.size - 1) vSpacing else 0
+        }.sum()
+
+        layout(constraints.maxWidth, height) {
+            var yPosition = 0
+            rows.forEach { row ->
+                var xPosition = 0
+                val rowHeight = row.maxOf { it.height }
+
+                row.forEach { placeable ->
+                    placeable.placeRelative(xPosition, yPosition)
+                    xPosition += placeable.width + hSpacing
+                }
+
+                yPosition += rowHeight + vSpacing
             }
         }
     }

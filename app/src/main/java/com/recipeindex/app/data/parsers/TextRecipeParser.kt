@@ -3,6 +3,7 @@ package com.recipeindex.app.data.parsers
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.data.entities.RecipeSource
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.TagStandardizer
 
 /**
  * TextRecipeParser - Smart parsing of unstructured recipe text
@@ -62,7 +63,7 @@ object TextRecipeParser {
                 servings = servings,
                 prepTimeMinutes = prepTime,
                 cookTimeMinutes = cookTime,
-                tags = tags,
+                tags = TagStandardizer.standardize(tags),
                 notes = null,
                 source = source,
                 sourceUrl = sourceIdentifier,

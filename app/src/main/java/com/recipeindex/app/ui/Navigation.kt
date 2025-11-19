@@ -3,6 +3,9 @@ package com.recipeindex.app.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -10,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.recipeindex.app.navigation.Screen
+import com.recipeindex.app.ui.components.GroceryListPickerDialog
 import com.recipeindex.app.ui.screens.*
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.ui.viewmodels.ImportPdfViewModel
@@ -53,6 +57,7 @@ fun RecipeIndexNavigation(
             RecipeListScreen(
                 viewModel = recipeViewModel,
                 groceryListViewModel = groceryListViewModel,
+                mealPlanViewModel = mealPlanViewModel,
                 onAddRecipe = {
                     navController.navigate(Screen.AddRecipe.route)
                 },
@@ -124,6 +129,10 @@ fun RecipeIndexNavigation(
 
             recipeViewModel.loadRecipe(recipeId)
             val currentRecipe by recipeViewModel.currentRecipe.collectAsState()
+            val groceryLists by groceryListViewModel.groceryLists.collectAsState()
+            val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
+            var showListPicker by remember { mutableStateOf(false) }
+            var showMealPlanPicker by remember { mutableStateOf(false) }
 
             currentRecipe?.let { recipe ->
                 RecipeDetailScreen(
@@ -147,12 +156,53 @@ fun RecipeIndexNavigation(
                         recipeViewModel.toggleFavorite(recipeId, isFavorite)
                     },
                     onAddToGroceryList = {
-                        // TODO: Show grocery list picker dialog
+                        showListPicker = true
                     },
                     onAddToMealPlan = {
-                        // TODO: Navigate to meal plan selection
+                        showMealPlanPicker = true
                     }
                 )
+
+                // Grocery list picker dialog
+                if (showListPicker) {
+                    GroceryListPickerDialog(
+                        availableLists = groceryLists,
+                        onDismiss = { showListPicker = false },
+                        onListSelected = { listId ->
+                            groceryListViewModel.addRecipesToList(listId, listOf(recipeId))
+                            showListPicker = false
+                        },
+                        onCreateNew = { listName ->
+                            val newListId = groceryListViewModel.createListAndReturn(listName)
+                            groceryListViewModel.addRecipesToList(newListId, listOf(recipeId))
+                            showListPicker = false
+                        }
+                    )
+                }
+
+                // Meal plan picker dialog
+                if (showMealPlanPicker) {
+                    com.recipeindex.app.ui.components.MealPlanPickerDialog(
+                        availablePlans = mealPlans,
+                        onDismiss = { showMealPlanPicker = false },
+                        onPlanSelected = { planId ->
+                            mealPlanViewModel.addRecipeToPlan(planId, recipeId)
+                            showMealPlanPicker = false
+                        },
+                        onCreateNew = { planName ->
+                            // Create a new meal plan with just this recipe
+                            val newPlan = com.recipeindex.app.data.entities.MealPlan(
+                                name = planName,
+                                recipeIds = listOf(recipeId),
+                                startDate = null,
+                                endDate = null
+                            )
+                            mealPlanViewModel.createMealPlan(newPlan) { _ ->
+                                showMealPlanPicker = false
+                            }
+                        }
+                    )
+                }
             }
         }
 
