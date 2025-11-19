@@ -182,13 +182,13 @@ fun RecipeListScreen(
             availableLists = groceryLists,
             onDismiss = { showListPicker = false },
             onListSelected = { listId ->
-                groceryListViewModel.addRecipeToList(listId, recipeForGroceryList!!.id)
+                groceryListViewModel.addRecipesToList(listId, listOf(recipeForGroceryList!!.id))
                 showListPicker = false
                 recipeForGroceryList = null
             },
             onCreateNew = { listName ->
                 val newListId = groceryListViewModel.createListAndReturn(listName)
-                groceryListViewModel.addRecipeToList(newListId, recipeForGroceryList!!.id)
+                groceryListViewModel.addRecipesToList(newListId, listOf(recipeForGroceryList!!.id))
                 showListPicker = false
                 recipeForGroceryList = null
             }
