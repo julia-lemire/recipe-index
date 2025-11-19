@@ -273,6 +273,54 @@ class GroceryListManager(
     }
 
     /**
+     * Check all items in a list
+     */
+    suspend fun checkAllItems(listId: Long): Result<Unit> {
+        return try {
+            val items = groceryItemDao.getItemsForList(listId).first()
+            items.forEach { item ->
+                if (!item.isChecked) {
+                    groceryItemDao.update(
+                        item.copy(
+                            isChecked = true,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    )
+                }
+            }
+            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "checkAllItems for list: $listId")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            DebugConfig.error(DebugConfig.Category.MANAGER, "checkAllItems failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Uncheck all items in a list
+     */
+    suspend fun uncheckAllItems(listId: Long): Result<Unit> {
+        return try {
+            val items = groceryItemDao.getItemsForList(listId).first()
+            items.forEach { item ->
+                if (item.isChecked) {
+                    groceryItemDao.update(
+                        item.copy(
+                            isChecked = false,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    )
+                }
+            }
+            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "uncheckAllItems for list: $listId")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            DebugConfig.error(DebugConfig.Category.MANAGER, "uncheckAllItems failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Get item count for a list
      */
     fun getItemCount(listId: Long): Flow<Int> {

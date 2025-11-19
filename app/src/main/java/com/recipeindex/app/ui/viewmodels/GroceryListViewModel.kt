@@ -411,6 +411,48 @@ class GroceryListViewModel(
     }
 
     /**
+     * Check all items in a list
+     */
+    fun checkAllItems(listId: Long) {
+        viewModelScope.launch {
+            try {
+                val result = groceryListManager.checkAllItems(listId)
+
+                result.onSuccess {
+                    DebugConfig.debugLog(DebugConfig.Category.UI, "Checked all items")
+                }.onFailure { e ->
+                    _error.value = "Failed to check all items: ${e.message}"
+                    DebugConfig.error(DebugConfig.Category.UI, "checkAllItems failed", e)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to check all items: ${e.message}"
+                DebugConfig.error(DebugConfig.Category.UI, "checkAllItems exception", e)
+            }
+        }
+    }
+
+    /**
+     * Uncheck all items in a list
+     */
+    fun uncheckAllItems(listId: Long) {
+        viewModelScope.launch {
+            try {
+                val result = groceryListManager.uncheckAllItems(listId)
+
+                result.onSuccess {
+                    DebugConfig.debugLog(DebugConfig.Category.UI, "Unchecked all items")
+                }.onFailure { e ->
+                    _error.value = "Failed to uncheck all items: ${e.message}"
+                    DebugConfig.error(DebugConfig.Category.UI, "uncheckAllItems failed", e)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to uncheck all items: ${e.message}"
+                DebugConfig.error(DebugConfig.Category.UI, "uncheckAllItems exception", e)
+            }
+        }
+    }
+
+    /**
      * Clear error message
      */
     fun clearError() {

@@ -196,6 +196,31 @@ fun GroceryListDetailScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // Select/Deselect all buttons
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedButton(
+                            onClick = { groceryListViewModel.checkAllItems(listId) },
+                            modifier = Modifier.weight(1f),
+                            enabled = items.isNotEmpty() && items.any { !it.isChecked }
+                        ) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Select All")
+                        }
+                        OutlinedButton(
+                            onClick = { groceryListViewModel.uncheckAllItems(listId) },
+                            modifier = Modifier.weight(1f),
+                            enabled = items.isNotEmpty() && items.any { it.isChecked }
+                        ) {
+                            Icon(Icons.Default.RadioButtonUnchecked, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Deselect All")
+                        }
+                    }
+
                     // Clear checked items button
                     val checkedItemsCount = items.count { it.isChecked }
                     OutlinedButton(
