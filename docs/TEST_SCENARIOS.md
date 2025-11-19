@@ -50,19 +50,31 @@
 
 ## Test Coverage Summary
 
-> **Status**: Planning phase - no tests implemented yet
+> **Status**: Initial tests implemented for Phases 3-4
 
 ### Current Coverage
-- **Unit Tests**: 0/0 (0%)
-- **Integration Tests**: 0/0 (0%)
-- **UI Tests**: 0/0 (0%)
-- **Total Scenarios**: 0 implemented, 35+ planned
+- **Unit Tests**: 38 tests in 2 files (~8% file coverage, untested: RecipeManager, all parsers, DAOs)
+  - ✅ GroceryListManagerTest.kt (22 tests)
+  - ✅ MealPlanManagerTest.kt (16 tests)
+- **Integration Tests**: 0 (planned: DAO tests, database migrations)
+- **UI Tests**: 0 (planned: screen interactions, navigation flows)
+- **Total Scenarios**: 38 implemented, 50+ planned
 
-### Priority Areas
-1. Grocery List Ingredient Consolidation (quantity parsing, modifier removal, unit matching)
-2. Meal Planning (auto-tag aggregation, flexible date ranges)
-3. Recipe Management (CRUD operations, import validation)
-4. Database (migrations v1→v2→v3, entity relationships)
+### Coverage Gaps (Priority Order)
+1. **CRITICAL**: TextRecipeParser (PDF/Photo import depends on this)
+2. **CRITICAL**: RecipeManager (core CRUD operations)
+3. **HIGH**: SchemaOrgRecipeParser (URL import)
+4. **HIGH**: Database migrations (v1→v2→v3)
+5. **MEDIUM**: DAOs (RecipeDao, MealPlanDao, GroceryListDao, GroceryItemDao)
+6. **MEDIUM**: PdfRecipeParser, PhotoRecipeParser
+7. **LOW**: ViewModels (mostly delegation, integration tests preferred)
+8. **LOW**: UI screens (manual testing acceptable for MVP)
+
+### Next Testing Priorities
+1. RecipeManager (create, update, delete, search, favorite toggle)
+2. TextRecipeParser (section detection, ingredient/instruction validation, noise filtering)
+3. SchemaOrgRecipeParser (Schema.org JSON-LD parsing, ISO 8601 durations, fallback handling)
+4. Database migration tests (Room v1→v2→v3 with data preservation)
 
 ---
 
@@ -83,36 +95,37 @@
 - [ ] Import handles malformed/missing data gracefully (planned)
 
 ### Meal Planning
-- [ ] Create meal plan with flexible date range (Sun-Thu, single day) (planned)
-- [ ] Create meal plan with no dates (indefinite/special event) (planned)
+- [x] Create meal plan with flexible date range (Sun-Thu, single day) (MealPlanManagerTest.kt:createMealPlan accepts flexible date range)
+- [x] Create meal plan with no dates (indefinite/special event) (MealPlanManagerTest.kt:createMealPlan accepts null dates)
 - [ ] Add multiple recipes to meal plan (planned)
-- [ ] Auto-aggregate ingredient tags from recipes (planned)
-- [ ] Auto-aggregate special event tags from recipes (planned)
-- [ ] Detect special event from plan name ("Thanksgiving Dinner" → "Thanksgiving" tag) (planned)
+- [x] Auto-aggregate ingredient tags from recipes (MealPlanManagerTest.kt:getAutoTags aggregates ingredient tags)
+- [x] Auto-aggregate special event tags from recipes (MealPlanManagerTest.kt:getAutoTags aggregates ingredient tags)
+- [x] Detect special event from plan name ("Thanksgiving Dinner" → "Thanksgiving" tag) (MealPlanManagerTest.kt:detectSpecialEventFromName tests)
 - [ ] Duplicate meal plan creates copy with "(Copy)" suffix (planned)
-- [ ] Delete meal plan preserves associated recipes (planned)
+- [x] Delete meal plan preserves associated recipes (MealPlanManagerTest.kt:deleteMealPlan preserves recipes)
 - [ ] Search meal plans by name (planned)
 - [ ] RecipePickerBottomSheet filters recipes by search query (planned)
-- [ ] Meal plan persists across app restarts (planned)
+- [ ] Meal plan persists across app restarts (planned - integration test needed)
 
 ### Grocery Lists - Ingredient Consolidation
-- [ ] Parse ingredient with quantity and unit (e.g., "2 lbs chicken breast") (planned)
-- [ ] Parse ingredient with fraction (e.g., "1/2 cup flour") (planned)
-- [ ] Parse ingredient with mixed number (e.g., "1 1/2 cups sugar") (planned)
-- [ ] Remove "diced" modifier when consolidating (planned)
-- [ ] Remove "chopped" modifier when consolidating (planned)
-- [ ] Remove "shredded" modifier when consolidating (planned)
-- [ ] Remove "sliced" modifier when consolidating (planned)
-- [ ] Keep "minced" separate from whole (different prep) (planned)
-- [ ] Consolidate matching name+unit pairs sums quantities (planned)
+- [x] Parse ingredient with quantity and unit (e.g., "2 lbs chicken breast") (GroceryListManagerTest.kt:parseIngredient extracts quantity and unit)
+- [x] Parse ingredient with fraction (e.g., "1/2 cup flour") (GroceryListManagerTest.kt:parseIngredient handles fractions)
+- [x] Parse ingredient with mixed number (e.g., "1 1/2 cups sugar") (GroceryListManagerTest.kt:parseIngredient handles mixed numbers)
+- [x] Remove "diced" modifier when consolidating (GroceryListManagerTest.kt:parseIngredient removes diced modifier)
+- [x] Remove "chopped" modifier when consolidating (GroceryListManagerTest.kt:parseIngredient removes chopped modifier)
+- [x] Remove "shredded" modifier when consolidating (GroceryListManagerTest.kt:parseIngredient removes shredded modifier)
+- [x] Remove "sliced" modifier when consolidating (GroceryListManagerTest.kt:parseIngredient removes sliced modifier)
+- [x] Keep "minced" separate from whole (different prep) (GroceryListManagerTest.kt:parseIngredient keeps minced separate)
+- [ ] Consolidate matching name+unit pairs sums quantities (GroceryListManagerTest.kt - needs actual result verification)
 - [ ] Different units remain separate (lbs vs cups) (planned)
-- [ ] Missing quantity creates item without quantity (planned)
-- [ ] Missing unit creates item with quantity only (planned)
-- [ ] Merge source recipe IDs when consolidating duplicates (planned)
+- [x] Missing quantity creates item without quantity (GroceryListManagerTest.kt:parseIngredient handles ingredient without quantity)
+- [x] Missing unit creates item with quantity only (GroceryListManagerTest.kt:parseIngredient handles ingredient without unit)
+- [x] Merge source recipe IDs when consolidating duplicates (GroceryListManagerTest.kt:addRecipesToList tracks source recipes)
 
 ### Grocery Lists - List Management
-- [ ] Create grocery list with name (planned)
-- [ ] Add recipes to existing list consolidates with existing items (planned)
+- [x] Create grocery list with name (GroceryListManagerTest.kt:createList succeeds with valid name)
+- [x] Create list fails with blank name (GroceryListManagerTest.kt:createList fails with blank name)
+- [x] Add recipes to existing list consolidates with existing items (GroceryListManagerTest.kt:addRecipesToList consolidates duplicate ingredients)
 - [ ] Add meal plan to list extracts all recipe ingredients (planned)
 - [ ] Add manual item via text field (planned)
 - [ ] Toggle item checked status (planned)
@@ -122,8 +135,8 @@
 - [ ] Delete item removes from list (planned)
 - [ ] Delete list removes all items (cascade) (planned)
 - [ ] Search lists by name (planned)
-- [ ] getItemCount returns correct count (planned)
-- [ ] getCheckedCount returns correct checked count (planned)
+- [ ] getItemCount returns correct count (planned - DAO integration test)
+- [ ] getCheckedCount returns correct checked count (planned - DAO integration test)
 
 ### Database
 - [ ] Room database migration v1→v2 adds MealPlan table (planned)

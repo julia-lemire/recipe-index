@@ -25,6 +25,20 @@ class Converters {
     }
 
     @TypeConverter
+    fun fromLongList(value: List<Long>): String {
+        return value.joinToString(separator = ",")
+    }
+
+    @TypeConverter
+    fun toLongList(value: String): List<Long> {
+        return if (value.isEmpty()) {
+            emptyList()
+        } else {
+            value.split(",").map { it.toLong() }
+        }
+    }
+
+    @TypeConverter
     fun fromRecipeSource(value: RecipeSource): String {
         return value.name
     }
