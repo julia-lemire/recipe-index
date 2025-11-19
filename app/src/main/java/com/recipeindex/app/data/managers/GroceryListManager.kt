@@ -17,7 +17,8 @@ import kotlinx.coroutines.flow.first
 class GroceryListManager(
     private val groceryListDao: GroceryListDao,
     private val groceryItemDao: GroceryItemDao,
-    private val recipeDao: RecipeDao
+    private val recipeDao: RecipeDao,
+    private val mealPlanDao: com.recipeindex.app.data.dao.MealPlanDao
 ) {
 
     /**
@@ -34,6 +35,13 @@ class GroceryListManager(
     suspend fun getListById(id: Long): GroceryList? {
         DebugConfig.debugLog(DebugConfig.Category.MANAGER, "getListById: $id")
         return groceryListDao.getById(id)
+    }
+
+    /**
+     * Get grocery list by ID as Flow
+     */
+    fun getListByIdFlow(id: Long): Flow<GroceryList?> {
+        return groceryListDao.getByIdFlow(id)
     }
 
     /**
@@ -237,6 +245,64 @@ class GroceryListManager(
             Result.success(Unit)
         } catch (e: Exception) {
             DebugConfig.error(DebugConfig.Category.MANAGER, "clearCheckedItems failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get item count for a list
+     */
+    fun getItemCount(listId: Long): Flow<Int> {
+        return groceryItemDao.getItemCount(listId)
+    }
+
+    /**
+     * Get checked item count for a list
+     */
+    fun getCheckedCount(listId: Long): Flow<Int> {
+        return groceryItemDao.getCheckedCount(listId)
+    }
+
+    /**
+     * Toggle item checked status by ID
+     */
+    suspend fun toggleItemCheckedById(itemId: Long, checked: Boolean): Result<Unit> {
+        return try {
+            groceryItemDao.updateCheckedStatus(itemId, checked)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            DebugConfig.error(DebugConfig.Category.MANAGER, "toggleItemCheckedById failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Delete item by ID
+     */
+    suspend fun deleteItemById(itemId: Long): Result<Unit> {
+        return try {
+            groceryItemDao.deleteById(itemId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            DebugConfig.error(DebugConfig.Category.MANAGER, "deleteItemById failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Add meal plan to grocery list
+     * Fetches all recipes in the meal plan and adds their ingredients
+     */
+    suspend fun addMealPlanToList(listId: Long, planId: Long): Result<Unit> {
+        return try {
+            // Get the meal plan
+            val mealPlan = mealPlanDao.getMealPlanById(planId).first()
+                ?: return Result.failure(Exception("Meal plan not found"))
+
+            // Add all recipes from the meal plan
+            addRecipesToList(listId, mealPlan.recipeIds)
+        } catch (e: Exception) {
+            DebugConfig.error(DebugConfig.Category.MANAGER, "addMealPlanToList failed", e)
             Result.failure(e)
         }
     }
