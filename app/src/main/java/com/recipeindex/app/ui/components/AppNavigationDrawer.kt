@@ -146,10 +146,14 @@ private fun DrawerContent(
         // Navigation items - with null safety check
         DebugConfig.debugLog(
             DebugConfig.Category.NAVIGATION,
-            "DrawerScreens size: ${Screen.drawerScreens.size}, contains null: ${Screen.drawerScreens.any { it == null }}"
+            "DrawerScreens size: ${Screen.drawerScreens.size}, currentRoute: $currentRoute"
         )
 
-        Screen.drawerScreens.filterNotNull().forEach { screen ->
+        Screen.drawerScreens.forEach { screen ->
+            DebugConfig.debugLog(
+                DebugConfig.Category.NAVIGATION,
+                "Rendering drawer item: ${screen.title} (route: ${screen.route}), selected: ${currentRoute == screen.route}"
+            )
             NavigationDrawerItem(
                 icon = {
                     Icon(

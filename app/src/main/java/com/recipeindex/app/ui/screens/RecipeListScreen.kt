@@ -3,8 +3,12 @@ package com.recipeindex.app.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -141,6 +145,10 @@ fun RecipeListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Check orientation for layout choice
+            val configuration = LocalConfiguration.current
+            val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
             when {
                 isLoading -> {
                     CircularProgressIndicator(
@@ -150,7 +158,33 @@ fun RecipeListScreen(
                 recipes.isEmpty() -> {
                     EmptyState(modifier = Modifier.align(Alignment.Center))
                 }
+                isLandscape -> {
+                    // Grid layout for landscape (2 columns)
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(recipes, key = { it.id }) { recipe ->
+                            RecipeCard(
+                                recipe = recipe,
+                                onClick = { onRecipeClick(recipe.id) },
+                                onToggleFavorite = { viewModel.toggleFavorite(recipe.id, !recipe.isFavorite) },
+                                onAddToGroceryList = {
+                                    recipeForGroceryList = recipe
+                                    showListPicker = true
+                                },
+                                onAddToMealPlan = {
+                                    // TODO: Navigate to meal plan selection
+                                }
+                            )
+                        }
+                    }
+                }
                 else -> {
+                    // Column layout for portrait
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),

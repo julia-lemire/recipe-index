@@ -3,7 +3,11 @@ package com.recipeindex.app.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -120,30 +124,67 @@ fun MealPlanningScreen(
                     EmptyMealPlanState(modifier = Modifier.fillMaxSize())
                 }
                 else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(mealPlans, key = { it.id }) { mealPlan ->
-                            MealPlanCard(
-                                mealPlan = mealPlan,
-                                recipes = recipes,
-                                onEdit = { onEditMealPlan(mealPlan.id) },
-                                onDelete = {
-                                    planToDelete = mealPlan
-                                    showDeleteDialog = true
-                                },
-                                onDuplicate = {
-                                    planToDuplicate = mealPlan
-                                    duplicateName = "${mealPlan.name} (Copy)"
-                                    showDuplicateDialog = true
-                                },
-                                onGenerateList = {
-                                    planForGroceryList = mealPlan
-                                    showListPicker = true
-                                }
-                            )
+                    // Check orientation for layout choice
+                    val configuration = LocalConfiguration.current
+                    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
+                    if (isLandscape) {
+                        // Grid layout for landscape (2 columns)
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(mealPlans, key = { it.id }) { mealPlan ->
+                                MealPlanCard(
+                                    mealPlan = mealPlan,
+                                    recipes = recipes,
+                                    onEdit = { onEditMealPlan(mealPlan.id) },
+                                    onDelete = {
+                                        planToDelete = mealPlan
+                                        showDeleteDialog = true
+                                    },
+                                    onDuplicate = {
+                                        planToDuplicate = mealPlan
+                                        duplicateName = "${mealPlan.name} (Copy)"
+                                        showDuplicateDialog = true
+                                    },
+                                    onGenerateList = {
+                                        planForGroceryList = mealPlan
+                                        showListPicker = true
+                                    }
+                                )
+                            }
+                        }
+                    } else {
+                        // Column layout for portrait
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(mealPlans, key = { it.id }) { mealPlan ->
+                                MealPlanCard(
+                                    mealPlan = mealPlan,
+                                    recipes = recipes,
+                                    onEdit = { onEditMealPlan(mealPlan.id) },
+                                    onDelete = {
+                                        planToDelete = mealPlan
+                                        showDeleteDialog = true
+                                    },
+                                    onDuplicate = {
+                                        planToDuplicate = mealPlan
+                                        duplicateName = "${mealPlan.name} (Copy)"
+                                        showDuplicateDialog = true
+                                    },
+                                    onGenerateList = {
+                                        planForGroceryList = mealPlan
+                                        showListPicker = true
+                                    }
+                                )
+                            }
                         }
                     }
                 }
