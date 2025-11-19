@@ -1,5 +1,6 @@
 package com.recipeindex.app.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -32,6 +33,30 @@ fun ImportPdfScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDiscardDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show error messages via Snackbar
+    LaunchedEffect(uiState) {
+        when (val state = uiState) {
+            is ImportPdfViewModel.UiState.SelectFile -> {
+                state.errorMessage?.let { error ->
+                    snackbarHostState.showSnackbar(
+                        message = error,
+                        duration = SnackbarDuration.Long
+                    )
+                }
+            }
+            is ImportPdfViewModel.UiState.Editing -> {
+                state.errorMessage?.let { error ->
+                    snackbarHostState.showSnackbar(
+                        message = error,
+                        duration = SnackbarDuration.Long
+                    )
+                }
+            }
+            else -> { /* No error to show */ }
+        }
+    }
 
     // PDF file picker launcher
     val pdfPickerLauncher = rememberLauncherForActivityResult(
@@ -67,6 +92,11 @@ fun ImportPdfScreen(
         }
     }
 
+    // Handle system back button
+    BackHandler {
+        handleBack()
+    }
+
     // Discard confirmation dialog
     if (showDiscardDialog) {
         AlertDialog(
@@ -93,6 +123,7 @@ fun ImportPdfScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Import from PDF") },
