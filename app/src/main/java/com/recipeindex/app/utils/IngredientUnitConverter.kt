@@ -1,17 +1,94 @@
 package com.recipeindex.app.utils
 
+import com.recipeindex.app.data.UnitSystem
+
 /**
  * IngredientUnitConverter - Convert ingredient units and display conversions
  *
- * Detects units in ingredient strings and adds metric/imperial conversions
- * Example: "1 cup flour" → "1 cup (237 ml) flour"
+ * Detects units in ingredient strings and formats them according to user preferences
+ * Example: "1 cup flour" → "1 cup (237 ml) flour" (if preference is BOTH)
+ *          "1 cup flour" → "237 ml flour" (if preference is METRIC)
  */
 object IngredientUnitConverter {
 
     /**
+     * Format an ingredient string according to user preferences
+     * Handles both liquid volume and weight measurements with granular control
+     */
+    fun formatIngredient(
+        ingredient: String,
+        liquidPreference: UnitSystem,
+        weightPreference: UnitSystem
+    ): String {
+        // Pattern to match quantity + unit at the beginning
+        val pattern = Regex("^([\\d./\\s-]+)\\s+(cups?|tbsp|tablespoons?|tsp|teaspoons?|fl\\.?\\s?oz|floz|ounces?|oz|lbs?|pounds?|g|grams?|kg|kilograms?|ml|milliliters?|liters?|L)\\s+(.+)", RegexOption.IGNORE_CASE)
+        val match = pattern.find(ingredient.trim())
+
+        return if (match != null) {
+            val quantityStr = match.groupValues[1]
+            val unit = match.groupValues[2]
+            val remainder = match.groupValues[3]
+
+            val quantity = parseQuantity(quantityStr) ?: return ingredient
+
+            // Determine if this is a liquid or weight measurement
+            val isLiquid = isLiquidUnit(unit)
+            val preference = if (isLiquid) liquidPreference else weightPreference
+
+            when (preference) {
+                UnitSystem.BOTH -> {
+                    // Show both units
+                    val isImperial = isImperialUnit(unit)
+                    val conversion = if (isImperial) {
+                        convertToMetric(quantity, unit)
+                    } else {
+                        convertToImperial(quantity, unit)
+                    }
+
+                    if (conversion != null) {
+                        "$quantityStr $unit ($conversion) $remainder"
+                    } else {
+                        ingredient
+                    }
+                }
+                UnitSystem.METRIC -> {
+                    // Convert to metric if currently imperial
+                    if (isImperialUnit(unit)) {
+                        val converted = convertToMetric(quantity, unit)
+                        if (converted != null) {
+                            "$converted $remainder"
+                        } else {
+                            ingredient
+                        }
+                    } else {
+                        ingredient // Already metric
+                    }
+                }
+                UnitSystem.IMPERIAL -> {
+                    // Convert to imperial if currently metric
+                    if (!isImperialUnit(unit)) {
+                        val converted = convertToImperial(quantity, unit)
+                        if (converted != null) {
+                            "$converted $remainder"
+                        } else {
+                            ingredient
+                        }
+                    } else {
+                        ingredient // Already imperial
+                    }
+                }
+            }
+        } else {
+            ingredient
+        }
+    }
+
+    /**
      * Add unit conversion to an ingredient string (shows both units)
      * Example: "2 cups flour" → "2 cups (473 ml) flour"
+     * @deprecated Use formatIngredient with granular preferences instead
      */
+    @Deprecated("Use formatIngredient with granular preferences instead")
     fun addConversion(ingredient: String, toMetric: Boolean): String {
         // Pattern to match quantity + unit at the beginning
         val pattern = Regex("^([\\d./\\s-]+)\\s+(cups?|tbsp|tablespoons?|tsp|teaspoons?|fl\\.?\\s?oz|ounces?|oz|lbs?|pounds?|g|grams?|kg|kilograms?|ml|milliliters?|liters?|L)\\s+(.+)", RegexOption.IGNORE_CASE)
@@ -37,6 +114,30 @@ object IngredientUnitConverter {
         } else {
             ingredient
         }
+    }
+
+    /**
+     * Check if a unit is a liquid volume measurement
+     */
+    private fun isLiquidUnit(unit: String): Boolean {
+        val normalized = unit.lowercase().replace(".", "").trim()
+        return normalized in listOf(
+            "cup", "cups", "tbsp", "tablespoon", "tablespoons",
+            "tsp", "teaspoon", "teaspoons", "fl oz", "floz",
+            "ml", "milliliter", "milliliters", "l", "liter", "liters"
+        )
+    }
+
+    /**
+     * Check if a unit is imperial (vs metric)
+     */
+    private fun isImperialUnit(unit: String): Boolean {
+        val normalized = unit.lowercase().replace(".", "").trim()
+        return normalized in listOf(
+            "cup", "cups", "tbsp", "tablespoon", "tablespoons",
+            "tsp", "teaspoon", "teaspoons", "fl oz", "floz",
+            "oz", "ounce", "ounces", "lb", "lbs", "pound", "pounds"
+        )
     }
 
     /**

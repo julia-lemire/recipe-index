@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +24,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
+import com.recipeindex.app.ui.viewmodels.SettingsViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.IngredientScaler
 import com.recipeindex.app.utils.IngredientUnitConverter
@@ -38,6 +38,7 @@ import com.recipeindex.app.utils.IngredientUnitConverter
 @Composable
 fun RecipeDetailScreen(
     recipe: Recipe,
+    settingsViewModel: SettingsViewModel,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onBack: () -> Unit,
@@ -51,7 +52,9 @@ fun RecipeDetailScreen(
     var showOverflowMenu by remember { mutableStateOf(false) }
     var selectedServings by remember { mutableStateOf(recipe.servings) }
     var showServingsMenu by remember { mutableStateOf(false) }
-    var showUnitConversions by remember { mutableStateOf(false) }
+
+    // Get user's unit preferences from settings
+    val settings by settingsViewModel.settings.collectAsState()
 
     // Calculate scaling factor for ingredients
     val scaleFactor = selectedServings.toDouble() / recipe.servings.toDouble()
@@ -241,32 +244,12 @@ fun RecipeDetailScreen(
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (selectedServings != recipe.servings) {
-                            Text(
-                                text = "Scaled for $selectedServings servings",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        // Unit conversion toggle
-                        IconButton(
-                            onClick = { showUnitConversions = !showUnitConversions },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.SwapHoriz,
-                                contentDescription = if (showUnitConversions) "Hide unit conversions" else "Show unit conversions",
-                                tint = if (showUnitConversions) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                            )
-                        }
+                    if (selectedServings != recipe.servings) {
+                        Text(
+                            text = "Scaled for $selectedServings servings",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
                 recipe.ingredients.forEach { ingredient ->
@@ -275,20 +258,19 @@ fun RecipeDetailScreen(
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
                     ) {
+                        // Scale ingredient based on servings
                         var processedIngredient = if (scaleFactor != 1.0) {
                             IngredientScaler.scaleIngredient(ingredient, scaleFactor)
                         } else {
                             ingredient
                         }
 
-                        // Add unit conversions if enabled
-                        if (showUnitConversions) {
-                            // Convert to metric by default (most common use case)
-                            processedIngredient = IngredientUnitConverter.addConversion(
-                                processedIngredient,
-                                toMetric = true
-                            )
-                        }
+                        // Format ingredient according to user's granular unit preferences
+                        processedIngredient = IngredientUnitConverter.formatIngredient(
+                            processedIngredient,
+                            liquidPreference = settings.liquidVolumePreference,
+                            weightPreference = settings.weightPreference
+                        )
 
                         Text(
                             text = "• $processedIngredient",

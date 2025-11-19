@@ -47,6 +47,20 @@ class SettingsViewModel(
     }
 
     /**
+     * Update liquid volume unit preference
+     */
+    fun setLiquidVolumePreference(preference: UnitSystem) {
+        settingsManager.setLiquidVolumePreference(preference)
+    }
+
+    /**
+     * Update weight unit preference
+     */
+    fun setWeightPreference(preference: UnitSystem) {
+        settingsManager.setWeightPreference(preference)
+    }
+
+    /**
      * Reset all settings to defaults
      */
     fun resetToDefaults() {

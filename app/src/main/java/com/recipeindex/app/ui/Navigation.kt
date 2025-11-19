@@ -137,6 +137,7 @@ fun RecipeIndexNavigation(
             currentRecipe?.let { recipe ->
                 RecipeDetailScreen(
                     recipe = recipe,
+                    settingsViewModel = settingsViewModel,
                     onEdit = {
                         navController.navigate(Screen.EditRecipe.createRoute(recipeId))
                     },
