@@ -18,6 +18,7 @@ object DebugConfig {
         IMPORT,
         UI,
         MANAGER,
+        SETTINGS,
         GENERAL
     }
 
