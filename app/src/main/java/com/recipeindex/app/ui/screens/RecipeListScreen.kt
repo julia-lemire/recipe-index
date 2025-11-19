@@ -4,13 +4,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.layout.Layout
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -159,9 +161,12 @@ fun RecipeListScreen(
                                 recipe = recipe,
                                 onClick = { onRecipeClick(recipe.id) },
                                 onToggleFavorite = { viewModel.toggleFavorite(recipe.id, !recipe.isFavorite) },
-                                onAddToList = {
+                                onAddToGroceryList = {
                                     recipeForGroceryList = recipe
                                     showListPicker = true
+                                },
+                                onAddToMealPlan = {
+                                    // TODO: Navigate to meal plan selection
                                 }
                             )
                         }
@@ -169,6 +174,25 @@ fun RecipeListScreen(
                 }
             }
         }
+    }
+
+    // Grocery list picker dialog
+    if (showListPicker && recipeForGroceryList != null) {
+        GroceryListPickerDialog(
+            availableLists = groceryLists,
+            onDismiss = { showListPicker = false },
+            onListSelected = { listId ->
+                groceryListViewModel.addRecipeToList(listId, recipeForGroceryList!!.id)
+                showListPicker = false
+                recipeForGroceryList = null
+            },
+            onCreateNew = { listName ->
+                val newListId = groceryListViewModel.createListAndReturn(listName)
+                groceryListViewModel.addRecipeToList(newListId, recipeForGroceryList!!.id)
+                showListPicker = false
+                recipeForGroceryList = null
+            }
+        )
     }
 }
 
@@ -197,8 +221,11 @@ private fun RecipeCard(
     recipe: Recipe,
     onClick: () -> Unit,
     onToggleFavorite: () -> Unit,
-    onAddToList: () -> Unit
+    onAddToGroceryList: () -> Unit,
+    onAddToMealPlan: () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -210,104 +237,195 @@ private fun RecipeCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Recipe Photo
+            // Recipe Photo (reduced from 180dp to 140dp)
             recipe.photoPath?.let { photoUrl ->
                 AsyncImage(
                     model = photoUrl,
                     contentDescription = "Recipe photo for ${recipe.title}",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(180.dp),
+                        .height(140.dp),
                     contentScale = ContentScale.Crop
                 )
             }
 
-            // Card Content
+            // Card Content (reduced padding from 16dp to 12dp)
             Column(
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(12.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = recipe.title,
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                    }
-                    IconButton(onClick = onToggleFavorite) {
-                        Icon(
-                            imageVector = if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "Favorite",
-                            tint = if (recipe.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-            // Info row: Servings, Prep, Cook
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = "${recipe.servings} servings",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                recipe.prepTimeMinutes?.let {
                     Text(
-                        text = "$it min prep",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = recipe.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f)
                     )
-                }
-                recipe.cookTimeMinutes?.let {
-                    Text(
-                        text = "$it min cook",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
 
-            // Tags
-            if (recipe.tags.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
+                    Row {
+                        // Show favorite icon only if favorited
+                        if (recipe.isFavorite) {
+                            IconButton(onClick = onToggleFavorite) {
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = "Unfavorite",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+
+                        // Add to meal plan button
+                        IconButton(onClick = onAddToMealPlan) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarMonth,
+                                contentDescription = "Add to Meal Plan",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        // Context menu button
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "More options"
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Add to Grocery List") },
+                                    onClick = {
+                                        showMenu = false
+                                        onAddToGroceryList()
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.ShoppingCart, contentDescription = null)
+                                    }
+                                )
+                                if (!recipe.isFavorite) {
+                                    DropdownMenuItem(
+                                        text = { Text("Mark as Favorite") },
+                                        onClick = {
+                                            showMenu = false
+                                            onToggleFavorite()
+                                        },
+                                        leadingIcon = {
+                                            Icon(Icons.Default.Favorite, contentDescription = null)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Info row: Servings, Prep, Cook
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    recipe.tags.take(3).forEach { tag ->
-                        SuggestionChip(
-                            onClick = { },
-                            label = { Text(tag, style = MaterialTheme.typography.labelSmall) }
+                    Text(
+                        text = "${recipe.servings} servings",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    recipe.prepTimeMinutes?.let {
+                        Text(
+                            text = "$it min prep",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    if (recipe.tags.size > 3) {
+                    recipe.cookTimeMinutes?.let {
                         Text(
-                            text = "+${recipe.tags.size - 3}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.align(Alignment.CenterVertically)
+                            text = "$it min cook",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
+
+                // Tags with wrapping (using custom FlowRow)
+                if (recipe.tags.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalSpacing = 6.dp,
+                        verticalSpacing = 4.dp
+                    ) {
+                        recipe.tags.forEach { tag ->
+                            SuggestionChip(
+                                onClick = { },
+                                label = { Text(tag, style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Custom FlowRow implementation for wrapping tags
+ */
+@Composable
+private fun FlowRow(
+    modifier: Modifier = Modifier,
+    horizontalSpacing: androidx.compose.ui.unit.Dp = 0.dp,
+    verticalSpacing: androidx.compose.ui.unit.Dp = 0.dp,
+    content: @Composable () -> Unit
+) {
+    Layout(
+        content = content,
+        modifier = modifier
+    ) { measurables, constraints ->
+        val hSpacing = horizontalSpacing.roundToPx()
+        val vSpacing = verticalSpacing.roundToPx()
+
+        val rows = mutableListOf<List<Pair<androidx.compose.ui.layout.Placeable, Int>>>()
+        var currentRow = mutableListOf<Pair<androidx.compose.ui.layout.Placeable, Int>>()
+        var currentRowWidth = 0
+        var maxWidth = 0
+
+        measurables.forEach { measurable ->
+            val placeable = measurable.measure(constraints)
+
+            if (currentRowWidth + placeable.width > constraints.maxWidth && currentRow.isNotEmpty()) {
+                rows.add(currentRow)
+                maxWidth = maxOf(maxWidth, currentRowWidth - hSpacing)
+                currentRow = mutableListOf()
+                currentRowWidth = 0
             }
 
-            // Add to list button
-            Spacer(modifier = Modifier.height(12.dp))
-            OutlinedButton(
-                onClick = onAddToList,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Add to Grocery List")
-            }
+            currentRow.add(placeable to currentRowWidth)
+            currentRowWidth += placeable.width + hSpacing
+        }
+
+        if (currentRow.isNotEmpty()) {
+            rows.add(currentRow)
+            maxWidth = maxOf(maxWidth, currentRowWidth - hSpacing)
+        }
+
+        val height = rows.mapIndexed { index, row ->
+            row.maxOf { it.first.height } + if (index < rows.size - 1) vSpacing else 0
+        }.sum()
+
+        layout(constraints.maxWidth, height) {
+            var yPosition = 0
+            rows.forEach { row ->
+                val rowHeight = row.maxOf { it.first.height }
+                row.forEach { (placeable, x) ->
+                    placeable.placeRelative(x, yPosition)
+                }
+                yPosition += rowHeight + vSpacing
             }
         }
     }
