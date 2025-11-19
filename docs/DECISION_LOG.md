@@ -1,7 +1,7 @@
 # Recipe Index Decision Log
 
 > **Purpose**: Architectural decision records (WHAT/WHY/WHEN decisions were made)
-> **Last Updated**: 2025-11-18
+> **Last Updated**: 2025-11-19
 
 **See Also:**
 - [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) - Quick lookup ("I need to...") and architecture patterns (HOW to implement)
@@ -45,6 +45,11 @@
 
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
+
+#### Nov 19, 2025: Error Handling with SnackbarHost Pattern
+- **Decision**: Establish SnackbarHost + BackHandler pattern for all screens: LaunchedEffect monitors ViewModel error states, SnackbarHost displays errors at bottom, BackHandler intercepts system back button for validation/save logic
+- **Rationale**: Provides consistent user experience for errors across app, ensures users see error messages without blocking UI (unlike dialogs), prevents accidental data loss via back button
+- **Implementation**: Created ErrorHandler utility with getErrorMessage() for user-friendly error text; applied to ImportUrlScreen, ImportPdfScreen, ImportPhotoScreen, GroceryListDetailScreen with SnackbarHostState + Scaffold snackbarHost parameter
 
 #### Nov 19, 2025: FlowRow Layout for Wrapping Tags
 - **Decision**: Implement custom FlowRow layout for recipe tags that measures children with minWidth=0 and wraps to next line when exceeding maxWidth

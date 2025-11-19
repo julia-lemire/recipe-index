@@ -1,7 +1,7 @@
 # Recipe Index File Catalog
 
 > **Purpose**: Complete file tree, system relationships, and component descriptions
-> **Last Updated**: 2025-11-18
+> **Last Updated**: 2025-11-19
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -139,6 +139,7 @@ com.recipeindex.app/
 │
 └── utils/
     ├── DebugConfig.kt
+    ├── ErrorHandler.kt
     └── UnitConverter.kt
 
 ```
@@ -270,6 +271,7 @@ com.recipeindex.app/
 
 ### Utils
 - **DebugConfig.kt** - Centralized logging: Category-based filtering (NAVIGATION, DATABASE, IMPORT, UI, MANAGER, SETTINGS, GENERAL), replaces android.util.Log
+- **ErrorHandler.kt** - Error handling utility: User-friendly error messages (network, validation, state errors), handleResult() for Result<T> processing, executeSafely() and executeWithRetry() for suspending operations
 
 ---
 > **Format Guidelines**:
