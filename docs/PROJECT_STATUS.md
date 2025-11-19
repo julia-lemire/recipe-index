@@ -53,8 +53,8 @@
 
 ## 1. Project Overview
 
-**Current Phase:** Recipe Import (Phase 2) - COMPLETE
-**Current Focus:** Phase 2 completed with all three import sources (URL, PDF, Photo)
+**Current Phase:** Grocery Lists (Phase 4) - COMPLETE
+**Current Focus:** Phase 4 completed with grocery list generation, manual entry, intelligent consolidation, and shopping UI
 
 Recipe Index: Offline-first Android app for home cooks to store, organize, and plan meals with recipes from URLs/PDFs/photos.
 
@@ -161,6 +161,29 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Recipe photo display (list cards and detail screen)
 - ✅ Tabbed instruction sections (Slow Cooker, Instant Pot, etc.)
 
+### Meal Planning (Phase 3)
+- ✅ MealPlan entity with Room (name, optional date range, recipe IDs, auto-aggregated tags, notes)
+- ✅ MealPlanDao with Flow-based queries (CRUD, search)
+- ✅ MealPlanManager for business logic (auto-tag aggregation from recipes, special event detection, validation)
+- ✅ RecipeTags with 150+ predefined tags (8 categories: Season, Ingredient, Special Event, Dish Type, Cooking Method, Cuisine, Dietary, Time)
+- ✅ MealPlanViewModel with StateFlow (delegates to Manager)
+- ✅ MealPlanningScreen with card-based list (search, duplicate, delete dialogs, shows all recipes and tags)
+- ✅ AddEditMealPlanScreen (flexible date ranges, recipe picker bottom sheet with search, auto-save on back)
+- ✅ Full navigation integration (add, edit, list)
+
+### Grocery Lists (Phase 4)
+- ✅ GroceryList entity with Room (simple container with id, name, timestamps)
+- ✅ GroceryItem entity with Room (list ID FK, name, quantity, unit, checked status, source recipe IDs, notes)
+- ✅ GroceryListDao and GroceryItemDao with special queries (item count, checked count, delete checked items)
+- ✅ GroceryListManager with intelligent consolidation (removes ignored modifiers like diced/chopped/shredded/sliced, sums quantities for matching name+unit pairs, tracks source recipes)
+- ✅ GroceryListViewModel with StateFlow (search, create, update, delete lists and items)
+- ✅ GroceryListScreen with card-based list view (progress indicators showing checked/total items, create/delete dialogs, search)
+- ✅ GroceryListDetailScreen with quick-entry text field at top (like Out of Milk app), item checkboxes, item detail dialog showing source recipes, bottom actions for clear checked/add recipes/add meal plans
+- ✅ GroceryListPickerDialog component (reusable for selecting existing list or creating new)
+- ✅ Recipe-to-list integration ("Add to Grocery List" button on recipe cards)
+- ✅ Meal plan-to-list integration ("Generate List" button on meal plan cards)
+- ✅ Full navigation integration (list of lists, detail view with all functionality)
+
 ---
 
 ## 5. Active Backlog
@@ -198,12 +221,13 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [ ] **More testing needed**: Meal planning with various scenarios (date ranges, multiple recipes, tag aggregation)
 
 ### Phase 4: Grocery Lists
-- [ ] List generation from meal plans
-- [ ] List generation from recipes
-- [ ] Manual list creation and editing
-- [ ] Ingredient consolidation
-- [ ] Shopping UI with check-off
-- [ ] Context menu actions (generate from meal plan, add from recipe)
+- [x] List generation from meal plans
+- [x] List generation from recipes
+- [x] Manual list creation and editing
+- [x] Ingredient consolidation (intelligent quantity summing, modifier removal)
+- [x] Shopping UI with check-off
+- [x] Context menu actions (generate from meal plan, add from recipe)
+- [ ] **More testing needed**: Grocery lists with various recipes (different units, fraction parsing, edge cases)
 
 ### Phase 5: Advanced
 - [ ] Portion scaling

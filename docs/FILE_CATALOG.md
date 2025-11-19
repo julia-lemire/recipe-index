@@ -67,12 +67,20 @@
 com.recipeindex.app/
 ├── data/
 │   ├── dao/
+│   │   ├── GroceryItemDao.kt
+│   │   ├── GroceryListDao.kt
+│   │   ├── MealPlanDao.kt
 │   │   └── RecipeDao.kt
 │   │
 │   ├── entities/
+│   │   ├── GroceryItem.kt
+│   │   ├── GroceryList.kt
+│   │   ├── MealPlan.kt
 │   │   └── Recipe.kt
 │   │
 │   ├── managers/
+│   │   ├── GroceryListManager.kt
+│   │   ├── MealPlanManager.kt
 │   │   └── RecipeManager.kt
 │   │
 │   ├── parsers/
@@ -83,17 +91,21 @@ com.recipeindex.app/
 │   │   └── TextRecipeParser.kt
 │   │
 │   ├── AppDatabase.kt
-│   └── Converters.kt
+│   ├── Converters.kt
+│   └── RecipeTags.kt
 │
 ├── navigation/
 │   └── NavGraph.kt
 │
 ├── ui/
 │   ├── components/
-│   │   └── AppNavigationDrawer.kt
+│   │   ├── AppNavigationDrawer.kt
+│   │   └── GroceryListPickerDialog.kt
 │   │
 │   ├── screens/
+│   │   ├── AddEditMealPlanScreen.kt
 │   │   ├── AddEditRecipeScreen.kt
+│   │   ├── GroceryListDetailScreen.kt
 │   │   ├── GroceryListScreen.kt
 │   │   ├── HomeScreen.kt
 │   │   ├── ImportPdfScreen.kt
@@ -111,9 +123,11 @@ com.recipeindex.app/
 │   │   └── Type.kt
 │   │
 │   ├── viewmodels/
+│   │   ├── GroceryListViewModel.kt
 │   │   ├── ImportPdfViewModel.kt
 │   │   ├── ImportPhotoViewModel.kt
 │   │   ├── ImportViewModel.kt
+│   │   ├── MealPlanViewModel.kt
 │   │   ├── RecipeViewModel.kt
 │   │   └── ViewModelFactory.kt
 │   │
@@ -157,6 +171,23 @@ com.recipeindex.app/
 - ImportPhotoScreen → ImportPhotoViewModel → PhotoRecipeParser → TextRecipeParser → RecipeManager
 - SchemaOrgRecipeParser → Jsoup (HTML parsing), kotlinx-serialization (JSON parsing)
 - PdfRecipeParser → PdfBox-Android (PDF text extraction)
+
+### Meal Planning Flow
+- MealPlanningScreen → MealPlanViewModel, RecipeViewModel, GroceryListViewModel
+- MealPlanningScreen → GroceryListPickerDialog (for "Generate List" action)
+- AddEditMealPlanScreen → MealPlanViewModel → MealPlanManager → MealPlanDao, RecipeDao
+- MealPlanManager → RecipeTags (for auto-tag aggregation and special event detection)
+- Navigation.kt → AddMealPlan, EditMealPlan screens with ViewModel integration
+
+### Grocery List Flow
+- GroceryListScreen → GroceryListViewModel → GroceryListManager → GroceryListDao, GroceryItemDao
+- GroceryListDetailScreen → GroceryListViewModel, RecipeViewModel, MealPlanViewModel (for available recipes/plans)
+- GroceryListManager → RecipeDao, MealPlanDao (for fetching ingredient data)
+- GroceryListManager → Intelligent consolidation logic (quantity parsing, modifier removal, unit matching)
+- GroceryListPickerDialog → Used by MealPlanningScreen, RecipeListScreen (reusable component)
+- RecipeListScreen → "Add to Grocery List" button → GroceryListPickerDialog
+- MealPlanningScreen → "Generate List" button → GroceryListPickerDialog
+- Navigation.kt → GroceryListDetail route with ViewModel integration
 - PhotoRecipeParser → ML Kit Text Recognition (OCR), supports multiple photos
 - TextRecipeParser → Smart pattern matching (detects sections, filters website noise, validates content, parses times/servings)
 - ImportViewModel UI states: Input → Loading → Editing → Saved

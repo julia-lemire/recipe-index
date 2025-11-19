@@ -46,7 +46,37 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
-#### Nov 18, 2025: Intelligent Content Filtering for PDF Extraction
+#### Nov 19, 2025: Intelligent Ingredient Consolidation for Grocery Lists
+- **Decision**: GroceryListManager consolidates ingredients by removing ignored modifiers (diced, chopped, shredded, sliced, cubed) and summing quantities for matching name+unit pairs
+- **Rationale**: Users transform ingredients at home (dicing, chopping), so modifiers don't affect shopping; consolidation reduces list length and simplifies shopping
+- **Implementation**: parseIngredient() removes modifiers via regex, consolidateIngredients() groups by normalized name+unit, sums quantities (handles fractions like 1/2), merges source recipe IDs
+
+#### Nov 19, 2025: Quick-Entry Text Field for Grocery Lists
+- **Decision**: GroceryListDetailScreen places text field at top for one-tap manual item entry (inspired by Out of Milk app)
+- **Rationale**: While shopping, users discover additional items and need instant entry without navigating away; top placement makes it most accessible
+- **Implementation**: OutlinedTextField + IconButton in Card at top of screen, adds to list immediately on button click, no dialog required for basic entry
+
+#### Nov 19, 2025: Source Recipe Tracking for Grocery Items
+- **Decision**: GroceryItem stores List<Long> sourceRecipeIds to track which recipes contributed each ingredient
+- **Rationale**: Users want to see where consolidated items came from for context and verification; supports future features like removing recipe items
+- **Implementation**: sourceRecipeIds field with @TypeConverter, merged when consolidating duplicate items, displayed in item detail dialog
+
+#### Nov 19, 2025: Grocery List Picker Dialog Pattern
+- **Decision**: Create reusable GroceryListPickerDialog component for selecting/creating lists from multiple entry points (recipes, meal plans)
+- **Rationale**: Consistent UX for adding to lists from different screens; single component ensures uniform behavior and reduces code duplication
+- **Implementation**: GroceryListPickerDialog with availableLists, onListSelected, onCreateNew callbacks; used by RecipeListScreen and MealPlanningScreen
+
+#### Nov 19, 2025: Auto-Tag Aggregation for Meal Plans
+- **Decision**: MealPlanManager auto-aggregates ingredient and special event tags from all recipes in plan, plus detects special events from plan name
+- **Rationale**: Manual tagging is tedious; auto-tagging provides immediate filtering/search value without user effort, supports grocery list generation
+- **Implementation**: getAutoTags() fetches recipe tags via RecipeDao, detectSpecialEventFromName() matches plan name against RecipeTags.SPECIAL_EVENTS, combines and deduplicates
+
+#### Nov 19, 2025: Flexible Date Ranges for Meal Planning
+- **Decision**: MealPlan uses optional startDate/endDate (both nullable) instead of strict week structure
+- **Rationale**: Users plan for varying durations (Sun-Thu, single-day events, full weeks); nullable dates support indefinite plans and special events without dates
+- **Implementation**: startDate and endDate as Long? (nullable timestamps), formatDateRange() displays range or "No dates set", UI shows optional date pickers
+
+#### Nov 19, 2025: Intelligent Content Filtering for PDF Extraction
 - **Decision**: TextRecipeParser filters extracted content with isWebsiteNoise(), looksLikeIngredient(), and looksLikeInstruction() before returning ingredients/instructions
 - **Rationale**: PDF text extraction from web pages includes navigation, CTAs, and footer text mixed with recipe content due to non-visual extraction order
 - **Implementation**: Regex patterns detect website noise (save/shop CTAs, ratings prompts, spaced letters), validate ingredients (measurements, food words), validate instructions (cooking verbs, temps/times)
