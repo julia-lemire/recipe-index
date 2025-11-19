@@ -3,6 +3,9 @@ package com.recipeindex.app.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -413,45 +416,62 @@ private fun RecipePickerBottomSheet(
         availableRecipes.filter { it.title.contains(searchQuery, ignoreCase = true) }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss
-    ) {
+    // Full-screen dialog instead of bottom sheet
+    BackHandler {
+        onDismiss()
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Select Recipes") },
+                navigationIcon = {
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, "Cancel")
+                    }
+                },
+                actions = {
+                    TextButton(
+                        onClick = { onRecipesSelected(tempSelectedIds) }
+                    ) {
+                        Text("Done (${tempSelectedIds.size})")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            Text(
-                text = "Select Recipes",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
             // Search field
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 placeholder = { Text("Search recipes...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Recipe list
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f, fill = false)
-                    .heightIn(max = 400.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            // Recipe grid (2 per row)
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(filteredRecipes, key = { it.id }) { recipe ->
                     val isSelected = recipe.id in tempSelectedIds
 
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp),
                         onClick = {
                             tempSelectedIds = if (isSelected) {
                                 tempSelectedIds.filter { it != recipe.id }
@@ -463,58 +483,51 @@ private fun RecipePickerBottomSheet(
                             containerColor = if (isSelected) {
                                 MaterialTheme.colorScheme.primaryContainer
                             } else {
-                                MaterialTheme.colorScheme.surface
+                                MaterialTheme.colorScheme.surfaceVariant
                             }
                         )
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.SpaceBetween
+                            ) {
                                 Text(
                                     text = recipe.title,
-                                    style = MaterialTheme.typography.bodyLarge
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 3
                                 )
-                                Text(
-                                    text = "${recipe.servings} servings",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Column {
+                                    Text(
+                                        text = "${recipe.servings} servings",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    val totalTime = (recipe.prepTimeMinutes ?: 0) + (recipe.cookTimeMinutes ?: 0)
+                                    if (totalTime > 0) {
+                                        Text(
+                                            text = "${totalTime}m",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                             }
                             if (isSelected) {
                                 Icon(
                                     Icons.Default.CheckCircle,
                                     contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(8.dp)
+                                        .size(24.dp)
                                 )
                             }
                         }
                     }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Action buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Cancel")
-                }
-                Button(
-                    onClick = { onRecipesSelected(tempSelectedIds) },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Done (${tempSelectedIds.size})")
                 }
             }
         }
