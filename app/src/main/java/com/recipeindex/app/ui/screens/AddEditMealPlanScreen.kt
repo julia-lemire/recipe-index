@@ -202,36 +202,113 @@ fun AddEditMealPlanScreen(
                 }
             }
 
-            // Selected recipes list
+            // Selected recipes list - enhanced cards with details
             if (selectedRecipeIds.isNotEmpty()) {
                 val selectedRecipes = availableRecipes.filter { it.id in selectedRecipeIds }
                 selectedRecipes.forEach { recipe ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
                     ) {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(12.dp)
                         ) {
-                            Text(
-                                text = recipe.title,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.weight(1f)
-                            )
-                            IconButton(
-                                onClick = {
-                                    selectedRecipeIds = selectedRecipeIds.filter { it != recipe.id }
-                                }
+                            // Title and remove button
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = "Remove",
-                                    tint = MaterialTheme.colorScheme.error
+                                Text(
+                                    text = recipe.title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.weight(1f)
                                 )
+                                IconButton(
+                                    onClick = {
+                                        selectedRecipeIds = selectedRecipeIds.filter { it != recipe.id }
+                                    }
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Remove",
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+
+                            // Servings and time info
+                            if (recipe.prepTimeMinutes != null || recipe.cookTimeMinutes != null || recipe.servings > 0) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    if (recipe.servings > 0) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Person,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                text = "${recipe.servings}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    val totalTime = (recipe.prepTimeMinutes ?: 0) + (recipe.cookTimeMinutes ?: 0)
+                                    if (totalTime > 0) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Schedule,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                text = "${totalTime}m",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Tags
+                            if (recipe.tags.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    recipe.tags.take(3).forEach { tag ->
+                                        SuggestionChip(
+                                            onClick = { },
+                                            label = { Text(tag, style = MaterialTheme.typography.labelSmall) }
+                                        )
+                                    }
+                                    if (recipe.tags.size > 3) {
+                                        SuggestionChip(
+                                            onClick = { },
+                                            label = { Text("+${recipe.tags.size - 3}", style = MaterialTheme.typography.labelSmall) }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

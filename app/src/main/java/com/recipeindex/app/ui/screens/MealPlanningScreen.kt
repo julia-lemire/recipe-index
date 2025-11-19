@@ -265,8 +265,10 @@ fun MealPlanningScreen(
                 planForGroceryList = null
             },
             onCreateNew = { listName ->
-                val newListId = groceryListViewModel.createListAndReturn(listName)
-                groceryListViewModel.addMealPlanToList(newListId, planForGroceryList!!.id)
+                // Create list first, then add meal plan in the success callback
+                groceryListViewModel.createList(listName) { newListId ->
+                    groceryListViewModel.addMealPlanToList(newListId, planForGroceryList!!.id)
+                }
                 showListPicker = false
                 planForGroceryList = null
             }
@@ -287,7 +289,8 @@ private fun MealPlanCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        onClick = onEdit // Make the entire card clickable to go to detail/edit screen
     ) {
         Column(
             modifier = Modifier

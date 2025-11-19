@@ -5,9 +5,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.*
@@ -16,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
@@ -322,6 +327,8 @@ private fun EditRecipeContent(
     onSave: () -> Unit,
     errorMessage: String?
 ) {
+    var tagInput by remember { mutableStateOf("") }
+
     Column(
         modifier = modifier
             .padding(16.dp)
@@ -436,26 +443,73 @@ private fun EditRecipeContent(
             )
         }
 
-        // Tags
-        OutlinedTextField(
-            value = recipe.tags.joinToString(", "),
-            onValueChange = {
-                val tags = it.split(",").map { tag -> tag.trim() }.filter { tag -> tag.isNotBlank() }
-                onRecipeChange(recipe.copy(tags = tags))
-            },
-            label = { Text("Tags (comma separated)") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Notes
-        OutlinedTextField(
-            value = recipe.notes ?: "",
-            onValueChange = { onRecipeChange(recipe.copy(notes = it.ifBlank { null })) },
-            label = { Text("Notes") },
+        // Tags - Chip-based UI
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            minLines = 3,
-            maxLines = 6
-        )
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Tags",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            // Display existing tags as removable chips
+            if (recipe.tags.isNotEmpty()) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalSpacing = 8.dp,
+                    verticalSpacing = 8.dp
+                ) {
+                    recipe.tags.forEach { tag ->
+                        InputChip(
+                            selected = false,
+                            onClick = {
+                                val updatedTags = recipe.tags.filter { it != tag }
+                                onRecipeChange(recipe.copy(tags = updatedTags))
+                            },
+                            label = { Text(tag) },
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Remove $tag",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Add new tag field
+            OutlinedTextField(
+                value = tagInput,
+                onValueChange = { tagInput = it },
+                label = { Text("Add tag") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                trailingIcon = {
+                    if (tagInput.isNotBlank()) {
+                        IconButton(
+                            onClick = {
+                                val newTag = tagInput.trim()
+                                if (newTag.isNotBlank() && !recipe.tags.contains(newTag)) {
+                                    val updatedTags = recipe.tags + newTag
+                                    onRecipeChange(recipe.copy(tags = updatedTags))
+                                }
+                                tagInput = ""
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add tag"
+                            )
+                        }
+                    }
+                },
+                singleLine = true
+            )
+        }
 
         // Save button
         Button(
@@ -466,6 +520,84 @@ private fun EditRecipeContent(
                     recipe.instructions.isNotEmpty()
         ) {
             Text("Save Recipe")
+        }
+    }
+}
+
+/**
+ * FlowRow - Custom layout that arranges children in rows, wrapping to new row when needed
+ * (Similar to CSS flexbox with flex-wrap)
+ */
+@Composable
+private fun FlowRow(
+    modifier: Modifier = Modifier,
+    horizontalSpacing: androidx.compose.ui.unit.Dp = 0.dp,
+    verticalSpacing: androidx.compose.ui.unit.Dp = 0.dp,
+    content: @Composable () -> Unit
+) {
+    Layout(
+        content = content,
+        modifier = modifier
+    ) { measurables, constraints ->
+        val horizontalSpacingPx = horizontalSpacing.roundToPx()
+        val verticalSpacingPx = verticalSpacing.roundToPx()
+
+        val rows = mutableListOf<MutableList<androidx.compose.ui.layout.Placeable>>()
+        var currentRow = mutableListOf<androidx.compose.ui.layout.Placeable>()
+        var currentRowWidth = 0
+        var currentRowHeight = 0
+
+        // Measure children and organize into rows
+        measurables.forEach { measurable ->
+            val placeable = measurable.measure(constraints)
+
+            // Check if we need to start a new row
+            if (currentRow.isNotEmpty() &&
+                currentRowWidth + horizontalSpacingPx + placeable.width > constraints.maxWidth
+            ) {
+                rows.add(currentRow)
+                currentRow = mutableListOf()
+                currentRowWidth = 0
+                currentRowHeight = 0
+            }
+
+            // Add to current row
+            currentRow.add(placeable)
+            currentRowWidth += placeable.width + if (currentRow.size > 1) horizontalSpacingPx else 0
+            currentRowHeight = maxOf(currentRowHeight, placeable.height)
+        }
+
+        // Add last row if not empty
+        if (currentRow.isNotEmpty()) {
+            rows.add(currentRow)
+        }
+
+        // Calculate total height
+        val totalHeight = rows.sumOf { row ->
+            row.maxOfOrNull { it.height } ?: 0
+        } + (rows.size - 1) * verticalSpacingPx
+
+        // Layout children
+        layout(
+            width = constraints.maxWidth,
+            height = totalHeight
+        ) {
+            var yPosition = 0
+
+            rows.forEach { row ->
+                var xPosition = 0
+                val rowHeight = row.maxOfOrNull { it.height } ?: 0
+
+                row.forEach { placeable ->
+                    placeable.placeRelative(
+                        x = xPosition,
+                        y = yPosition
+                    )
+                    xPosition += placeable.width + horizontalSpacingPx
+                }
+
+                yPosition += rowHeight + verticalSpacingPx
+            }
         }
     }
 }

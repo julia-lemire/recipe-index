@@ -318,7 +318,7 @@ private fun ParsedRecipeData.toRecipe(sourceUrl: String): Recipe {
         prepTimeMinutes = prepTimeMinutes,
         cookTimeMinutes = cookTimeMinutes,
         tags = tags,
-        notes = description,
+        notes = null, // Notes should be user-added only, not populated during import
         source = RecipeSource.URL,
         sourceUrl = sourceUrl,
         photoPath = imageUrl, // Save image URL to photoPath
