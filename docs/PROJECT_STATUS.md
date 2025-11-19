@@ -217,6 +217,12 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Landscape mode: Recipe and meal plan cards display in 2-column grid
 - ✅ Error handling: ErrorHandler utility, SnackbarHost for error display, BackHandler for system back button
 
+### Advanced Features (Phase 5)
+- ✅ Portion scaling: Servings dropdown in RecipeDetailScreen (half, original, 2x, 3x, 4x) with automatic ingredient quantity scaling
+- ✅ Ingredient parsing: IngredientScaler handles fractions (1/2), mixed numbers (1 1/2), decimals, ranges, smart formatting
+- ✅ Unit conversions: Toggle button to show metric/imperial conversions inline ("1 cup (237 ml) flour")
+- ✅ Recipe selection: Full-screen grid layout for meal plan recipe picker (2 columns, search, selection counter in TopAppBar)
+
 ---
 
 ## 5. Active Backlog
@@ -268,11 +274,11 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [x] Canned items intelligent parsing
 - [x] UX improvements (card compaction, icon buttons, context menus)
 - [x] Meal plan auto-naming from dates
-- [ ] Portion scaling with servings dropdown
-- [ ] Unit conversion display in recipes (with toggle for original units)
-- [ ] Granular unit preferences by category (weight, liquid)
-- [ ] Full-screen recipe selection for meal plans (grid layout, 2/row on phone)
+- [x] Portion scaling with servings dropdown (half, original, 2x, 3x, 4x servings with smart ingredient scaling)
+- [x] Unit conversion display in recipes (toggle to show metric/imperial conversions inline)
+- [x] Full-screen recipe selection for meal plans (grid layout, 2/row, search, selection counter)
 - [x] Landscape mode: 2 cards per row (recipes/meal plans)
+- [ ] Granular unit preferences by category (weight, liquid) - Deferred (toggle is sufficient)
 - [ ] Nutritional info
 - [ ] Recipe suggestions
 - [ ] Cooking mode
