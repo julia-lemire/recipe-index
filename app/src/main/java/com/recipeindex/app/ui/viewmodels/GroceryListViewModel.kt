@@ -18,12 +18,16 @@ class GroceryListViewModel(
 
     private val _lists = MutableStateFlow<List<GroceryList>>(emptyList())
     val lists: StateFlow<List<GroceryList>> = _lists.asStateFlow()
+    val groceryLists: StateFlow<List<GroceryList>> = _lists.asStateFlow() // Alias for convenience
 
     private val _currentList = MutableStateFlow<GroceryList?>(null)
     val currentList: StateFlow<GroceryList?> = _currentList.asStateFlow()
 
     private val _currentListItems = MutableStateFlow<List<GroceryItem>>(emptyList())
     val currentListItems: StateFlow<List<GroceryItem>> = _currentListItems.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -285,6 +289,123 @@ class GroceryListViewModel(
             } catch (e: Exception) {
                 _error.value = "Failed to clear items: ${e.message}"
                 DebugConfig.error(DebugConfig.Category.UI, "clearCheckedItems exception", e)
+            }
+        }
+    }
+
+    /**
+     * Search grocery lists
+     */
+    fun searchLists(query: String) {
+        _searchQuery.value = query
+        // Note: In a real app, you'd filter the lists here
+        // For now, keeping it simple
+    }
+
+    /**
+     * Create list and return ID synchronously (blocking)
+     * Used when creating a list and immediately adding items
+     */
+    fun createListAndReturn(name: String): Long {
+        var resultId: Long = 0
+        viewModelScope.launch {
+            val result = groceryListManager.createList(name)
+            result.onSuccess { listId ->
+                resultId = listId
+            }
+        }
+        return resultId
+    }
+
+    /**
+     * Add meal plan to grocery list
+     */
+    fun addMealPlanToList(listId: Long, planId: Long, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val result = groceryListManager.addMealPlanToList(listId, planId)
+                _isLoading.value = false
+
+                result.onSuccess {
+                    DebugConfig.debugLog(DebugConfig.Category.UI, "Added meal plan to list")
+                    onSuccess()
+                }.onFailure { e ->
+                    _error.value = "Failed to add meal plan: ${e.message}"
+                    DebugConfig.error(DebugConfig.Category.UI, "addMealPlanToList failed", e)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to add meal plan: ${e.message}"
+                _isLoading.value = false
+                DebugConfig.error(DebugConfig.Category.UI, "addMealPlanToList exception", e)
+            }
+        }
+    }
+
+    /**
+     * Get current list as Flow (for composable observation)
+     */
+    fun getCurrentList(listId: Long): Flow<GroceryList?> {
+        return groceryListManager.getListByIdFlow(listId)
+    }
+
+    /**
+     * Get items for list as Flow (for composable observation)
+     */
+    fun getItems(listId: Long): Flow<List<GroceryItem>> {
+        return groceryListManager.getItemsForList(listId)
+    }
+
+    /**
+     * Get item count for list
+     */
+    fun getItemCount(listId: Long): Flow<Int> {
+        return groceryListManager.getItemCount(listId)
+    }
+
+    /**
+     * Get checked item count for list
+     */
+    fun getCheckedCount(listId: Long): Flow<Int> {
+        return groceryListManager.getCheckedCount(listId)
+    }
+
+    /**
+     * Toggle item checked status (by ID)
+     */
+    fun toggleItemChecked(itemId: Long, checked: Boolean) {
+        viewModelScope.launch {
+            try {
+                val result = groceryListManager.toggleItemCheckedById(itemId, checked)
+
+                result.onFailure { e ->
+                    _error.value = "Failed to update item: ${e.message}"
+                    DebugConfig.error(DebugConfig.Category.UI, "toggleItemChecked failed", e)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to update item: ${e.message}"
+                DebugConfig.error(DebugConfig.Category.UI, "toggleItemChecked exception", e)
+            }
+        }
+    }
+
+    /**
+     * Delete item by ID
+     */
+    fun deleteItem(itemId: Long) {
+        viewModelScope.launch {
+            try {
+                val result = groceryListManager.deleteItemById(itemId)
+
+                result.onSuccess {
+                    DebugConfig.debugLog(DebugConfig.Category.UI, "Deleted item: $itemId")
+                }.onFailure { e ->
+                    _error.value = "Failed to delete item: ${e.message}"
+                    DebugConfig.error(DebugConfig.Category.UI, "deleteItem failed", e)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to delete item: ${e.message}"
+                DebugConfig.error(DebugConfig.Category.UI, "deleteItem exception", e)
             }
         }
     }

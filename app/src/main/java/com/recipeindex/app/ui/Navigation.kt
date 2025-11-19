@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.recipeindex.app.navigation.Screen
 import com.recipeindex.app.ui.screens.*
+import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.ui.viewmodels.ImportPdfViewModel
 import com.recipeindex.app.ui.viewmodels.ImportPhotoViewModel
 import com.recipeindex.app.ui.viewmodels.ImportViewModel
@@ -33,6 +34,7 @@ fun RecipeIndexNavigation(
 ) {
     val recipeViewModel: RecipeViewModel = viewModel(factory = viewModelFactory)
     val mealPlanViewModel: MealPlanViewModel = viewModel(factory = viewModelFactory)
+    val groceryListViewModel: GroceryListViewModel = viewModel(factory = viewModelFactory)
     val importViewModel: ImportViewModel = viewModel(factory = viewModelFactory)
 
     NavHost(
@@ -48,6 +50,7 @@ fun RecipeIndexNavigation(
         composable(Screen.RecipeIndex.route) {
             RecipeListScreen(
                 viewModel = recipeViewModel,
+                groceryListViewModel = groceryListViewModel,
                 onAddRecipe = {
                     navController.navigate(Screen.AddRecipe.route)
                 },
@@ -150,6 +153,7 @@ fun RecipeIndexNavigation(
             MealPlanningScreen(
                 mealPlanViewModel = mealPlanViewModel,
                 recipeViewModel = recipeViewModel,
+                groceryListViewModel = groceryListViewModel,
                 onAddMealPlan = {
                     navController.navigate(Screen.AddMealPlan.route)
                 },
@@ -215,7 +219,34 @@ fun RecipeIndexNavigation(
 
         // Grocery Lists
         composable(Screen.GroceryLists.route) {
-            GroceryListScreen(onMenuClick = onMenuClick)
+            GroceryListScreen(
+                groceryListViewModel = groceryListViewModel,
+                onViewList = { listId ->
+                    navController.navigate(Screen.GroceryListDetail.createRoute(listId))
+                },
+                onMenuClick = onMenuClick
+            )
+        }
+
+        // Grocery List Detail
+        composable(
+            route = Screen.GroceryListDetail.route,
+            arguments = listOf(navArgument("listId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val listId = backStackEntry.arguments?.getLong("listId") ?: return@composable
+
+            val recipes by recipeViewModel.recipes.collectAsState()
+            val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
+
+            GroceryListDetailScreen(
+                listId = listId,
+                groceryListViewModel = groceryListViewModel,
+                availableRecipes = recipes,
+                availableMealPlans = mealPlans,
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         // Settings

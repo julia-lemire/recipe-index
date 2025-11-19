@@ -45,6 +45,11 @@ sealed class Screen(
         fun createRoute(planId: Long) = "edit_meal_plan/$planId"
     }
 
+    // Grocery list screens (not in drawer)
+    object GroceryListDetail : Screen("grocery_list/{listId}", "Grocery List", Icons.Default.ShoppingCart) {
+        fun createRoute(listId: Long) = "grocery_list/$listId"
+    }
+
     companion object {
         val drawerScreens = listOf(Home, RecipeIndex, MealPlanning, GroceryLists, Settings)
     }

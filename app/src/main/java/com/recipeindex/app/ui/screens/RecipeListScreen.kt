@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.clip
@@ -21,6 +22,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
+import com.recipeindex.app.ui.components.GroceryListPickerDialog
+import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.utils.DebugConfig
 
@@ -33,6 +36,7 @@ import com.recipeindex.app.utils.DebugConfig
 @Composable
 fun RecipeListScreen(
     viewModel: RecipeViewModel,
+    groceryListViewModel: GroceryListViewModel,
     onAddRecipe: () -> Unit,
     onImportRecipe: () -> Unit = {},
     onRecipeClick: (Long) -> Unit,
@@ -42,7 +46,10 @@ fun RecipeListScreen(
 
     val recipes by viewModel.recipes.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val groceryLists by groceryListViewModel.groceryLists.collectAsState()
     var fabExpanded by remember { mutableStateOf(false) }
+    var showListPicker by remember { mutableStateOf(false) }
+    var recipeForGroceryList by remember { mutableStateOf<Recipe?>(null) }
 
     Scaffold(
         topBar = {
@@ -151,7 +158,11 @@ fun RecipeListScreen(
                             RecipeCard(
                                 recipe = recipe,
                                 onClick = { onRecipeClick(recipe.id) },
-                                onToggleFavorite = { viewModel.toggleFavorite(recipe.id, !recipe.isFavorite) }
+                                onToggleFavorite = { viewModel.toggleFavorite(recipe.id, !recipe.isFavorite) },
+                                onAddToList = {
+                                    recipeForGroceryList = recipe
+                                    showListPicker = true
+                                }
                             )
                         }
                     }
@@ -185,7 +196,8 @@ private fun EmptyState(modifier: Modifier = Modifier) {
 private fun RecipeCard(
     recipe: Recipe,
     onClick: () -> Unit,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    onAddToList: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -284,6 +296,17 @@ private fun RecipeCard(
                         )
                     }
                 }
+            }
+
+            // Add to list button
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = onAddToList,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Add to Grocery List")
             }
             }
         }

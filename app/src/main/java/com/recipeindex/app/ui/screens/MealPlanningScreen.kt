@@ -14,6 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.data.entities.Recipe
+import com.recipeindex.app.ui.components.GroceryListPickerDialog
+import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.ui.viewmodels.MealPlanViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.utils.DebugConfig
@@ -28,6 +30,7 @@ import java.util.*
 fun MealPlanningScreen(
     mealPlanViewModel: MealPlanViewModel,
     recipeViewModel: RecipeViewModel,
+    groceryListViewModel: GroceryListViewModel,
     onAddMealPlan: () -> Unit,
     onEditMealPlan: (Long) -> Unit,
     onMenuClick: () -> Unit = {}
@@ -38,6 +41,7 @@ fun MealPlanningScreen(
     val recipes by recipeViewModel.recipes.collectAsState()
     val isLoading by mealPlanViewModel.isLoading.collectAsState()
     val searchQuery by mealPlanViewModel.searchQuery.collectAsState()
+    val groceryLists by groceryListViewModel.groceryLists.collectAsState()
 
     var showSearchBar by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -45,6 +49,8 @@ fun MealPlanningScreen(
     var showDuplicateDialog by remember { mutableStateOf(false) }
     var planToDuplicate by remember { mutableStateOf<MealPlan?>(null) }
     var duplicateName by remember { mutableStateOf("") }
+    var showListPicker by remember { mutableStateOf(false) }
+    var planForGroceryList by remember { mutableStateOf<MealPlan?>(null) }
 
     Scaffold(
         topBar = {
@@ -134,8 +140,8 @@ fun MealPlanningScreen(
                                     showDuplicateDialog = true
                                 },
                                 onGenerateList = {
-                                    // TODO: Implement grocery list generation (Phase 4)
-                                    DebugConfig.debugLog(DebugConfig.Category.UI, "Generate list for: ${mealPlan.name}")
+                                    planForGroceryList = mealPlan
+                                    showListPicker = true
                                 }
                             )
                         }
@@ -203,6 +209,25 @@ fun MealPlanningScreen(
                 TextButton(onClick = { showDuplicateDialog = false }) {
                     Text("Cancel")
                 }
+            }
+        )
+    }
+
+    // Grocery list picker dialog
+    if (showListPicker && planForGroceryList != null) {
+        GroceryListPickerDialog(
+            availableLists = groceryLists,
+            onDismiss = { showListPicker = false },
+            onListSelected = { listId ->
+                groceryListViewModel.addMealPlanToList(listId, planForGroceryList!!.id)
+                showListPicker = false
+                planForGroceryList = null
+            },
+            onCreateNew = { listName ->
+                val newListId = groceryListViewModel.createListAndReturn(listName)
+                groceryListViewModel.addMealPlanToList(newListId, planForGroceryList!!.id)
+                showListPicker = false
+                planForGroceryList = null
             }
         )
     }
