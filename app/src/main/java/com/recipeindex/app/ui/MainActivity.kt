@@ -10,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.recipeindex.app.data.AppDatabase
+import com.recipeindex.app.data.managers.GroceryListManager
+import com.recipeindex.app.data.managers.MealPlanManager
 import com.recipeindex.app.data.managers.RecipeManager
 import com.recipeindex.app.data.parsers.PdfRecipeParser
 import com.recipeindex.app.data.parsers.PhotoRecipeParser
@@ -44,6 +46,13 @@ class MainActivity : ComponentActivity() {
         // Setup dependencies
         val database = AppDatabase.getDatabase(applicationContext)
         val recipeManager = RecipeManager(database.recipeDao())
+        val mealPlanManager = MealPlanManager(database.mealPlanDao(), database.recipeDao())
+        val groceryListManager = GroceryListManager(
+            database.groceryListDao(),
+            database.groceryItemDao(),
+            database.recipeDao(),
+            database.mealPlanDao()
+        )
 
         // Setup HTTP client for URL recipe import
         val httpClient = HttpClient(OkHttp) {
@@ -60,6 +69,8 @@ class MainActivity : ComponentActivity() {
 
         val viewModelFactory = ViewModelFactory(
             recipeManager,
+            mealPlanManager,
+            groceryListManager,
             urlRecipeParser,
             pdfRecipeParser,
             photoRecipeParser

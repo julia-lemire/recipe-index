@@ -39,6 +39,17 @@ sealed class Screen(
     object ImportPdf : Screen("import_pdf", "Import from PDF", Icons.Default.List)
     object ImportPhoto : Screen("import_photo", "Import from Photo", Icons.Default.List)
 
+    // Meal planning screens (not in drawer)
+    object AddMealPlan : Screen("add_meal_plan", "Add Meal Plan", Icons.Default.DateRange)
+    object EditMealPlan : Screen("edit_meal_plan/{planId}", "Edit Meal Plan", Icons.Default.DateRange) {
+        fun createRoute(planId: Long) = "edit_meal_plan/$planId"
+    }
+
+    // Grocery list screens (not in drawer)
+    object GroceryListDetail : Screen("grocery_list/{listId}", "Grocery List", Icons.Default.ShoppingCart) {
+        fun createRoute(listId: Long) = "grocery_list/$listId"
+    }
+
     companion object {
         val drawerScreens = listOf(Home, RecipeIndex, MealPlanning, GroceryLists, Settings)
     }

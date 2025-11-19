@@ -1,22 +1,56 @@
 package com.recipeindex.app.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.recipeindex.app.data.entities.MealPlan
+import com.recipeindex.app.data.entities.Recipe
+import com.recipeindex.app.ui.components.GroceryListPickerDialog
+import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
+import com.recipeindex.app.ui.viewmodels.MealPlanViewModel
+import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.utils.DebugConfig
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
- * Meal Planning Screen - Weekly meal planning calendar
+ * Meal Planning Screen - Card-based meal plan list with search and filtering
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MealPlanningScreen(onMenuClick: () -> Unit = {}) {
+fun MealPlanningScreen(
+    mealPlanViewModel: MealPlanViewModel,
+    recipeViewModel: RecipeViewModel,
+    groceryListViewModel: GroceryListViewModel,
+    onAddMealPlan: () -> Unit,
+    onEditMealPlan: (Long) -> Unit,
+    onMenuClick: () -> Unit = {}
+) {
     DebugConfig.debugLog(DebugConfig.Category.UI, "MealPlanningScreen composed")
+
+    val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
+    val recipes by recipeViewModel.recipes.collectAsState()
+    val isLoading by mealPlanViewModel.isLoading.collectAsState()
+    val searchQuery by mealPlanViewModel.searchQuery.collectAsState()
+    val groceryLists by groceryListViewModel.groceryLists.collectAsState()
+
+    var showSearchBar by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var planToDelete by remember { mutableStateOf<MealPlan?>(null) }
+    var showDuplicateDialog by remember { mutableStateOf(false) }
+    var planToDuplicate by remember { mutableStateOf<MealPlan?>(null) }
+    var duplicateName by remember { mutableStateOf("") }
+    var showListPicker by remember { mutableStateOf(false) }
+    var planForGroceryList by remember { mutableStateOf<MealPlan?>(null) }
 
     Scaffold(
         topBar = {
@@ -26,38 +60,361 @@ fun MealPlanningScreen(onMenuClick: () -> Unit = {}) {
                     IconButton(onClick = onMenuClick) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")
                     }
+                },
+                actions = {
+                    IconButton(onClick = { showSearchBar = !showSearchBar }) {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    DebugConfig.debugLog(DebugConfig.Category.UI, "Add Meal Plan FAB clicked")
+                    onAddMealPlan()
+                },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Meal Plan"
+                )
+            }
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
         ) {
+            // Search bar
+            if (showSearchBar) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { mealPlanViewModel.searchMealPlans(it) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    placeholder = { Text("Search meal plans...") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { mealPlanViewModel.searchMealPlans("") }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear")
+                            }
+                        }
+                    },
+                    singleLine = true
+                )
+            }
+
+            when {
+                isLoading -> {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
+                }
+                mealPlans.isEmpty() -> {
+                    EmptyMealPlanState(modifier = Modifier.fillMaxSize())
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(mealPlans, key = { it.id }) { mealPlan ->
+                            MealPlanCard(
+                                mealPlan = mealPlan,
+                                recipes = recipes,
+                                onEdit = { onEditMealPlan(mealPlan.id) },
+                                onDelete = {
+                                    planToDelete = mealPlan
+                                    showDeleteDialog = true
+                                },
+                                onDuplicate = {
+                                    planToDuplicate = mealPlan
+                                    duplicateName = "${mealPlan.name} (Copy)"
+                                    showDuplicateDialog = true
+                                },
+                                onGenerateList = {
+                                    planForGroceryList = mealPlan
+                                    showListPicker = true
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog && planToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Meal Plan") },
+            text = { Text("Are you sure you want to delete \"${planToDelete!!.name}\"?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        mealPlanViewModel.deleteMealPlan(planToDelete!!)
+                        showDeleteDialog = false
+                        planToDelete = null
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Duplicate dialog
+    if (showDuplicateDialog && planToDuplicate != null) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateDialog = false },
+            title = { Text("Duplicate Meal Plan") },
+            text = {
+                Column {
+                    Text("Enter name for duplicated plan:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = duplicateName,
+                        onValueChange = { duplicateName = it },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        mealPlanViewModel.duplicateMealPlan(planToDuplicate!!, duplicateName)
+                        showDuplicateDialog = false
+                        planToDuplicate = null
+                    },
+                    enabled = duplicateName.isNotBlank()
+                ) {
+                    Text("Duplicate")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Grocery list picker dialog
+    if (showListPicker && planForGroceryList != null) {
+        GroceryListPickerDialog(
+            availableLists = groceryLists,
+            onDismiss = { showListPicker = false },
+            onListSelected = { listId ->
+                groceryListViewModel.addMealPlanToList(listId, planForGroceryList!!.id)
+                showListPicker = false
+                planForGroceryList = null
+            },
+            onCreateNew = { listName ->
+                val newListId = groceryListViewModel.createListAndReturn(listName)
+                groceryListViewModel.addMealPlanToList(newListId, planForGroceryList!!.id)
+                showListPicker = false
+                planForGroceryList = null
+            }
+        )
+    }
+}
+
+@Composable
+private fun MealPlanCard(
+    mealPlan: MealPlan,
+    recipes: List<Recipe>,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    onDuplicate: () -> Unit,
+    onGenerateList: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
+            // Name and dates
             Text(
-                text = "Meal Planning",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                text = mealPlan.name,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
             )
-            Text(
-                text = "Plan your weekly meals here",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-            )
+
+            if (mealPlan.startDate != null || mealPlan.endDate != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = formatDateRange(mealPlan.startDate, mealPlan.endDate),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Tags
+            if (mealPlan.tags.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    mealPlan.tags.take(5).forEach { tag ->
+                        AssistChip(
+                            onClick = { },
+                            label = { Text(tag, style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+                    if (mealPlan.tags.size > 5) {
+                        AssistChip(
+                            onClick = { },
+                            label = { Text("+${mealPlan.tags.size - 5}", style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+                }
+            }
+
+            // Recipes
+            if (mealPlan.recipeIds.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Recipes:",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                val planRecipes = recipes.filter { it.id in mealPlan.recipeIds }
+                planRecipes.forEach { recipe ->
+                    Text(
+                        text = "• ${recipe.title}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                    )
+                }
+            }
+
+            // Notes
+            if (!mealPlan.notes.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = mealPlan.notes,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+
+            // Action buttons
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedButton(
+                    onClick = onEdit,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Edit")
+                }
+                OutlinedButton(
+                    onClick = onDuplicate,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Duplicate")
+                }
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Coming soon",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Button(
+                    onClick = onGenerateList,
+                    modifier = Modifier.weight(1f),
+                    enabled = mealPlan.recipeIds.isNotEmpty()
+                ) {
+                    Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Generate List")
+                }
+                OutlinedButton(
+                    onClick = onDelete,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Delete")
+                }
+            }
         }
     }
 }
+
+@Composable
+private fun EmptyMealPlanState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.DateRange,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "No meal plans yet",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Tap + to create your first meal plan",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        )
+    }
+}
+
+private fun formatDateRange(startDate: Long?, endDate: Long?): String {
+    val dateFormat = SimpleDateFormat("MMM dd", Locale.getDefault())
+
+    return when {
+        startDate != null && endDate != null -> {
+            if (startDate == endDate) {
+                dateFormat.format(Date(startDate))
+            } else {
+                "${dateFormat.format(Date(startDate))} - ${dateFormat.format(Date(endDate))}"
+            }
+        }
+        startDate != null -> "Starting ${dateFormat.format(Date(startDate))}"
+        endDate != null -> "Ending ${dateFormat.format(Date(endDate))}"
+        else -> ""
+    }
 }
