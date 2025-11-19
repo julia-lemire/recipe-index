@@ -206,6 +206,13 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Import screens: Discard button with confirmation dialog for escaping auto-save
 - ✅ Landscape mode: Recipe and meal plan cards display in 2-column grid on landscape orientation
 - ✅ Error handling: ErrorHandler utility, SnackbarHost for error display, BackHandler for system back button
+- ✅ Tag management: Standardization during import (normalizes variations, removes noise words, deduplicates)
+- ✅ Tag editing: Chip-based UI in recipe editor (removable chips + text input for easy mobile editing)
+- ✅ Tag display: Limited to 3 tags on recipe cards with smart prioritization (cook method > cuisine > ingredients > meal type)
+- ✅ Tag wrapping: Fixed tags in recipe detail to properly wrap instead of squishing (custom FlowRow layout)
+- ✅ Meal plan picker: Dialog for adding recipes to meal plans from recipe cards and detail screen
+- ✅ Navigation drawer: Collapse button even in landscape/tablet mode for more screen space
+- ✅ Grocery list integration: Fixed "Add to Grocery List" button in recipe detail context menu
 
 ---
 

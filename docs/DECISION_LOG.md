@@ -46,6 +46,31 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 19, 2025: Collapsible Navigation Drawer in All Orientations
+- **Decision**: Add collapse button to permanent drawer header (tablets/landscape) with floating expand button when collapsed, allowing drawer to be hidden even on wide screens
+- **Rationale**: Provides more screen real estate when needed for content-focused tasks, especially useful on tablets or landscape phones where drawer is permanent
+- **Implementation**: Box+Row layout with conditional Surface rendering based on isDrawerCollapsed state, IconButton with ChevronLeft in drawer header, FloatingActionButton with Menu icon overlays content when collapsed
+
+#### Nov 19, 2025: Meal Plan Picker Dialog Component
+- **Decision**: Create MealPlanPickerDialog component (parallel to GroceryListPickerDialog) for adding recipes to meal plans from recipe cards/detail screen
+- **Rationale**: Calendar icon on recipe cards needed functional meal planning workflow, reusable dialog provides consistent UX across recipe list and detail screens
+- **Implementation**: ModalBottomSheet-style AlertDialog with list of existing plans (showing name + formatted date), "Create New Plan" button, integrates with MealPlanViewModel.addRecipeToPlan()
+
+#### Nov 19, 2025: Tag Display Prioritization on Recipe Cards
+- **Decision**: Limit recipe cards to maximum 3 tags with smart prioritization (cook method weight=3, cuisine weight=2, ingredients weight=1, meal type weight=-1)
+- **Rationale**: Too many tags make cards inconsistent heights and cluttered, prioritizing actionable/descriptive tags (how it's cooked, what cuisine) over generic ones (breakfast/dinner)
+- **Implementation**: prioritizeAndLimitTags() function scores tags by keyword matching against category lists, sorts by score descending, takes top 3, displays in existing FlowRow
+
+#### Nov 19, 2025: Chip-Based Tag Input in Recipe Editor
+- **Decision**: Replace single-line comma-separated TextField with chip-based UI showing removable InputChips + add TextField with + button
+- **Rationale**: Comma-separated input is hard to edit on mobile (poor tap targets, difficult to remove specific tags), chips provide clear visual boundaries and easy removal
+- **Implementation**: FlowRow displays tags as InputChips with trailing close icon (onTrailingIconClick removes tag), separate OutlinedTextField with add IconButton to append new tags
+
+#### Nov 19, 2025: Tag Standardization with TagStandardizer Utility
+- **Decision**: Create TagStandardizer utility that normalizes imported tags by mapping variations to standard forms, removing noise words, and deduplicating
+- **Rationale**: Import sources contain messy tag data ("italian food", "italian cuisine", "Italian Recipe" should all become "italian"), standardization improves filtering/search and reduces clutter
+- **Implementation**: Object with standardMappings map (variations→standard), noiseWords set, standardize() function applies mappings, removes noise, lowercases, deduplicates, integrated into TextRecipeParser
+
 #### Nov 19, 2025: Error Handling with SnackbarHost Pattern
 - **Decision**: Establish SnackbarHost + BackHandler pattern for all screens: LaunchedEffect monitors ViewModel error states, SnackbarHost displays errors at bottom, BackHandler intercepts system back button for validation/save logic
 - **Rationale**: Provides consistent user experience for errors across app, ensures users see error messages without blocking UI (unlike dialogs), prevents accidental data loss via back button
