@@ -296,7 +296,7 @@ class GroceryListManager(
     suspend fun addMealPlanToList(listId: Long, planId: Long): Result<Unit> {
         return try {
             // Get the meal plan
-            val mealPlan = mealPlanDao.getMealPlanById(planId).first()
+            val mealPlan = mealPlanDao.getById(planId)
                 ?: return Result.failure(Exception("Meal plan not found"))
 
             // Add all recipes from the meal plan
