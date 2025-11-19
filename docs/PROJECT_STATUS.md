@@ -201,13 +201,18 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Recipe cards: Limited to max 3 tags with smart prioritization (cook method > cuisine > ingredients > meal type)
 - ✅ Recipe cards: "Add to Grocery List" moved to context menu (3-dot dropdown)
 - ✅ Recipe detail: Tags now wrap properly (was squishing horizontally, now uses FlowRow like cards)
-- ✅ Recipe detail: Context menu with "Add to Grocery List" and "Add to Meal Plan" actions (now fully wired with picker dialogs)
+- ✅ Recipe detail: "Add to Grocery List" and "Add to Meal Plan" moved inline as icon buttons (was in overflow menu), only Delete remains in overflow
 - ✅ Recipe editor: Chip-based tag UI replacing comma-separated input (removable chips + add field for mobile-friendly editing)
-- ✅ Meal plan cards: Icon-only buttons (Edit, Generate List), context menu for Duplicate/Delete
+- ✅ Meal plan cards: Icon-only buttons (Edit, Generate List), context menu for Duplicate/Delete, entire card clickable to navigate to detail
+- ✅ Meal plan detail: Enhanced recipe cards with servings, time, and tags (was simple text list)
 - ✅ Meal plan: Auto-populate name from selected dates ("Nov 18-22" format)
 - ✅ Meal plan picker: Reusable dialog for adding recipes to plans from cards/detail screen (select existing or create new)
-- ✅ Import: Tag standardization during parsing (normalizes "italian food"→"italian", removes noise words, deduplicates)
+- ✅ Import screens: Chip-based tag UI on all verification screens (URL/PDF/Photo), notes field removed (user-added only)
+- ✅ Import: Tag standardization during parsing (normalizes "italian food"→"italian", removes noise words, deduplicates, 100+ mappings)
+- ✅ Import: Notes NOT populated during import from any source (user-added only per design)
 - ✅ Import: Discard button with confirmation dialog for escaping auto-save
+- ✅ Grocery lists: Select All/Deselect All buttons with smart enable logic (only enabled when applicable)
+- ✅ Grocery lists: Fixed empty list bug when generating from meal plan (was using broken createListAndReturn)
 - ✅ Navigation drawer: Collapse button even in landscape/tablet mode for more screen space (FloatingActionButton to re-expand)
 - ✅ Landscape mode: Recipe and meal plan cards display in 2-column grid
 - ✅ Error handling: ErrorHandler utility, SnackbarHost for error display, BackHandler for system back button

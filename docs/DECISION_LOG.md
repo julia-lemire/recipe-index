@@ -46,6 +46,36 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 19, 2025: Select All/Deselect All for Grocery Lists
+- **Decision**: Add "Select All" and "Deselect All" buttons to GroceryListDetailScreen with smart enable logic (only enabled when there are unchecked or checked items respectively)
+- **Rationale**: Allows batch operations when shopping (select all to mark as complete) or when planning (deselect all to reuse list), reduces tedious individual clicking for long lists
+- **Implementation**: checkAllItems() and uncheckAllItems() in GroceryListManager iterate through items and update checked status, UI buttons arranged in Row with weight(1f), enabled based on items.any { !it.isChecked } / items.any { it.isChecked }
+
+#### Nov 19, 2025: Inline Action Buttons for Recipe Detail
+- **Decision**: Move "Add to Grocery List" and "Add to Meal Plan" from DropdownMenu to inline IconButtons in TopAppBar actions, leaving only Delete in overflow menu
+- **Rationale**: These are primary actions users want quick access to (adding recipes to planning tools), hiding them in overflow menu required extra taps and reduced discoverability
+- **Implementation**: IconButtons with ShoppingCart and CalendarMonth icons placed between Edit button and MoreVert overflow menu in TopAppBar actions
+
+#### Nov 19, 2025: Enhanced Recipe Cards in Meal Plan Detail
+- **Decision**: Replace simple text list of recipes in AddEditMealPlanScreen with rich cards showing title, servings, time, and tags (same visual style as RecipeListScreen cards)
+- **Rationale**: Provides at-a-glance meal planning information (how many servings, cooking time) to help users make decisions without opening each recipe, improves visual consistency with rest of app
+- **Implementation**: Card with Column layout containing title Row with remove IconButton, servings/time Row with Person and Schedule icons, FlowRow for tags (max 3 + overflow indicator)
+
+#### Nov 19, 2025: Clickable Meal Plan Cards
+- **Decision**: Add onClick parameter to Card composable in MealPlanCard to make entire card clickable for navigation to detail/edit screen
+- **Rationale**: Improves UX by expanding tap target from small Edit button to entire card, follows common pattern where list cards are clickable to view details
+- **Implementation**: Card onClick parameter set to onEdit callback, same navigation as Edit IconButton but larger interaction area
+
+#### Nov 19, 2025: Notes Field Removal from Import Screens
+- **Decision**: Remove notes OutlinedTextField from all import verification screens (ImportUrlScreen, ImportPdfScreen, ImportPhotoScreen) and ensure parsers set notes=null
+- **Rationale**: Notes should be user-added context/modifications only, not auto-populated from import sources (prevents description text clutter, maintains clean separation between imported data and user notes)
+- **Implementation**: Removed OutlinedTextField from EditRecipeContent in all three import screens, SchemaOrgRecipeParser changed from notes=description to notes=null, TextRecipeParser already had notes=null
+
+#### Nov 19, 2025: Grocery List Generation Bug Fix
+- **Decision**: Replace synchronous createListAndReturn() with async createList() callback in MealPlanningScreen grocery list picker onCreateNew handler
+- **Rationale**: createListAndReturn() was broken (always returned 0 due to async timing), causing meal plan recipes to never be added to newly created grocery lists, proper callback ensures listId is available before calling addMealPlanToList()
+- **Implementation**: Changed from "val newListId = groceryListViewModel.createListAndReturn(listName); groceryListViewModel.addMealPlanToList(newListId, planId)" to "groceryListViewModel.createList(listName) { newListId -> groceryListViewModel.addMealPlanToList(newListId, planId) }"
+
 #### Nov 19, 2025: Collapsible Navigation Drawer in All Orientations
 - **Decision**: Add collapse button to permanent drawer header (tablets/landscape) with floating expand button when collapsed, allowing drawer to be hidden even on wide screens
 - **Rationale**: Provides more screen real estate when needed for content-focused tasks, especially useful on tablets or landscape phones where drawer is permanent
