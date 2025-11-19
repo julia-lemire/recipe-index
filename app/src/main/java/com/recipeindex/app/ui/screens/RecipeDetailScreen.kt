@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.IngredientScaler
+import com.recipeindex.app.utils.IngredientUnitConverter
 
 /**
  * RecipeDetailScreen - View recipe details
@@ -45,6 +49,12 @@ fun RecipeDetailScreen(
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showOverflowMenu by remember { mutableStateOf(false) }
+    var selectedServings by remember { mutableStateOf(recipe.servings) }
+    var showServingsMenu by remember { mutableStateOf(false) }
+    var showUnitConversions by remember { mutableStateOf(false) }
+
+    // Calculate scaling factor for ingredients
+    val scaleFactor = selectedServings.toDouble() / recipe.servings.toDouble()
 
     // Handle system back button
     BackHandler {
@@ -142,7 +152,67 @@ fun RecipeDetailScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        InfoItem(label = "Servings", value = recipe.servings.toString())
+                        // Servings dropdown
+                        Column {
+                            Text(
+                                text = "Servings",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Box {
+                                OutlinedButton(
+                                    onClick = { showServingsMenu = true },
+                                    modifier = Modifier.height(40.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp)
+                                ) {
+                                    Text(
+                                        text = selectedServings.toString(),
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Icon(
+                                        Icons.Default.ArrowDropDown,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = showServingsMenu,
+                                    onDismissRequest = { showServingsMenu = false }
+                                ) {
+                                    // Servings options: half, original, double, custom multiples
+                                    listOf(
+                                        recipe.servings / 2,
+                                        recipe.servings,
+                                        recipe.servings * 2,
+                                        recipe.servings * 3,
+                                        recipe.servings * 4
+                                    ).distinct().filter { it > 0 }.forEach { servings ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(servings.toString())
+                                                    if (servings == recipe.servings) {
+                                                        Text(
+                                                            "(original)",
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                }
+                                            },
+                                            onClick = {
+                                                selectedServings = servings
+                                                showServingsMenu = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
                         recipe.prepTimeMinutes?.let {
                             InfoItem(label = "Prep", value = "$it min")
                         }
@@ -158,22 +228,70 @@ fun RecipeDetailScreen(
                 }
             }
 
-            // Ingredients
+            // Ingredients - scaled based on selected servings
             // TODO: Add "Cook Mode" feature with checkable ingredients to help track while cooking
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "Ingredients",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Ingredients",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (selectedServings != recipe.servings) {
+                            Text(
+                                text = "Scaled for $selectedServings servings",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        // Unit conversion toggle
+                        IconButton(
+                            onClick = { showUnitConversions = !showUnitConversions },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.SwapHoriz,
+                                contentDescription = if (showUnitConversions) "Hide unit conversions" else "Show unit conversions",
+                                tint = if (showUnitConversions) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            )
+                        }
+                    }
+                }
                 recipe.ingredients.forEach { ingredient ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
                     ) {
+                        var processedIngredient = if (scaleFactor != 1.0) {
+                            IngredientScaler.scaleIngredient(ingredient, scaleFactor)
+                        } else {
+                            ingredient
+                        }
+
+                        // Add unit conversions if enabled
+                        if (showUnitConversions) {
+                            // Convert to metric by default (most common use case)
+                            processedIngredient = IngredientUnitConverter.addConversion(
+                                processedIngredient,
+                                toMetric = true
+                            )
+                        }
+
                         Text(
-                            text = "• $ingredient",
+                            text = "• $processedIngredient",
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }

@@ -46,6 +46,21 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 19, 2025: Full-Screen Recipe Selection Grid
+- **Decision**: Replace ModalBottomSheet with full Scaffold-based screen using LazyVerticalGrid (2 columns) for meal plan recipe selection
+- **Rationale**: Full screen provides more space to browse recipes, grid layout shows more recipes at once than vertical list, matches user expectation from original request for "full-screen recipe selection"
+- **Implementation**: Scaffold with TopAppBar (Close button, Done counter), search field, LazyVerticalGrid with GridCells.Fixed(2), cards show title/servings/time, selected state with primaryContainer color and CheckCircle icon in top-right
+
+#### Nov 19, 2025: Unit Conversion Toggle in Recipe Detail
+- **Decision**: Add SwapHoriz icon toggle button in ingredients section header to show/hide inline unit conversions (e.g., "1 cup (237 ml) flour")
+- **Rationale**: Users cooking with unfamiliar measurement systems need quick conversions without manually calculating, toggle allows users who don't need conversions to keep interface clean
+- **Implementation**: IngredientUnitConverter utility parses ingredient strings, detects units (cups/oz/lbs/ml/g/kg), converts using UnitConverter, formats as "original (converted) remainder", works with scaled ingredients from portion sizing
+
+#### Nov 19, 2025: Portion Scaling with Servings Dropdown
+- **Decision**: Add servings dropdown in RecipeDetailScreen info card allowing users to select half, original, 2x, 3x, or 4x servings with automatic ingredient quantity scaling
+- **Rationale**: Users frequently cook for different numbers of people than recipe's original servings, manual calculation of scaled quantities is error-prone and time-consuming
+- **Implementation**: IngredientScaler utility parses quantities (fractions, mixed numbers, decimals, ranges), scales by factor (selectedServings/recipe.servings), formats output preferring common fractions (1/2, 1/4, 3/4), shows "Scaled for N servings" indicator when not at original
+
 #### Nov 19, 2025: Select All/Deselect All for Grocery Lists
 - **Decision**: Add "Select All" and "Deselect All" buttons to GroceryListDetailScreen with smart enable logic (only enabled when there are unchecked or checked items respectively)
 - **Rationale**: Allows batch operations when shopping (select all to mark as complete) or when planning (deselect all to reuse list), reduces tedious individual clicking for long lists
