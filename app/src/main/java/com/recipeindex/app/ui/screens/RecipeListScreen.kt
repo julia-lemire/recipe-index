@@ -43,6 +43,7 @@ import com.recipeindex.app.utils.DebugConfig
 fun RecipeListScreen(
     viewModel: RecipeViewModel,
     groceryListViewModel: GroceryListViewModel,
+    mealPlanViewModel: com.recipeindex.app.ui.viewmodels.MealPlanViewModel,
     onAddRecipe: () -> Unit,
     onImportRecipe: () -> Unit = {},
     onRecipeClick: (Long) -> Unit,
@@ -53,9 +54,12 @@ fun RecipeListScreen(
     val recipes by viewModel.recipes.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val groceryLists by groceryListViewModel.groceryLists.collectAsState()
+    val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
     var fabExpanded by remember { mutableStateOf(false) }
     var showListPicker by remember { mutableStateOf(false) }
     var recipeForGroceryList by remember { mutableStateOf<Recipe?>(null) }
+    var showMealPlanPicker by remember { mutableStateOf(false) }
+    var recipeForMealPlan by remember { mutableStateOf<Recipe?>(null) }
 
     Scaffold(
         topBar = {
@@ -177,7 +181,8 @@ fun RecipeListScreen(
                                     showListPicker = true
                                 },
                                 onAddToMealPlan = {
-                                    // TODO: Navigate to meal plan selection
+                                    recipeForMealPlan = recipe
+                                    showMealPlanPicker = true
                                 }
                             )
                         }
@@ -200,7 +205,8 @@ fun RecipeListScreen(
                                     showListPicker = true
                                 },
                                 onAddToMealPlan = {
-                                    // TODO: Navigate to meal plan selection
+                                    recipeForMealPlan = recipe
+                                    showMealPlanPicker = true
                                 }
                             )
                         }
@@ -225,6 +231,32 @@ fun RecipeListScreen(
                 groceryListViewModel.addRecipesToList(newListId, listOf(recipeForGroceryList!!.id))
                 showListPicker = false
                 recipeForGroceryList = null
+            }
+        )
+    }
+
+    // Meal plan picker dialog
+    if (showMealPlanPicker && recipeForMealPlan != null) {
+        com.recipeindex.app.ui.components.MealPlanPickerDialog(
+            availablePlans = mealPlans,
+            onDismiss = { showMealPlanPicker = false },
+            onPlanSelected = { planId ->
+                mealPlanViewModel.addRecipeToPlan(planId, recipeForMealPlan!!.id)
+                showMealPlanPicker = false
+                recipeForMealPlan = null
+            },
+            onCreateNew = { planName ->
+                // Create a new meal plan with just this recipe
+                val newPlan = com.recipeindex.app.data.entities.MealPlan(
+                    name = planName,
+                    recipeIds = listOf(recipeForMealPlan!!.id),
+                    startDate = null,
+                    endDate = null
+                )
+                mealPlanViewModel.createMealPlan(newPlan) { _ ->
+                    showMealPlanPicker = false
+                    recipeForMealPlan = null
+                }
             }
         )
     }
@@ -386,7 +418,7 @@ private fun RecipeCard(
                     }
                 }
 
-                // Tags with wrapping (using custom FlowRow)
+                // Tags with wrapping (using custom FlowRow) - limit to 3 tags
                 if (recipe.tags.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(
@@ -394,7 +426,7 @@ private fun RecipeCard(
                         horizontalSpacing = 6.dp,
                         verticalSpacing = 4.dp
                     ) {
-                        recipe.tags.forEach { tag ->
+                        prioritizeAndLimitTags(recipe.tags, maxTags = 3).forEach { tag ->
                             SuggestionChip(
                                 onClick = { },
                                 label = { Text(tag, style = MaterialTheme.typography.labelSmall) }
@@ -473,4 +505,34 @@ private fun FlowRow(
             }
         }
     }
+}
+
+/**
+ * Prioritize and limit tags for display on recipe cards
+ * Prioritizes: cook method, cuisine, ingredients over meal type
+ */
+private fun prioritizeAndLimitTags(tags: List<String>, maxTags: Int = 3): List<String> {
+    if (tags.size <= maxTags) return tags
+
+    // Define priority keywords for each category
+    val cookMethodKeywords = listOf("baked", "grilled", "fried", "roasted", "steamed", "boiled", "sauteed", "stir-fry", "slow-cook", "instant pot", "air fryer")
+    val cuisineKeywords = listOf("italian", "mexican", "chinese", "japanese", "thai", "indian", "french", "greek", "mediterranean", "american", "korean", "vietnamese")
+    val ingredientKeywords = listOf("chicken", "beef", "pork", "fish", "seafood", "vegetarian", "vegan", "pasta", "rice", "potato", "tofu")
+    val mealTypeKeywords = listOf("breakfast", "lunch", "dinner", "snack", "dessert", "appetizer")
+
+    // Score each tag
+    val scoredTags = tags.map { tag ->
+        val lowerTag = tag.lowercase()
+        val score = when {
+            cookMethodKeywords.any { lowerTag.contains(it) } -> 3
+            cuisineKeywords.any { lowerTag.contains(it) } -> 2
+            ingredientKeywords.any { lowerTag.contains(it) } -> 1
+            mealTypeKeywords.any { lowerTag.contains(it) } -> -1
+            else -> 0
+        }
+        tag to score
+    }
+
+    // Sort by score (descending) and take top N
+    return scoredTags.sortedByDescending { it.second }.take(maxTags).map { it.first }
 }

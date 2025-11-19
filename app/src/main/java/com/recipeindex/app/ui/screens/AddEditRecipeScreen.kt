@@ -9,8 +9,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.data.entities.RecipeSource
@@ -37,7 +40,8 @@ fun AddEditRecipeScreen(
     var cookTime by remember { mutableStateOf(recipe?.cookTimeMinutes?.toString() ?: "") }
     var ingredients by remember { mutableStateOf(recipe?.ingredients?.joinToString("\n") ?: "") }
     var instructions by remember { mutableStateOf(recipe?.instructions?.joinToString("\n\n") ?: "") }
-    var tags by remember { mutableStateOf(recipe?.tags?.joinToString(", ") ?: "") }
+    var tags by remember { mutableStateOf(recipe?.tags ?: emptyList()) }
+    var tagInput by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf(recipe?.notes ?: "") }
 
     var showError by remember { mutableStateOf(false) }
@@ -82,7 +86,7 @@ fun AddEditRecipeScreen(
                     cookTimeMinutes = cookTime.toIntOrNull(),
                     ingredients = ingredients.split("\n").map { it.trim() }.filter { it.isNotBlank() },
                     instructions = instructions.split("\n\n").map { it.trim() }.filter { it.isNotBlank() },
-                    tags = tags.split(",").map { it.trim() }.filter { it.isNotBlank() },
+                    tags = tags.filter { it.isNotBlank() },
                     notes = notes.ifBlank { null },
                     source = recipe?.source ?: RecipeSource.MANUAL,
                     sourceUrl = recipe?.sourceUrl,
@@ -199,15 +203,71 @@ fun AddEditRecipeScreen(
                 maxLines = 10
             )
 
-            // Tags
-            OutlinedTextField(
-                value = tags,
-                onValueChange = { tags = it },
-                label = { Text("Tags (comma separated)") },
-                placeholder = { Text("dinner, italian, quick") },
+            // Tags (chip-based)
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Tags",
+                    style = MaterialTheme.typography.labelLarge
+                )
+
+                // Display existing tags as removable chips
+                if (tags.isNotEmpty()) {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalSpacing = 6.dp,
+                        verticalSpacing = 6.dp
+                    ) {
+                        tags.forEach { tag ->
+                            InputChip(
+                                selected = false,
+                                onClick = { },
+                                label = { Text(tag) },
+                                trailingIcon = {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Remove $tag",
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                },
+                                onTrailingIconClick = {
+                                    tags = tags.filter { it != tag }
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Input field to add new tags
+                OutlinedTextField(
+                    value = tagInput,
+                    onValueChange = { tagInput = it },
+                    label = { Text("Add tag") },
+                    placeholder = { Text("e.g., italian, quick") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done
+                    ),
+                    trailingIcon = {
+                        if (tagInput.isNotBlank()) {
+                            IconButton(
+                                onClick = {
+                                    val newTag = tagInput.trim()
+                                    if (newTag.isNotBlank() && !tags.contains(newTag)) {
+                                        tags = tags + newTag
+                                    }
+                                    tagInput = ""
+                                }
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Add tag")
+                            }
+                        }
+                    }
+                )
+            }
 
             // Notes
             OutlinedTextField(
@@ -221,6 +281,69 @@ fun AddEditRecipeScreen(
             )
 
             Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+/**
+ * Custom FlowRow implementation for wrapping tags
+ */
+@Composable
+private fun FlowRow(
+    modifier: Modifier = Modifier,
+    horizontalSpacing: androidx.compose.ui.unit.Dp = 0.dp,
+    verticalSpacing: androidx.compose.ui.unit.Dp = 0.dp,
+    content: @Composable () -> Unit
+) {
+    Layout(
+        content = content,
+        modifier = modifier
+    ) { measurables, constraints ->
+        val hSpacing = horizontalSpacing.roundToPx()
+        val vSpacing = verticalSpacing.roundToPx()
+
+        val placeables = measurables.map { measurable ->
+            measurable.measure(constraints.copy(minWidth = 0))
+        }
+
+        val rows = mutableListOf<MutableList<androidx.compose.ui.layout.Placeable>>()
+        var currentRow = mutableListOf<androidx.compose.ui.layout.Placeable>()
+        var currentRowWidth = 0
+
+        placeables.forEach { placeable ->
+            val itemWidth = placeable.width + hSpacing
+
+            if (currentRowWidth + placeable.width > constraints.maxWidth && currentRow.isNotEmpty()) {
+                rows.add(currentRow)
+                currentRow = mutableListOf()
+                currentRowWidth = 0
+            }
+
+            currentRow.add(placeable)
+            currentRowWidth += itemWidth
+        }
+
+        if (currentRow.isNotEmpty()) {
+            rows.add(currentRow)
+        }
+
+        val height = rows.mapIndexed { index, row ->
+            row.maxOf { it.height } + if (index < rows.size - 1) vSpacing else 0
+        }.sum()
+
+        layout(constraints.maxWidth, height) {
+            var yPosition = 0
+            rows.forEach { row ->
+                var xPosition = 0
+                val rowHeight = row.maxOf { it.height }
+
+                row.forEach { placeable ->
+                    placeable.placeRelative(xPosition, yPosition)
+                    xPosition += placeable.width + hSpacing
+                }
+
+                yPosition += rowHeight + vSpacing
+            }
         }
     }
 }
