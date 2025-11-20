@@ -204,5 +204,37 @@
 
 **Example**: ImportUrlScreen monitors `ImportViewModel.UiState` with LaunchedEffect, shows errors via SnackbarHost at bottom of screen, BackHandler validates before navigating back
 
+### Tag Standardization with Tracking Pattern
+**Use when**: Importing or processing user-generated tag data that needs normalization
+**Structure**:
+- Use `TagStandardizer.standardize()` for silent standardization (returns List<String>)
+- Use `TagStandardizer.standardizeWithTracking()` when user needs visibility into changes (returns List<TagModification>)
+- Show TagModificationDialog for tracked changes, allowing per-tag editing before accepting
+- Store `tagModifications` in ViewModel UiState to trigger dialog display
+- Apply accepted tags via ViewModel update function
+
+**Example**: ImportViewModel calls `TagStandardizer.standardizeWithTracking()`, stores modifications in `UiState.Editing`, ImportUrlScreen shows TagModificationDialog with original→standardized arrows, user can edit each tag before accepting
+
+### Reusable Component Pattern
+**Use when**: Multiple screens need the same UI component (dialogs, pickers, specialized inputs)
+**Structure**:
+- Create component in `ui/components/` directory
+- Use clear, descriptive naming (e.g., `AppDatePickerDialog`, `TagModificationDialog`)
+- Accept necessary state as parameters, emit actions via callbacks
+- Keep components stateless when possible (parent manages state)
+- Document parameters and usage in file header comment
+
+**Example**: AppDatePickerDialog in `ui/components/DatePickerDialog.kt` accepts `initialDate/onDateSelected/onDismiss`, used by AddEditMealPlanScreen for start/end date selection, replaces inline date picker implementations
+
+### Icon-Over-Text Button Pattern
+**Use when**: Bottom action bars with 3-5 primary actions need clear labeling on mobile
+**Structure**:
+- Row with SpaceEvenly arrangement
+- Each action is clickable Column (weight=1f) containing: Icon(24dp) + Spacer(4dp) + Text(labelSmall)
+- Use conditional tint for disabled states (onSurfaceVariant.copy(alpha=0.38f))
+- Use conditional icon/text for toggle states (e.g., Select All ↔ Deselect)
+- Wrap in Card with elevation for visual separation from content
+
+**Example**: GroceryListDetailScreen bottom actions use icon-over-text for Select All toggle, Clear, Recipes, and Meal Plans buttons, providing large touch targets with clear labels
 
 ---
