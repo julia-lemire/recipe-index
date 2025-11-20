@@ -2,6 +2,7 @@ package com.recipeindex.app.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.recipeindex.app.data.AppSettings
+import com.recipeindex.app.data.RecipeViewMode
 import com.recipeindex.app.data.TemperatureUnit
 import com.recipeindex.app.data.UnitSystem
 import com.recipeindex.app.data.managers.SettingsManager
@@ -58,6 +59,13 @@ class SettingsViewModel(
      */
     fun setWeightPreference(preference: UnitSystem) {
         settingsManager.setWeightPreference(preference)
+    }
+
+    /**
+     * Update recipe view mode preference
+     */
+    fun setRecipeViewMode(viewMode: RecipeViewMode) {
+        settingsManager.setRecipeViewMode(viewMode)
     }
 
     /**

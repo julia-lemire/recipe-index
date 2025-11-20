@@ -3,6 +3,7 @@ package com.recipeindex.app.data.managers
 import android.content.Context
 import android.content.SharedPreferences
 import com.recipeindex.app.data.AppSettings
+import com.recipeindex.app.data.RecipeViewMode
 import com.recipeindex.app.data.TemperatureUnit
 import com.recipeindex.app.data.UnitSystem
 import com.recipeindex.app.utils.DebugConfig
@@ -43,6 +44,9 @@ class SettingsManager(context: Context) {
             ),
             weightPreference = UnitSystem.valueOf(
                 prefs.getString(KEY_WEIGHT_PREFERENCE, UnitSystem.IMPERIAL.name) ?: UnitSystem.IMPERIAL.name
+            ),
+            recipeViewMode = RecipeViewMode.valueOf(
+                prefs.getString(KEY_RECIPE_VIEW_MODE, RecipeViewMode.CARD.name) ?: RecipeViewMode.CARD.name
             )
         )
     }
@@ -102,6 +106,15 @@ class SettingsManager(context: Context) {
     }
 
     /**
+     * Update recipe view mode preference
+     */
+    fun setRecipeViewMode(viewMode: RecipeViewMode) {
+        prefs.edit().putString(KEY_RECIPE_VIEW_MODE, viewMode.name).apply()
+        _settings.value = _settings.value.copy(recipeViewMode = viewMode)
+        DebugConfig.debugLog(DebugConfig.Category.SETTINGS, "Recipe view mode changed to: $viewMode")
+    }
+
+    /**
      * Reset all settings to defaults
      */
     fun resetToDefaults() {
@@ -117,5 +130,6 @@ class SettingsManager(context: Context) {
         private const val KEY_DEFAULT_SERVINGS = "default_servings"
         private const val KEY_LIQUID_VOLUME_PREFERENCE = "liquid_volume_preference"
         private const val KEY_WEIGHT_PREFERENCE = "weight_preference"
+        private const val KEY_RECIPE_VIEW_MODE = "recipe_view_mode"
     }
 }

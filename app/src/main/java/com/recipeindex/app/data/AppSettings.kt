@@ -23,7 +23,10 @@ data class AppSettings(
     val liquidVolumePreference: UnitSystem = UnitSystem.IMPERIAL,
 
     /** Weight unit preference (oz, lbs vs g, kg) */
-    val weightPreference: UnitSystem = UnitSystem.IMPERIAL
+    val weightPreference: UnitSystem = UnitSystem.IMPERIAL,
+
+    /** Recipe list view mode (card or list) */
+    val recipeViewMode: RecipeViewMode = RecipeViewMode.CARD
 )
 
 /**
@@ -46,4 +49,15 @@ enum class UnitSystem {
 enum class TemperatureUnit {
     FAHRENHEIT,
     CELSIUS
+}
+
+/**
+ * Recipe view mode preference
+ */
+enum class RecipeViewMode {
+    /** Card view with photos and full details */
+    CARD,
+
+    /** Compact list view */
+    LIST
 }
