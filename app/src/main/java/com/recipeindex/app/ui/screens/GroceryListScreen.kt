@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.data.entities.GroceryList
@@ -20,7 +21,7 @@ import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.ShareHelper
 import com.recipeindex.app.utils.filtersort.grocerylist.*
-import com.recipeindex.app.utils.filtersort.ui.FilterChipRow
+import com.recipeindex.app.utils.filtersort.ui.FilterBottomSheet
 import com.recipeindex.app.utils.filtersort.ui.SortMenu
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -65,6 +66,10 @@ fun GroceryListScreen(
     var listToDelete by remember { mutableStateOf<GroceryList?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var newListName by remember { mutableStateOf("") }
+    var showFilterSheet by remember { mutableStateOf(false) }
+    val filterSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true  // Always open to full height
+    )
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -124,6 +129,17 @@ fun GroceryListScreen(
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
+                    IconButton(onClick = { showFilterSheet = true }) {
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = "Filters",
+                            tint = if (activeFilterIds.isNotEmpty()) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                LocalContentColor.current
+                            }
+                        )
+                    }
                     SortMenu(
                         availableSorts = availableSorts,
                         currentSort = currentSort,
@@ -175,14 +191,6 @@ fun GroceryListScreen(
                     singleLine = true
                 )
             }
-
-            // Filter chips
-            FilterChipRow(
-                availableFilters = availableFilters,
-                activeFilterIds = activeFilterIds,
-                onFilterToggle = { groceryListViewModel.toggleFilter(it) },
-                onClearAll = { groceryListViewModel.clearFilters() }
-            )
 
             when {
                 isLoading -> {
@@ -280,6 +288,18 @@ fun GroceryListScreen(
                     Text("Cancel")
                 }
             }
+        )
+    }
+
+    // Filter bottom sheet
+    if (showFilterSheet) {
+        FilterBottomSheet(
+            availableFilters = availableFilters,
+            activeFilterIds = activeFilterIds,
+            onFilterToggle = { groceryListViewModel.toggleFilter(it) },
+            onClearAll = { groceryListViewModel.clearFilters() },
+            onDismiss = { showFilterSheet = false },
+            sheetState = filterSheetState
         )
     }
 }
