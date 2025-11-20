@@ -57,10 +57,23 @@ fun ImportUrlScreen(
 
     // Show tag modification dialog when recipe is loaded with modifications
     LaunchedEffect(uiState) {
+        DebugConfig.debugLog(
+            DebugConfig.Category.UI,
+            "[TAG_DIALOG_TRIGGER] LaunchedEffect triggered. uiState type: ${uiState::class.simpleName}, showTagModificationDialog: $showTagModificationDialog"
+        )
         if (uiState is ImportViewModel.UiState.Editing) {
             val editingState = uiState as ImportViewModel.UiState.Editing
+            val hasModifications = editingState.tagModifications?.any { it.wasModified } == true
+            DebugConfig.debugLog(
+                DebugConfig.Category.UI,
+                "[TAG_DIALOG_TRIGGER] In Editing state. hasModifications: $hasModifications, showTagModificationDialog: $showTagModificationDialog"
+            )
             // Only show dialog if there are tags that were actually modified (not just lowercased)
-            if (editingState.tagModifications?.any { it.wasModified } == true && !showTagModificationDialog) {
+            if (hasModifications && !showTagModificationDialog) {
+                DebugConfig.debugLog(
+                    DebugConfig.Category.UI,
+                    "[TAG_DIALOG_TRIGGER] Setting showTagModificationDialog = true"
+                )
                 showTagModificationDialog = true
             }
         }
@@ -222,15 +235,27 @@ fun ImportUrlScreen(
 
     // Tag modification dialog
     if (showTagModificationDialog && uiState is ImportViewModel.UiState.Editing) {
+        DebugConfig.debugLog(
+            DebugConfig.Category.UI,
+            "[TAG_DIALOG_SHOW] Showing TagModificationDialog"
+        )
         val editingState = uiState as ImportViewModel.UiState.Editing
         editingState.tagModifications?.let { modifications ->
             TagModificationDialog(
                 modifications = modifications,
                 onAccept = { acceptedTags ->
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.UI,
+                        "[TAG_DIALOG_SHOW] onAccept called with ${acceptedTags.size} tags"
+                    )
                     viewModel.applyTagModifications(acceptedTags)
                     showTagModificationDialog = false
                 },
                 onDismiss = {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.UI,
+                        "[TAG_DIALOG_SHOW] onDismiss called from screen"
+                    )
                     // Keep the standardized tags
                     showTagModificationDialog = false
                 }

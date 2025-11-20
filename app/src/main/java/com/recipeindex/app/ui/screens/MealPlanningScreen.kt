@@ -266,12 +266,15 @@ fun MealPlanningScreen(
             onListSelected = { listId ->
                 val selectedList = groceryLists.find { it.id == listId }
                 val listName = selectedList?.name ?: "list"
+                // Capture plan details before clearing (callback is async!)
+                val planId = planForGroceryList!!.id
+                val planName = planForGroceryList!!.name
 
-                groceryListViewModel.addMealPlanToList(listId, planForGroceryList!!.id) {
+                groceryListViewModel.addMealPlanToList(listId, planId) {
                     // Success callback - show snackbar
                     scope.launch {
                         snackbarHostState.showSnackbar(
-                            message = "Added ${planForGroceryList!!.name} ingredients to $listName",
+                            message = "Added $planName ingredients to $listName",
                             duration = SnackbarDuration.Short
                         )
                     }
@@ -280,13 +283,17 @@ fun MealPlanningScreen(
                 planForGroceryList = null
             },
             onCreateNew = { listName ->
+                // Capture plan details before clearing (callbacks are async!)
+                val planId = planForGroceryList!!.id
+                val planName = planForGroceryList!!.name
+
                 // Create list first, then add meal plan in the success callback
                 groceryListViewModel.createList(listName) { newListId ->
-                    groceryListViewModel.addMealPlanToList(newListId, planForGroceryList!!.id) {
+                    groceryListViewModel.addMealPlanToList(newListId, planId) {
                         // Success callback - show snackbar
                         scope.launch {
                             snackbarHostState.showSnackbar(
-                                message = "Added ${planForGroceryList!!.name} ingredients to $listName",
+                                message = "Added $planName ingredients to $listName",
                                 duration = SnackbarDuration.Short
                             )
                         }
