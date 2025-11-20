@@ -181,7 +181,7 @@ fun GroceryListDetailScreen(
                 }
             }
 
-            // Bottom actions
+            // Bottom actions - Icon over text pattern
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large.copy(
@@ -190,69 +190,128 @@ fun GroceryListDetailScreen(
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    // Select/Deselect all buttons
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    // Toggle Select/Deselect All
+                    val allChecked = items.isNotEmpty() && items.all { it.isChecked }
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable(enabled = items.isNotEmpty()) {
+                                if (allChecked) {
+                                    groceryListViewModel.uncheckAllItems(listId)
+                                } else {
+                                    groceryListViewModel.checkAllItems(listId)
+                                }
+                            }
+                            .padding(8.dp)
                     ) {
-                        OutlinedButton(
-                            onClick = { groceryListViewModel.checkAllItems(listId) },
-                            modifier = Modifier.weight(1f),
-                            enabled = items.isNotEmpty() && items.any { !it.isChecked }
-                        ) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Select All")
-                        }
-                        OutlinedButton(
-                            onClick = { groceryListViewModel.uncheckAllItems(listId) },
-                            modifier = Modifier.weight(1f),
-                            enabled = items.isNotEmpty() && items.any { it.isChecked }
-                        ) {
-                            Icon(Icons.Default.RadioButtonUnchecked, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Deselect All")
-                        }
+                        Icon(
+                            imageVector = if (allChecked) Icons.Default.RadioButtonUnchecked else Icons.Default.CheckCircle,
+                            contentDescription = if (allChecked) "Deselect All" else "Select All",
+                            tint = if (items.isEmpty()) {
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            },
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (allChecked) "Deselect" else "Select All",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (items.isEmpty()) {
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            }
+                        )
                     }
 
-                    // Clear checked items button
+                    // Clear checked items
                     val checkedItemsCount = items.count { it.isChecked }
-                    OutlinedButton(
-                        onClick = { showClearCheckedDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = checkedItemsCount > 0
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable(enabled = checkedItemsCount > 0) {
+                                showClearCheckedDialog = true
+                            }
+                            .padding(8.dp)
                     ) {
-                        Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Clear Checked Items ($checkedItemsCount)")
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Clear Checked",
+                            tint = if (checkedItemsCount > 0) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            },
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Clear ($checkedItemsCount)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (checkedItemsCount > 0) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            }
+                        )
                     }
 
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    // Add from Recipes
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                showRecipePicker = true
+                            }
+                            .padding(8.dp)
                     ) {
-                        OutlinedButton(
-                            onClick = { showRecipePicker = true },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(Icons.Default.Restaurant, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Recipes")
-                        }
-                        OutlinedButton(
-                            onClick = { showMealPlanPicker = true },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(Icons.Default.DateRange, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Meal Plans")
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Restaurant,
+                            contentDescription = "Add from Recipes",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Recipes",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // Add from Meal Plans
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                showMealPlanPicker = true
+                            }
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Add from Meal Plans",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Meal Plans",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
