@@ -6,6 +6,7 @@ import com.recipeindex.app.data.managers.GroceryListManager
 import com.recipeindex.app.data.managers.MealPlanManager
 import com.recipeindex.app.data.managers.RecipeManager
 import com.recipeindex.app.data.managers.SettingsManager
+import com.recipeindex.app.data.managers.SubstitutionManager
 import com.recipeindex.app.data.parsers.PdfRecipeParser
 import com.recipeindex.app.data.parsers.PhotoRecipeParser
 import com.recipeindex.app.data.parsers.RecipeParser
@@ -20,6 +21,7 @@ class ViewModelFactory(
     private val mealPlanManager: MealPlanManager,
     private val groceryListManager: GroceryListManager,
     private val settingsManager: SettingsManager,
+    private val substitutionManager: SubstitutionManager,
     private val urlRecipeParser: RecipeParser,
     private val pdfRecipeParser: PdfRecipeParser,
     private val photoRecipeParser: PhotoRecipeParser
@@ -48,6 +50,9 @@ class ViewModelFactory(
             }
             modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
                 SettingsViewModel(settingsManager) as T
+            }
+            modelClass.isAssignableFrom(SubstitutionViewModel::class.java) -> {
+                SubstitutionViewModel(substitutionManager) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
