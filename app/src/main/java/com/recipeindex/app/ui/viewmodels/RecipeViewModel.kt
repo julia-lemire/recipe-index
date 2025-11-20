@@ -6,6 +6,10 @@ import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.data.entities.RecipeLog
 import com.recipeindex.app.data.managers.RecipeManager
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.filtersort.core.Filter
+import com.recipeindex.app.utils.filtersort.core.FilterSortGroupManager
+import com.recipeindex.app.utils.filtersort.core.GroupBy
+import com.recipeindex.app.utils.filtersort.core.Sort
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -35,6 +39,17 @@ class RecipeViewModel(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    // Filter/Sort/Group Manager
+    val filterSortManager = FilterSortGroupManager(
+        sourceItems = recipeManager.getAllRecipes(),
+        searchPredicate = { recipe, query ->
+            recipe.title.contains(query, ignoreCase = true) ||
+            recipe.ingredients.any { it.contains(query, ignoreCase = true) } ||
+            recipe.tags.any { it.contains(query, ignoreCase = true) }
+        },
+        scope = viewModelScope
+    )
 
     init {
         loadRecipes()
@@ -85,6 +100,7 @@ class RecipeViewModel(
      */
     fun searchRecipes(query: String) {
         _searchQuery.value = query
+        filterSortManager.setSearchQuery(query)
         viewModelScope.launch {
             try {
                 if (query.isBlank()) {
@@ -100,6 +116,59 @@ class RecipeViewModel(
                 DebugConfig.error(DebugConfig.Category.UI, "searchRecipes failed", e)
             }
         }
+    }
+
+    /**
+     * Add a filter
+     */
+    fun addFilter(filter: Filter<Recipe>) {
+        filterSortManager.addFilter(filter)
+    }
+
+    /**
+     * Remove a filter
+     */
+    fun removeFilter(filterId: String) {
+        filterSortManager.removeFilter(filterId)
+    }
+
+    /**
+     * Toggle a filter on/off
+     */
+    fun toggleFilter(filter: Filter<Recipe>) {
+        if (filterSortManager.isFilterActive(filter.id)) {
+            filterSortManager.removeFilter(filter.id)
+        } else {
+            filterSortManager.addFilter(filter)
+        }
+    }
+
+    /**
+     * Clear all filters
+     */
+    fun clearFilters() {
+        filterSortManager.clearFilters()
+    }
+
+    /**
+     * Set the current sort
+     */
+    fun setSort(sort: Sort<Recipe>?) {
+        filterSortManager.setSort(sort)
+    }
+
+    /**
+     * Toggle sort direction
+     */
+    fun toggleSortDirection() {
+        filterSortManager.toggleSortDirection()
+    }
+
+    /**
+     * Set the current grouping
+     */
+    fun setGroupBy(groupBy: GroupBy<Recipe, *>?) {
+        filterSortManager.setGroupBy(groupBy)
     }
 
     /**

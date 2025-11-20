@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 20, 2025: Generic FilterSortGroup Library
+- **Decision**: Created generic, extractable filter/sort/group library in utils/filtersort/ with core interfaces (Filter<T>, Sort<T>, GroupBy<T,K>), FilterSortGroupManager for reactive state management, recipe-specific implementations, and reusable UI components (FilterChipRow, SortMenu)
+- **Rationale**: Multiple screens need filtering (recipes, meal plans, grocery lists, substitutions) and sorting capabilities; creating a generic, type-safe library enables code reuse across all screens, ensures consistent UX, simplifies future extraction to standalone module, and eliminates duplicate filter/sort logic scattered across ViewModels
+- **Implementation**: Core package (utils/filtersort/core/) contains Filter<T> interface with matches(), Sort<T> interface with comparator and reversible direction, GroupBy<T,K> interface with extractKey(), and FilterSortGroupManager with combine() flow operators for reactive filtering/sorting/grouping; recipe package (utils/filtersort/recipe/) provides FavoriteFilter, TagFilter, SourceFilter, CookTimeFilter, ServingsFilter, TitleSort, DateCreatedSort, CookTimeSort, SourceGrouping, FavoriteGrouping, etc.; UI package (utils/filtersort/ui/) provides FilterChipRow with horizontal scroll and active state, SortMenu with dropdown and direction toggle; RecipeViewModel instantiates FilterSortGroupManager with getAllRecipes() flow and search predicate matching title/ingredients/tags, exposes filterSortManager publicly for UI binding
+
 #### Nov 20, 2025: Accessible Import from Multiple Entry Points
 - **Decision**: Added "Import from File" option to ImportSourceSelectionScreen (4th card in Import tab) and import icon buttons to MealPlanningScreen and GroceryListScreen top bars, making Settings import a backup catch-all
 - **Rationale**: Users shouldn't have to navigate to Settings for file import - it should be accessible from the same screens where they add/view content; Settings remains as fallback for users who don't know where else to find it
