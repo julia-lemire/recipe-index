@@ -5,6 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.data.managers.MealPlanManager
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.filtersort.core.Filter
+import com.recipeindex.app.utils.filtersort.core.FilterSortGroupManager
+import com.recipeindex.app.utils.filtersort.core.GroupBy
+import com.recipeindex.app.utils.filtersort.core.Sort
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -35,6 +39,17 @@ class MealPlanViewModel(
 
     private val _selectedDateRange = MutableStateFlow<Pair<Long, Long>?>(null)
     val selectedDateRange: StateFlow<Pair<Long, Long>?> = _selectedDateRange.asStateFlow()
+
+    // Filter/Sort/Group Manager
+    val filterSortManager = FilterSortGroupManager(
+        sourceItems = mealPlanManager.getAllMealPlans(),
+        searchPredicate = { mealPlan, query ->
+            mealPlan.name.contains(query, ignoreCase = true) ||
+            mealPlan.tags.any { it.contains(query, ignoreCase = true) } ||
+            mealPlan.notes?.contains(query, ignoreCase = true) == true
+        },
+        scope = viewModelScope
+    )
 
     init {
         loadMealPlans()
@@ -84,6 +99,7 @@ class MealPlanViewModel(
      */
     fun searchMealPlans(query: String) {
         _searchQuery.value = query
+        filterSortManager.setSearchQuery(query)
         viewModelScope.launch {
             try {
                 if (query.isBlank()) {
@@ -279,5 +295,58 @@ class MealPlanViewModel(
      */
     fun clearCurrentMealPlan() {
         _currentMealPlan.value = null
+    }
+
+    /**
+     * Add a filter
+     */
+    fun addFilter(filter: Filter<MealPlan>) {
+        filterSortManager.addFilter(filter)
+    }
+
+    /**
+     * Remove a filter
+     */
+    fun removeFilter(filterId: String) {
+        filterSortManager.removeFilter(filterId)
+    }
+
+    /**
+     * Toggle a filter on/off
+     */
+    fun toggleFilter(filter: Filter<MealPlan>) {
+        if (filterSortManager.isFilterActive(filter.id)) {
+            filterSortManager.removeFilter(filter.id)
+        } else {
+            filterSortManager.addFilter(filter)
+        }
+    }
+
+    /**
+     * Clear all filters
+     */
+    fun clearFilters() {
+        filterSortManager.clearFilters()
+    }
+
+    /**
+     * Set the current sort
+     */
+    fun setSort(sort: Sort<MealPlan>?) {
+        filterSortManager.setSort(sort)
+    }
+
+    /**
+     * Toggle sort direction
+     */
+    fun toggleSortDirection() {
+        filterSortManager.toggleSortDirection()
+    }
+
+    /**
+     * Set the current grouping
+     */
+    fun setGroupBy(groupBy: GroupBy<MealPlan, *>?) {
+        filterSortManager.setGroupBy(groupBy)
     }
 }

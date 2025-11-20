@@ -68,18 +68,21 @@ class TagGrouping : GroupBy<Recipe, String> {
 }
 
 /**
+ * Cook time categories for grouping
+ */
+enum class CookTimeCategory {
+    QUICK,      // ≤30 min
+    MEDIUM,     // 31-60 min
+    LONG,       // >60 min
+    UNKNOWN     // No time info
+}
+
+/**
  * Group recipes by cook time category
  */
 class CookTimeGrouping : GroupBy<Recipe, CookTimeCategory> {
     override val id: String = "cook_time"
     override val label: String = "Cook Time"
-
-    enum class CookTimeCategory {
-        QUICK,      // ≤30 min
-        MEDIUM,     // 31-60 min
-        LONG,       // >60 min
-        UNKNOWN     // No time info
-    }
 
     override fun extractKey(item: Recipe): CookTimeCategory {
         val totalTime = (item.prepTimeMinutes ?: 0) + (item.cookTimeMinutes ?: 0)
@@ -112,18 +115,21 @@ class CookTimeGrouping : GroupBy<Recipe, CookTimeCategory> {
 }
 
 /**
+ * Servings range categories for grouping
+ */
+enum class ServingsRange {
+    SINGLE,     // 1-2
+    SMALL,      // 3-4
+    MEDIUM,     // 5-6
+    LARGE       // 7+
+}
+
+/**
  * Group recipes by servings range
  */
 class ServingsGrouping : GroupBy<Recipe, ServingsRange> {
     override val id: String = "servings"
     override val label: String = "Servings"
-
-    enum class ServingsRange {
-        SINGLE,     // 1-2
-        SMALL,      // 3-4
-        MEDIUM,     // 5-6
-        LARGE       // 7+
-    }
 
     override fun extractKey(item: Recipe): ServingsRange {
         return when (item.servings) {

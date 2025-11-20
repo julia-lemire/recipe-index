@@ -6,6 +6,10 @@ import com.recipeindex.app.data.entities.GroceryItem
 import com.recipeindex.app.data.entities.GroceryList
 import com.recipeindex.app.data.managers.GroceryListManager
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.filtersort.core.Filter
+import com.recipeindex.app.utils.filtersort.core.FilterSortGroupManager
+import com.recipeindex.app.utils.filtersort.core.GroupBy
+import com.recipeindex.app.utils.filtersort.core.Sort
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -34,6 +38,15 @@ class GroceryListViewModel(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    // Filter/Sort/Group Manager
+    val filterSortManager = FilterSortGroupManager(
+        sourceItems = groceryListManager.getAllLists(),
+        searchPredicate = { groceryList, query ->
+            groceryList.name.contains(query, ignoreCase = true)
+        },
+        scope = viewModelScope
+    )
 
     init {
         loadLists()
@@ -298,8 +311,7 @@ class GroceryListViewModel(
      */
     fun searchLists(query: String) {
         _searchQuery.value = query
-        // Note: In a real app, you'd filter the lists here
-        // For now, keeping it simple
+        filterSortManager.setSearchQuery(query)
     }
 
     /**
@@ -442,5 +454,58 @@ class GroceryListViewModel(
      */
     fun clearError() {
         _error.value = null
+    }
+
+    /**
+     * Add a filter
+     */
+    fun addFilter(filter: Filter<GroceryList>) {
+        filterSortManager.addFilter(filter)
+    }
+
+    /**
+     * Remove a filter
+     */
+    fun removeFilter(filterId: String) {
+        filterSortManager.removeFilter(filterId)
+    }
+
+    /**
+     * Toggle a filter on/off
+     */
+    fun toggleFilter(filter: Filter<GroceryList>) {
+        if (filterSortManager.isFilterActive(filter.id)) {
+            filterSortManager.removeFilter(filter.id)
+        } else {
+            filterSortManager.addFilter(filter)
+        }
+    }
+
+    /**
+     * Clear all filters
+     */
+    fun clearFilters() {
+        filterSortManager.clearFilters()
+    }
+
+    /**
+     * Set the current sort
+     */
+    fun setSort(sort: Sort<GroceryList>?) {
+        filterSortManager.setSort(sort)
+    }
+
+    /**
+     * Toggle sort direction
+     */
+    fun toggleSortDirection() {
+        filterSortManager.toggleSortDirection()
+    }
+
+    /**
+     * Set the current grouping
+     */
+    fun setGroupBy(groupBy: GroupBy<GroceryList, *>?) {
+        filterSortManager.setGroupBy(groupBy)
     }
 }

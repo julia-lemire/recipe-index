@@ -19,6 +19,9 @@ import com.recipeindex.app.ui.MainActivity
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.ShareHelper
+import com.recipeindex.app.utils.filtersort.grocerylist.*
+import com.recipeindex.app.utils.filtersort.ui.FilterChipRow
+import com.recipeindex.app.utils.filtersort.ui.SortMenu
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,9 +38,27 @@ fun GroceryListScreen(
 ) {
     DebugConfig.debugLog(DebugConfig.Category.UI, "GroceryListScreen composed")
 
-    val groceryLists by groceryListViewModel.groceryLists.collectAsState()
+    val groceryLists by groceryListViewModel.filterSortManager.filteredItems.collectAsState()
     val isLoading by groceryListViewModel.isLoading.collectAsState()
     val searchQuery by groceryListViewModel.searchQuery.collectAsState()
+
+    // Available filters and sorts
+    val availableFilters = remember {
+        listOf(
+            CreatedRecentlyFilter(daysAgo = 7),
+            CreatedRecentlyFilter(daysAgo = 30),
+            ModifiedRecentlyFilter(daysAgo = 7)
+        )
+    }
+    val availableSorts = remember {
+        listOf(
+            DateCreatedSort(),
+            DateModifiedSort(),
+            NameSort()
+        )
+    }
+    val activeFilterIds by groceryListViewModel.filterSortManager.activeFilterIds.collectAsState()
+    val currentSort by groceryListViewModel.filterSortManager.currentSort.collectAsState()
 
     var showSearchBar by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -103,6 +124,12 @@ fun GroceryListScreen(
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
+                    SortMenu(
+                        availableSorts = availableSorts,
+                        currentSort = currentSort,
+                        onSortSelected = { groceryListViewModel.setSort(it) },
+                        onSortDirectionToggle = { groceryListViewModel.toggleSortDirection() }
+                    )
                 }
             )
         },
@@ -148,6 +175,14 @@ fun GroceryListScreen(
                     singleLine = true
                 )
             }
+
+            // Filter chips
+            FilterChipRow(
+                availableFilters = availableFilters,
+                activeFilterIds = activeFilterIds,
+                onFilterToggle = { groceryListViewModel.toggleFilter(it) },
+                onClearAll = { groceryListViewModel.clearFilters() }
+            )
 
             when {
                 isLoading -> {

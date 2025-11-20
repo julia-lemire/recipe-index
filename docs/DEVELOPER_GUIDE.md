@@ -114,9 +114,12 @@
 
 ### Filter, Sort, and Group Lists
 - **Core Library**: `utils/filtersort/core/` (Filter<T>, Sort<T>, GroupBy<T,K>, FilterSortGroupManager)
-- **Recipe Implementations**: `utils/filtersort/recipe/` (RecipeFilters, RecipeSorts, RecipeGroupings)
-- **UI Components**: `utils/filtersort/ui/` (FilterChipRow, SortMenu)
-- **Usage**: Create FilterSortGroupManager in ViewModel with source flow and search predicate, expose filteredItems/groupedItems StateFlow, use toggleFilter/setSort/setGroupBy functions
+- **Recipe Implementations**: `utils/filtersort/recipe/` (RecipeFilters.kt, RecipeSorts.kt, RecipeGroupings.kt)
+- **Meal Plan Implementations**: `utils/filtersort/mealplan/` (MealPlanFilters.kt with ContainsRecipeFilter for finding plans with specific recipes, MealPlanSorts.kt, MealPlanGroupings.kt)
+- **Grocery List Implementations**: `utils/filtersort/grocerylist/` (GroceryListFilters.kt, GroceryListSorts.kt, GroceryListGroupings.kt)
+- **UI Components**: `utils/filtersort/ui/` (FilterChipRow with horizontal scroll and clear all, SortMenu with dropdown and direction toggle)
+- **Usage**: Create FilterSortGroupManager(sourceItems flow, searchPredicate, scope) in ViewModel, expose filterSortManager publicly, UI collects filteredItems/groupedItems StateFlow, UI uses toggleFilter/setSort/setGroupBy functions, add convenience methods in ViewModel delegating to filterSortManager
+- **UI Integration**: Add FilterChipRow below search bar/TopAppBar, add SortMenu in TopAppBar actions, collect val items by viewModel.filterSortManager.filteredItems.collectAsState()
 - **Extractable**: Zero app dependencies, 100% type-safe generics, ready to extract as standalone library
 
 ### Handle App Settings

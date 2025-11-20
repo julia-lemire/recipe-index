@@ -156,6 +156,14 @@ com.recipeindex.app/
     │   │   ├── FilterSortGroupManager.kt
     │   │   ├── GroupBy.kt
     │   │   └── Sort.kt
+    │   ├── grocerylist/
+    │   │   ├── GroceryListFilters.kt
+    │   │   ├── GroceryListGroupings.kt
+    │   │   └── GroceryListSorts.kt
+    │   ├── mealplan/
+    │   │   ├── MealPlanFilters.kt
+    │   │   ├── MealPlanGroupings.kt
+    │   │   └── MealPlanSorts.kt
     │   ├── recipe/
     │   │   ├── RecipeFilters.kt
     │   │   ├── RecipeGroupings.kt
@@ -346,6 +354,12 @@ com.recipeindex.app/
 - **RecipeFilters.kt** - Recipe filter implementations: FavoriteFilter (favorites only), TagFilter (by tag name), SourceFilter (URL/PDF/Photo/Manual), CookTimeFilter (≤30/≤60/>60 min ranges), ServingsFilter (min/max range), HasPhotoFilter, HasNotesFilter
 - **RecipeSorts.kt** - Recipe sort implementations: TitleSort (alphabetical), DateCreatedSort (newest first default), CookTimeSort (shortest first default, recipes without time sorted last), ServingsSort (fewest first default), FavoriteSort (favorites first default)
 - **RecipeGroupings.kt** - Recipe grouping implementations: SourceGrouping (by RecipeSource enum), FavoriteGrouping (Favorites/Other Recipes with favorites first), TagGrouping (by first tag or "Untagged"), CookTimeGrouping (Quick ≤30min / Medium 31-60min / Long >60min / Unknown), ServingsGrouping (Single 1-2 / Small 3-4 / Medium 5-6 / Large 7+)
+- **MealPlanFilters.kt** - Meal plan filter implementations: DateRangeFilter (plans overlapping date range), RecipeCountFilter (min/max recipes), TagFilter (by tag name), ContainsRecipeFilter (finds plans with specific recipe by name or ID), HasNotesFilter, HasDatesFilter (date-based vs standalone event plans)
+- **MealPlanSorts.kt** - Meal plan sort implementations: NameSort (alphabetical), StartDateSort (most recent first default, plans without dates last), DateCreatedSort (newest first default), RecipeCountSort (most recipes first default)
+- **MealPlanGroupings.kt** - Meal plan grouping implementations: MonthGrouping (by start date month, most recent first), TagGrouping (by first tag or "Untagged"), RecipeCountGrouping (Empty / Single / Small 2-3 / Medium 4-6 / Large 7+, largest first), PlanTypeGrouping (Date-based / Event plans, date-based first)
+- **GroceryListFilters.kt** - Grocery list filter implementations: CreatedRecentlyFilter (last N days with presets: Today/This Week/This Month), ModifiedRecentlyFilter (last N days), note: item-based filters (unchecked count, completion %) require composite data type
+- **GroceryListSorts.kt** - Grocery list sort implementations: NameSort (alphabetical), DateCreatedSort (newest first default), DateModifiedSort (most recently modified first default)
+- **GroceryListGroupings.kt** - Grocery list grouping implementations: MonthGrouping (by creation month, most recent first), AgeGrouping (Today / This Week / This Month / Older)
 - **FilterChipRow.kt** - Horizontal scrollable row of filter chips: Takes availableFilters list and activeFilterIds set, renders FilterChip for each with selected state, optional "Clear All" AssistChip with leading close icon, onFilterToggle callback, horizontalScroll modifier
 - **SortMenu.kt** - Sort dropdown menu: IconButton with Sort icon, DropdownMenu with sort options, shows checkmark for active sort, shows direction arrow (up/down) for active sort, "Clear Sort" option when sort active, clicking active sort toggles direction, clicking inactive sort selects it
 

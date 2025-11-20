@@ -407,3 +407,14 @@
 - [ ] Import screens show parsing errors via Snackbar (planned - UI test)
 
 ---
+
+
+### FilterSortGroup Library
+- [ ] FilterSortGroupManager combines search, filters, sort, groupBy correctly (planned)
+- [ ] FilterSortGroupManager AND logic for multiple filters (planned)
+- [ ] FilterSortGroupManager filteredItems updates when sourceItems changes (planned)
+- [ ] FilterSortGroupManager groupedItems groups correctly with custom ordering (planned)
+- [ ] Recipe filters (FavoriteFilter, TagFilter, CookTimeFilter, etc.) match correctly (planned)
+- [ ] Meal plan ContainsRecipeFilter finds plans with specific recipe by name or ID (planned)
+- [ ] Sort direction toggle reverses order correctly (planned)
+- [ ] GroupBy compareKeys custom ordering works (planned)
