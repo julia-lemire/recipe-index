@@ -1,7 +1,7 @@
 # Recipe Index Test Scenarios
 
 > **Purpose**: Test coverage and scenarios to implement for automated testing
-> **Last Updated**: 2025-11-19
+> **Last Updated**: 2025-11-20
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -159,6 +159,18 @@
 - [ ] PDF import parses structured recipe document (planned - PdfRecipeParser delegates to TextRecipeParser)
 - [ ] Photo OCR import extracts text from image (planned - PhotoRecipeParser delegates to TextRecipeParser)
 
+#### Tag Management
+- [ ] TagStandardizer normalizes tag variations to standard forms (planned - e.g., "italian food"→"italian")
+- [ ] TagStandardizer removes noise words from tags (planned - removes "recipe", "meal", "dish", etc.)
+- [ ] TagStandardizer deduplicates identical tags after normalization (planned)
+- [ ] TagStandardizer.standardize() returns silent standardized list (planned)
+- [ ] TagStandardizer.standardizeWithTracking() returns TagModification objects (planned)
+- [ ] TagModification tracks original, standardized, and wasModified flag (planned)
+- [ ] Tag auto-suggestion filters existing tags by user input (planned - appears after 2 chars)
+- [ ] Tag auto-suggestion excludes already-selected tags (planned)
+- [ ] Tag auto-suggestion limits to 5 results (planned)
+- [ ] ImportViewModel.getAllExistingTags() collects all unique tags from database (planned)
+
 ### Meal Planning
 - [x] Create meal plan with flexible date range (Sun-Thu, single day) (MealPlanManagerTest.kt:createMealPlan accepts flexible date range)
 - [x] Create meal plan with no dates (indefinite/special event) (MealPlanManagerTest.kt:createMealPlan accepts null dates)
@@ -229,6 +241,19 @@
 - [ ] MealPlan foreign key to Recipe enforces referential integrity (planned)
 - [ ] GroceryItem foreign key to GroceryList enforces referential integrity (planned)
 - [ ] Cascade delete: deleting GroceryList deletes all GroceryItems (planned)
+
+### UI Components
+- [ ] AppDatePickerDialog displays Material3 DatePicker (planned)
+- [ ] AppDatePickerDialog calls onDateSelected with selected date (planned)
+- [ ] AppDatePickerDialog calls onDismiss when dismissed (planned)
+- [ ] TagModificationDialog displays original→standardized transformations (planned)
+- [ ] TagModificationDialog shows strikethrough on original tags (planned)
+- [ ] TagModificationDialog allows inline editing of each tag (planned)
+- [ ] TagModificationDialog filters out modifications with wasModified=false (planned)
+- [ ] Icon-over-text buttons render icon above text label (planned)
+- [ ] Icon-over-text buttons use 24dp icons with labelSmall text (planned)
+- [ ] Smart toggle button changes icon/text based on state (planned)
+- [ ] Smart toggle button disabled when no items (planned - Select All with empty list)
 
 ### Error Handling
 
