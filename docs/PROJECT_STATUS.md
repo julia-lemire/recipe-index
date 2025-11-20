@@ -214,8 +214,10 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Import: Tag auto-suggestion from existing tags (appears after 2 chars, click to add, integrated in all import screens)
 - ✅ Import: Notes NOT populated during import from any source (user-added only per design)
 - ✅ Import: Discard button with confirmation dialog for escaping auto-save
-- ✅ Grocery lists: Select All/Deselect All buttons with smart enable logic (only enabled when applicable)
+- ✅ Grocery lists: Icon-over-text button pattern for all actions (Select All toggle, Clear, Recipes, Meal Plans), consolidated Select/Deselect into single toggle button
 - ✅ Grocery lists: Fixed empty list bug when generating from meal plan (was using broken createListAndReturn)
+- ✅ Grocery lists: Fixed Add to Grocery button in meal planner not adding items (addMealPlanToList now returns result)
+- ✅ Meal plan cards: Action buttons repositioned inline with date range for compact layout
 - ✅ Navigation drawer: Collapse button even in landscape/tablet mode for more screen space (FloatingActionButton to re-expand)
 - ✅ Landscape mode: Recipe and meal plan cards display in 2-column grid
 - ✅ Error handling: ErrorHandler utility, SnackbarHost for error display, BackHandler for system back button
