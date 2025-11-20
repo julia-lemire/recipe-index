@@ -262,7 +262,18 @@ fun RecipeIndexNavigation(
         ) { backStackEntry ->
             val planId = backStackEntry.arguments?.getLong("planId") ?: return@composable
 
-            mealPlanViewModel.loadMealPlan(planId)
+            // Only load meal plan when planId changes, not on every recomposition
+            LaunchedEffect(planId) {
+                mealPlanViewModel.loadMealPlan(planId)
+            }
+
+            // Clear current meal plan when leaving this screen
+            DisposableEffect(Unit) {
+                onDispose {
+                    mealPlanViewModel.clearCurrentMealPlan()
+                }
+            }
+
             val currentPlan by mealPlanViewModel.currentMealPlan.collectAsState()
             val recipes by recipeViewModel.recipes.collectAsState()
 
