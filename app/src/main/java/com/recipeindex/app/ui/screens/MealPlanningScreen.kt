@@ -270,11 +270,16 @@ fun MealPlanningScreen(
                 val planId = planForGroceryList!!.id
                 val planName = planForGroceryList!!.name
 
-                groceryListViewModel.addMealPlanToList(listId, planId) {
-                    // Success callback - show snackbar
+                groceryListViewModel.addMealPlanToList(listId, planId) { count ->
+                    // Success callback - show snackbar with count
                     scope.launch {
+                        val message = if (count > 0) {
+                            "Added $count ingredient${if (count == 1) "" else "s"} to $listName"
+                        } else {
+                            "No ingredients found in $planName - recipes may be missing"
+                        }
                         snackbarHostState.showSnackbar(
-                            message = "Added $planName ingredients to $listName",
+                            message = message,
                             duration = SnackbarDuration.Short
                         )
                     }
@@ -289,11 +294,16 @@ fun MealPlanningScreen(
 
                 // Create list first, then add meal plan in the success callback
                 groceryListViewModel.createList(listName) { newListId ->
-                    groceryListViewModel.addMealPlanToList(newListId, planId) {
-                        // Success callback - show snackbar
+                    groceryListViewModel.addMealPlanToList(newListId, planId) { count ->
+                        // Success callback - show snackbar with count
                         scope.launch {
+                            val message = if (count > 0) {
+                                "Added $count ingredient${if (count == 1) "" else "s"} to $listName"
+                            } else {
+                                "No ingredients found in $planName - recipes may be missing"
+                            }
                             snackbarHostState.showSnackbar(
-                                message = "Added $planName ingredients to $listName",
+                                message = message,
                                 duration = SnackbarDuration.Short
                             )
                         }

@@ -106,8 +106,9 @@ class GroceryListManager(
 
     /**
      * Add recipes to grocery list with consolidation
+     * @return Result<Int> containing the count of ingredients added
      */
-    suspend fun addRecipesToList(listId: Long, recipeIds: List<Long>): Result<Unit> {
+    suspend fun addRecipesToList(listId: Long, recipeIds: List<Long>): Result<Int> {
         return try {
             DebugConfig.debugLog(
                 DebugConfig.Category.MANAGER,
@@ -178,7 +179,7 @@ class GroceryListManager(
                 DebugConfig.Category.MANAGER,
                 "addRecipesToList: ${recipeIds.size} recipes, ${consolidated.size} items"
             )
-            Result.success(Unit)
+            Result.success(consolidated.size)
         } catch (e: Exception) {
             DebugConfig.error(DebugConfig.Category.MANAGER, "addRecipesToList failed", e)
             Result.failure(e)
@@ -363,8 +364,9 @@ class GroceryListManager(
     /**
      * Add meal plan to grocery list
      * Fetches all recipes in the meal plan and adds their ingredients
+     * @return Result<Int> containing the count of ingredients added
      */
-    suspend fun addMealPlanToList(listId: Long, planId: Long): Result<Unit> {
+    suspend fun addMealPlanToList(listId: Long, planId: Long): Result<Int> {
         return try {
             // Get the meal plan
             val mealPlan = mealPlanDao.getById(planId)

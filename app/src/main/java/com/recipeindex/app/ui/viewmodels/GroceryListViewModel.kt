@@ -164,16 +164,16 @@ class GroceryListViewModel(
     /**
      * Add recipes to grocery list
      */
-    fun addRecipesToList(listId: Long, recipeIds: List<Long>, onSuccess: () -> Unit = {}) {
+    fun addRecipesToList(listId: Long, recipeIds: List<Long>, onSuccess: (Int) -> Unit = {}) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val result = groceryListManager.addRecipesToList(listId, recipeIds)
                 _isLoading.value = false
 
-                result.onSuccess {
-                    DebugConfig.debugLog(DebugConfig.Category.UI, "Added ${recipeIds.size} recipes to list")
-                    onSuccess()
+                result.onSuccess { count ->
+                    DebugConfig.debugLog(DebugConfig.Category.UI, "Added $count ingredients from ${recipeIds.size} recipes to list")
+                    onSuccess(count)
                 }.onFailure { e ->
                     _error.value = "Failed to add recipes: ${e.message}"
                     DebugConfig.error(DebugConfig.Category.UI, "addRecipesToList failed", e)
@@ -320,16 +320,16 @@ class GroceryListViewModel(
     /**
      * Add meal plan to grocery list
      */
-    fun addMealPlanToList(listId: Long, planId: Long, onSuccess: () -> Unit = {}) {
+    fun addMealPlanToList(listId: Long, planId: Long, onSuccess: (Int) -> Unit = {}) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val result = groceryListManager.addMealPlanToList(listId, planId)
                 _isLoading.value = false
 
-                result.onSuccess {
-                    DebugConfig.debugLog(DebugConfig.Category.UI, "Added meal plan to list")
-                    onSuccess()
+                result.onSuccess { count ->
+                    DebugConfig.debugLog(DebugConfig.Category.UI, "Added meal plan to list: $count ingredients")
+                    onSuccess(count)
                 }.onFailure { e ->
                     _error.value = "Failed to add meal plan: ${e.message}"
                     DebugConfig.error(DebugConfig.Category.UI, "addMealPlanToList failed", e)
