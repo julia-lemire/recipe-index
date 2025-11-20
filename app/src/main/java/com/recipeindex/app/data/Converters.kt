@@ -2,6 +2,9 @@ package com.recipeindex.app.data
 
 import androidx.room.TypeConverter
 import com.recipeindex.app.data.entities.RecipeSource
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.builtins.ListSerializer
 
 /**
  * Room TypeConverters for complex types
@@ -9,6 +12,8 @@ import com.recipeindex.app.data.entities.RecipeSource
  * Converts between Kotlin types and database-compatible types
  */
 class Converters {
+
+    private val json = Json { ignoreUnknownKeys = true }
 
     @TypeConverter
     fun fromStringList(value: List<String>): String {
@@ -46,5 +51,23 @@ class Converters {
     @TypeConverter
     fun toRecipeSource(value: String): RecipeSource {
         return RecipeSource.valueOf(value)
+    }
+
+    @TypeConverter
+    fun fromSubstituteList(value: List<Substitute>): String {
+        return json.encodeToString(value)
+    }
+
+    @TypeConverter
+    fun toSubstituteList(value: String): List<Substitute> {
+        return if (value.isEmpty()) {
+            emptyList()
+        } else {
+            try {
+                json.decodeFromString(ListSerializer(Substitute.serializer()), value)
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
     }
 }

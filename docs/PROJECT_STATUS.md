@@ -1,7 +1,7 @@
 # Recipe Index Project Status
 
 > **Purpose**: Current status, core principles, completed features, and backlog
-> **Last Updated**: 2025-11-19
+> **Last Updated**: 2025-11-20
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -220,8 +220,10 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 ### Advanced Features (Phase 5)
 - ✅ Portion scaling: Servings dropdown in RecipeDetailScreen (half, original, 2x, 3x, 4x) with automatic ingredient quantity scaling
 - ✅ Ingredient parsing: IngredientScaler handles fractions (1/2), mixed numbers (1 1/2), decimals, ranges, smart formatting
-- ✅ Unit conversions: Toggle button to show metric/imperial conversions inline ("1 cup (237 ml) flour")
+- ✅ Granular unit preferences: Separate settings for liquid volume (cups/ml) and weight (oz/g) with IMPERIAL/METRIC/BOTH options per category
+- ✅ Unit conversions: IngredientUnitConverter automatically formats ingredients based on user's liquid/weight preferences, supports showing both units inline ("1 cup (237 ml)")
 - ✅ Recipe selection: Full-screen grid layout for meal plan recipe picker (2 columns, search, selection counter in TopAppBar)
+- ✅ Cook mode: Checkable ingredients/instructions, integrated timer (5-60 min), bold numbers in steps, keep screen awake, session-persistent state
 
 ---
 
@@ -278,10 +280,10 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [x] Unit conversion display in recipes (toggle to show metric/imperial conversions inline)
 - [x] Full-screen recipe selection for meal plans (grid layout, 2/row, search, selection counter)
 - [x] Landscape mode: 2 cards per row (recipes/meal plans)
-- [ ] Granular unit preferences by category (weight, liquid) - Deferred (toggle is sufficient)
+- [x] Granular unit preferences by category (weight, liquid) - Separate settings for liquid volume and weight units
+- [x] Cook mode (checkable ingredients/instructions, timer, bold numbers, keep screen awake)
 - [ ] Nutritional info
 - [ ] Recipe suggestions
-- [ ] Cooking mode
 - [ ] Substitution guide
 
 ### Phase 6: Polish
