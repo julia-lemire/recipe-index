@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -22,6 +23,7 @@ sealed class Screen(
     object RecipeIndex : Screen("recipe_index", "Recipe Index", Icons.Default.List)
     object MealPlanning : Screen("meal_planning", "Meal Planning", Icons.Default.DateRange)
     object GroceryLists : Screen("grocery_lists", "Grocery Lists", Icons.Default.ShoppingCart)
+    object SubstitutionGuide : Screen("substitution_guide", "Substitution Guide", Icons.Default.SwapHoriz)
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 
     // Recipe screens (not in drawer)
@@ -50,7 +52,13 @@ sealed class Screen(
         fun createRoute(listId: Long) = "grocery_list/$listId"
     }
 
+    // Substitution screens (SubstitutionGuide is in drawer, AddEditSubstitution is not)
+    object AddEditSubstitution : Screen("add_edit_substitution/{substitutionId}", "Add/Edit Substitution", Icons.Default.SwapHoriz) {
+        fun createRoute(substitutionId: Long) = "add_edit_substitution/$substitutionId"
+        fun createRouteNew() = "add_edit_substitution/-1"
+    }
+
     companion object {
-        val drawerScreens = listOf(Home, RecipeIndex, MealPlanning, GroceryLists, Settings)
+        val drawerScreens = listOf(Home, RecipeIndex, MealPlanning, GroceryLists, SubstitutionGuide, Settings)
     }
 }

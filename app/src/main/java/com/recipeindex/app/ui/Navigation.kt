@@ -1,6 +1,7 @@
 package com.recipeindex.app.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +23,7 @@ import com.recipeindex.app.ui.viewmodels.ImportViewModel
 import com.recipeindex.app.ui.viewmodels.MealPlanViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.ui.viewmodels.SettingsViewModel
+import com.recipeindex.app.ui.viewmodels.SubstitutionViewModel
 import com.recipeindex.app.ui.viewmodels.ViewModelFactory
 import com.recipeindex.app.utils.DebugConfig
 
@@ -42,6 +44,12 @@ fun RecipeIndexNavigation(
     val groceryListViewModel: GroceryListViewModel = viewModel(factory = viewModelFactory)
     val importViewModel: ImportViewModel = viewModel(factory = viewModelFactory)
     val settingsViewModel: SettingsViewModel = viewModel(factory = viewModelFactory)
+    val substitutionViewModel: SubstitutionViewModel = viewModel(factory = viewModelFactory)
+
+    // Initialize substitution database with default data on first run
+    LaunchedEffect(Unit) {
+        substitutionViewModel.initializeDefaultSubstitutions()
+    }
 
     NavHost(
         navController = navController,
@@ -138,6 +146,7 @@ fun RecipeIndexNavigation(
                 RecipeDetailScreen(
                     recipe = recipe,
                     settingsViewModel = settingsViewModel,
+                    substitutionViewModel = substitutionViewModel,
                     onEdit = {
                         navController.navigate(Screen.EditRecipe.createRoute(recipeId))
                     },
@@ -313,6 +322,20 @@ fun RecipeIndexNavigation(
             SettingsScreen(
                 viewModel = settingsViewModel,
                 onMenuClick = onMenuClick
+            )
+        }
+
+        // Substitution Guide
+        composable(Screen.SubstitutionGuide.route) {
+            SubstitutionGuideScreen(
+                viewModel = substitutionViewModel,
+                onMenuClick = onMenuClick,
+                onAddSubstitution = {
+                    navController.navigate(Screen.AddEditSubstitution.createRouteNew())
+                },
+                onEditSubstitution = { substitutionId ->
+                    navController.navigate(Screen.AddEditSubstitution.createRoute(substitutionId))
+                }
             )
         }
 

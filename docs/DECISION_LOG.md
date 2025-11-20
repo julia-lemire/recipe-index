@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 20, 2025: Substitution Guide with Database and Recipe Integration
+- **Decision**: Add comprehensive substitution guide with Room database storage (IngredientSubstitution entity), pre-populated defaults (~100 substitutes for 22 common ingredients), dedicated SubstitutionGuideScreen accessible from nav drawer, and long-press ingredient lookup from RecipeDetailScreen with quantity-aware conversions
+- **Rationale**: Users need quick substitution suggestions while cooking (out of ingredient, dietary restrictions, or preference changes), storing substitutions in database allows user editing and offline access, long-press from recipe provides contextual lookup with portion already included, suitability ratings and dietary tags help users choose best alternative
+- **Implementation**: SubstitutionManager handles CRUD operations and default population, SubstitutionViewModel manages search/category/dietary filters using Flow operators (combine, flatMapLatest), SubstitutionGuideScreen shows expandable cards with search and filters, SubstitutionDialog for recipe lookup parses ingredient strings to extract quantity/unit/name using regex patterns similar to IngredientScaler, substitutes ordered by suitability (1-10 rating), converted amounts displayed using ratio multiplication and fraction formatting, AddEditSubstitutionScreen deferred to Phase 6 (navigation routes created but UI not implemented)
+
 #### Nov 20, 2025: Cook Mode with Checkable Steps and Timer
 - **Decision**: Add comprehensive cook mode toggle to RecipeDetailScreen with checkable ingredients/instructions, integrated timer (5-60 min dropdown), bold numbers in text, keep screen awake, and session-persistent state
 - **Rationale**: Users need hands-free tracking while cooking, manual step tracking is error-prone, timer prevents context switching to separate app, screen staying awake prevents interruption mid-recipe
