@@ -113,7 +113,9 @@ fun TagModificationDialog(
                                         }
                                         TextButton(onClick = {
                                             if (editText.isNotBlank()) {
-                                                editedTags[index] = editText.trim().lowercase()
+                                                editedTags = editedTags.toMutableList().apply {
+                                                    this[index] = editText.trim().lowercase()
+                                                }
                                             }
                                             editingIndex = null
                                             editText = ""
@@ -192,7 +194,9 @@ fun TagModificationDialog(
                                             // Show restore button
                                             TextButton(
                                                 onClick = {
-                                                    editedTags[index] = mod.standardized
+                                                    editedTags = editedTags.toMutableList().apply {
+                                                        this[index] = mod.standardized
+                                                    }
                                                 }
                                             ) {
                                                 Text("Restore")
@@ -202,7 +206,9 @@ fun TagModificationDialog(
                                             Row {
                                                 IconButton(
                                                     onClick = {
-                                                        editedTags[index] = ""
+                                                        editedTags = editedTags.toMutableList().apply {
+                                                            this[index] = ""
+                                                        }
                                                     }
                                                 ) {
                                                     Icon(

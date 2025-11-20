@@ -228,9 +228,10 @@ object TagStandardizer {
             .filter { it.isNotBlank() && it.length >= 2 }
             .map { normalizeTag(it) }
             .map { applyStandardMapping(it) }
+            .filter { !isJunkTag(it) } // Check junk BEFORE removing noise words
             .map { removeNoiseWords(it) }
             .filter { it.isNotBlank() }
-            .filter { !isJunkTag(it) }
+            .filter { !isJunkTag(it) } // Check again after noise removal
             .distinct()
             .toList()
     }
@@ -337,14 +338,14 @@ object TagStandardizer {
 
     /**
      * Normalize a single tag
-     * - Remove extra whitespace
-     * - Replace multiple spaces with single space
      * - Remove special characters (except hyphens)
+     * - Replace multiple spaces with single space
+     * - Remove extra whitespace
      */
     private fun normalizeTag(tag: String): String {
         return tag
-            .replace(Regex("\\s+"), " ")
-            .replace(Regex("[^a-z0-9\\s-]"), "")
+            .replace(Regex("[^a-z0-9\\s-]"), "") // Remove special chars first
+            .replace(Regex("\\s+"), " ")         // Then collapse spaces
             .trim()
     }
 
