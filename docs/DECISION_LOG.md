@@ -46,6 +46,26 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 20, 2025: Simplified Meal Plan Date Entry with Inline Calendar Button
+- **Decision**: Replaced two separate "Start Date" and "End Date" buttons with single calendar icon button positioned inline with meal plan name field, using Material 3 DateRangePicker
+- **Rationale**: Two buttons took significant vertical space and required two interactions for date ranges; single inline button reduces visual clutter and simplifies workflow
+- **Implementation**: Added DateRangePickerDialog component to AddEditMealPlanScreen, shows selected dates as supporting text under name field, includes Clear button to remove dates
+
+#### Nov 20, 2025: Recipe Picker Defaults to Existing Tab
+- **Decision**: Changed RecipePickerBottomSheet initial tab from 0 (Import) to 1 (Existing) when adding recipes to meal plans
+- **Rationale**: Users more commonly select from existing recipes than import new ones while creating meal plans; import tab remains one tap away
+- **Implementation**: Set `selectedTab by remember { mutableStateOf(1) }` in RecipePickerBottomSheet composable
+
+#### Nov 20, 2025: Grocery List Operation Feedback with Snackbar
+- **Decision**: Added SnackbarHost to MealPlanningScreen and show success message when meal plan ingredients are added to grocery list
+- **Rationale**: Users had no confirmation that "Add to Grocery List" button completed successfully, leading to confusion about whether ingredients were actually added
+- **Implementation**: Added snackbarHostState and coroutine scope to MealPlanningScreen, pass onSuccess callback to addMealPlanToList showing snackbar with meal plan and list names
+
+#### Nov 20, 2025: Meal Type Words as Noise in Tag Filtering
+- **Decision**: Added dinner/dinners, lunch/lunches, breakfast/breakfasts to noiseWords set in TagStandardizer
+- **Rationale**: Compound tags like "high-fiber dinners" were not being cleaned to "high-fiber" because "dinner" wasn't recognized as noise; standalone meal type tags still needed to remain valid
+- **Implementation**: noiseWords set now includes meal type variations, leveraging existing "keep original if all words filtered" logic to preserve standalone "dinner"/"lunch"/"breakfast" tags
+
 #### Nov 20, 2025: Remove Button in Tag Modification Dialog
 - **Decision**: Added minus icon button to `TagModificationDialog` allowing users to mark individual tags for deletion before accepting changes
 - **Rationale**: Users had to accept all changes then manually remove unwanted tags from the preview screen; direct deletion streamlines workflow and reduces friction

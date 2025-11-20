@@ -303,6 +303,24 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 
 ## Recent Updates (Latest Session)
 
+### Meal Planning UX Improvements
+- ✅ **Simplified Date Entry**: Replaced two separate date buttons with single calendar icon button inline with meal plan name field
+  - Uses Material 3 DateRangePicker for selecting single date or range
+  - Shows selected dates as supporting text under name field
+  - Clear button to remove dates  - Reduces visual clutter and simplifies date selection workflow
+- ✅ **Recipe Picker Defaults to Existing**: Changed RecipePickerBottomSheet to open on "Existing" tab (was "Import")
+  - Users more commonly select existing recipes than import new ones while planning
+  - Import tab still easily accessible with single tap
+- ✅ **Grocery List Feedback**: Added snackbar notification when meal plan ingredients added to grocery list
+  - Shows success message with meal plan name and list name
+  - Confirms operation completed (previously no feedback)
+  - Helps users understand that ingredients were successfully added
+
+### Tag Filtering Refinements  - ✅ **Meal Type Noise Words**: Added dinner/dinners, lunch/lunches, breakfast/breakfasts to noiseWords
+  - Fixes tags like "high-fiber dinners" → "high-fiber"
+  - Standalone meal type tags ("dinner", "lunch") still kept valid
+  - Uses "keep original if all words filtered" logic in removeNoiseWords()
+
 ### Recipe Creation Flow Simplification
 - ✅ **Tabbed Add Recipe Screen**: Consolidated recipe creation into single `ImportSourceSelectionScreen` with 2 tabs
   - **Import tab**: Shows 3 import sources (URL, PDF, Photo)
