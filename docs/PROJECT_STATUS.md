@@ -388,6 +388,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 
 #### Bug Fixes
 - ✅ **Grocery List Generation**: Fixed `addMealPlanToList()` not returning result
+- ✅ **Grocery List Crash**: Fixed NullPointerException when adding meal plan to grocery list (captured variables before async callback cleared them)
 - ✅ **Build Errors**: Fixed `Icons.Default.Star` references to use `Icons.Default.Favorite`
 - ✅ **Flow Handling**: Fixed `getAllExistingTags()` to properly collect from Flow using `.first()`
 
