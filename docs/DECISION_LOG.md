@@ -46,6 +46,21 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 20, 2025: Preview-First Recipe Import UI
+- **Decision**: Replaced `EditRecipeContent` with `RecipePreviewContent` that shows imported recipes in a formatted, WYSIWYG preview with inline tag editing and per-field edit dialogs
+- **Rationale**: Users should see how the recipe will look before saving rather than staring at text fields; most imports don't need editing and inline tag editing is the most common adjustment
+- **Implementation**: Card-based layout with inline tag management (InputChips with remove, add field with auto-suggestions), IconButton + Edit icon for title/metadata/ingredients/instructions that open focused dialogs, shows preview of first 5 ingredients and first 3 instruction steps
+
+#### Nov 20, 2025: Tabbed Recipe Picker in Meal Plan Creation
+- **Decision**: Modified `RecipePickerBottomSheet` to include two tabs: Import (default) showing URL/PDF/Photo import options, and Existing showing recipe selection grid
+- **Rationale**: Meal plan creation workflow required too many navigation steps (navigate to recipes → import → back → meal plans → create → select); users should be able to import recipes directly while building meal plans
+- **Implementation**: TabRow with Import tab (shows ImportRecipesTab with source cards) and Existing tab (shows existing recipe grid); Import tab defaults first, automatically switches to Existing after import completion
+
+#### Nov 20, 2025: Tag Standardization Debug Logging
+- **Decision**: Added comprehensive logging to `TagStandardizer.standardizeWithTracking()` via new `DebugConfig.Category.TAG_STANDARDIZATION`
+- **Rationale**: Need visibility into tag transformations across recipe imports to identify patterns for improving standardizer mappings and noise word lists
+- **Implementation**: Logs recipe name, original tags, step-by-step transformations (normalized → mapped → final), filtered tags with reasons, duplicates removed, and final saved tags; filter Logcat by tag `RecipeIndex` + search `TAG_STANDARDIZATION`
+
 #### Nov 20, 2025: Icon-Over-Text Button Pattern for Grocery List Actions
 - **Decision**: Replace all OutlinedButtons in GroceryListDetailScreen with icon-over-text Column layout pattern (icon stacked above text label)
 - **Rationale**: Icon-over-text provides better touch targets on mobile while using less horizontal space than icon+text side-by-side, creates visual consistency with other bottom action bars
