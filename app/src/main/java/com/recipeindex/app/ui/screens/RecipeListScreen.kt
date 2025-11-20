@@ -177,8 +177,9 @@ fun RecipeListScreen(
                 recipeForGroceryList = null
             },
             onCreateNew = { listName ->
+                val recipeId = recipeForGroceryList!!.id  // Capture before clearing
                 groceryListViewModel.createList(listName) { listId ->
-                    groceryListViewModel.addRecipesToList(listId, listOf(recipeForGroceryList!!.id))
+                    groceryListViewModel.addRecipesToList(listId, listOf(recipeId))
                 }
                 showListPicker = false
                 recipeForGroceryList = null
