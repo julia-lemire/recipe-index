@@ -1,7 +1,7 @@
 # Recipe Index Developer Guide
 
 > **Purpose**: Quick lookup ("I need to...") and architecture patterns (HOW to implement)
-> **Last Updated**: 2025-11-19
+> **Last Updated**: 2025-11-20
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -81,6 +81,16 @@
 - **Manager**: `data/ContentManagers/GroceryListManager.kt`
 - **Entity**: `data/entities/GroceryList.kt`
 - **Screen**: `ui/screens/GroceryListScreen.kt`
+
+### Work with Ingredient Substitutions
+- **Manager**: `data/managers/SubstitutionManager.kt`
+- **Entity**: `data/entities/IngredientSubstitution.kt`
+- **Support Class**: `data/Substitute.kt` (serializable data class for substitute options)
+- **DAO**: `data/dao/SubstitutionDao.kt`
+- **ViewModel**: `ui/viewmodels/SubstitutionViewModel.kt`
+- **Screens**: `ui/screens/SubstitutionGuideScreen.kt`, `ui/screens/AddEditSubstitutionScreen.kt`
+- **Dialog**: `ui/components/SubstitutionDialog.kt` (for recipe ingredient lookup)
+- **Defaults**: `utils/SubstitutionData.kt` (pre-populated ~100 substitutes)
 
 ### Import Recipes
 - **Parser Interface**: `data/parsers/RecipeParser.kt`

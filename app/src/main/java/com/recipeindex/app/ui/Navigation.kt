@@ -1,6 +1,7 @@
 package com.recipeindex.app.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +23,7 @@ import com.recipeindex.app.ui.viewmodels.ImportViewModel
 import com.recipeindex.app.ui.viewmodels.MealPlanViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.ui.viewmodels.SettingsViewModel
+import com.recipeindex.app.ui.viewmodels.SubstitutionViewModel
 import com.recipeindex.app.ui.viewmodels.ViewModelFactory
 import com.recipeindex.app.utils.DebugConfig
 
@@ -42,6 +44,12 @@ fun RecipeIndexNavigation(
     val groceryListViewModel: GroceryListViewModel = viewModel(factory = viewModelFactory)
     val importViewModel: ImportViewModel = viewModel(factory = viewModelFactory)
     val settingsViewModel: SettingsViewModel = viewModel(factory = viewModelFactory)
+    val substitutionViewModel: SubstitutionViewModel = viewModel(factory = viewModelFactory)
+
+    // Initialize substitution database with default data on first run
+    LaunchedEffect(Unit) {
+        substitutionViewModel.initializeDefaultSubstitutions()
+    }
 
     NavHost(
         navController = navController,
@@ -138,6 +146,7 @@ fun RecipeIndexNavigation(
                 RecipeDetailScreen(
                     recipe = recipe,
                     settingsViewModel = settingsViewModel,
+                    substitutionViewModel = substitutionViewModel,
                     onEdit = {
                         navController.navigate(Screen.EditRecipe.createRoute(recipeId))
                     },
@@ -314,6 +323,66 @@ fun RecipeIndexNavigation(
                 viewModel = settingsViewModel,
                 onMenuClick = onMenuClick
             )
+        }
+
+        // Substitution Guide
+        composable(Screen.SubstitutionGuide.route) {
+            SubstitutionGuideScreen(
+                viewModel = substitutionViewModel,
+                onMenuClick = onMenuClick,
+                onAddSubstitution = {
+                    navController.navigate(Screen.AddEditSubstitution.createRouteNew())
+                },
+                onEditSubstitution = { substitutionId ->
+                    navController.navigate(Screen.AddEditSubstitution.createRoute(substitutionId))
+                }
+            )
+        }
+
+        // Add/Edit Substitution
+        composable(
+            route = Screen.AddEditSubstitution.route,
+            arguments = listOf(navArgument("substitutionId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val substitutionId = backStackEntry.arguments?.getLong("substitutionId") ?: -1
+
+            if (substitutionId == -1L) {
+                // New substitution
+                AddEditSubstitutionScreen(
+                    substitution = null,
+                    viewModel = substitutionViewModel,
+                    onSave = {
+                        DebugConfig.debugLog(
+                            DebugConfig.Category.NAVIGATION,
+                            "Substitution created, navigating back"
+                        )
+                        navController.popBackStack()
+                    },
+                    onCancel = {
+                        navController.popBackStack()
+                    }
+                )
+            } else {
+                // Edit existing substitution
+                val substitution by substitutionViewModel.observeSubstitutionById(substitutionId).collectAsState(initial = null)
+
+                substitution?.let { sub ->
+                    AddEditSubstitutionScreen(
+                        substitution = sub,
+                        viewModel = substitutionViewModel,
+                        onSave = {
+                            DebugConfig.debugLog(
+                                DebugConfig.Category.NAVIGATION,
+                                "Substitution updated, navigating back"
+                            )
+                            navController.popBackStack()
+                        },
+                        onCancel = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
         }
 
         // Import Source Selection

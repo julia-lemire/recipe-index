@@ -46,6 +46,16 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 20, 2025: AddEditSubstitutionScreen for User-Editable Substitutions
+- **Decision**: Add comprehensive add/edit screen for user-created substitutions with multiple substitute options per ingredient
+- **Rationale**: Users need to add custom substitutions for regional ingredients, personal preferences, and dietary restrictions beyond pre-populated defaults
+- **Implementation**: AddEditSubstitutionScreen with ingredient/category fields, dynamic substitute list (name, conversion ratio, suitability 1-10 slider, dietary tag chips), createOrUpdateSubstitution() handles create/edit, auto-save on back with validation
+
+#### Nov 20, 2025: Substitution Guide with Database and Recipe Integration
+- **Decision**: Add comprehensive substitution guide with Room database storage (IngredientSubstitution entity), pre-populated defaults (~100 substitutes for 22 common ingredients), dedicated SubstitutionGuideScreen accessible from nav drawer, and long-press ingredient lookup from RecipeDetailScreen with quantity-aware conversions
+- **Rationale**: Users need quick substitution suggestions while cooking (out of ingredient, dietary restrictions, or preference changes), storing substitutions in database allows user editing and offline access, long-press from recipe provides contextual lookup with portion already included, suitability ratings and dietary tags help users choose best alternative
+- **Implementation**: SubstitutionManager handles CRUD operations and default population, SubstitutionViewModel manages search/category/dietary filters using Flow operators (combine, flatMapLatest), SubstitutionGuideScreen shows expandable cards with search and filters, SubstitutionDialog for recipe lookup parses ingredient strings to extract quantity/unit/name using regex patterns similar to IngredientScaler, substitutes ordered by suitability (1-10 rating), converted amounts displayed using ratio multiplication and fraction formatting
+
 #### Nov 20, 2025: Cook Mode with Checkable Steps and Timer
 - **Decision**: Add comprehensive cook mode toggle to RecipeDetailScreen with checkable ingredients/instructions, integrated timer (5-60 min dropdown), bold numbers in text, keep screen awake, and session-persistent state
 - **Rationale**: Users need hands-free tracking while cooking, manual step tracking is error-prone, timer prevents context switching to separate app, screen staying awake prevents interruption mid-recipe

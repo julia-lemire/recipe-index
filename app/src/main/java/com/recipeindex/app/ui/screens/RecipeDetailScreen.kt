@@ -6,7 +6,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import android.view.WindowManager
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -32,7 +34,9 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
+import com.recipeindex.app.ui.components.SubstitutionDialog
 import com.recipeindex.app.ui.viewmodels.SettingsViewModel
+import com.recipeindex.app.ui.viewmodels.SubstitutionViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.IngredientScaler
 import com.recipeindex.app.utils.IngredientUnitConverter
@@ -44,11 +48,12 @@ import kotlinx.coroutines.delay
  *
  * Layout: Title, Servings/Prep/Cook time, Ingredients, Instructions, Tags, Notes
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun RecipeDetailScreen(
     recipe: Recipe,
     settingsViewModel: SettingsViewModel,
+    substitutionViewModel: SubstitutionViewModel,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onBack: () -> Unit,
@@ -71,6 +76,10 @@ fun RecipeDetailScreen(
     var timerRunning by remember { mutableStateOf(false) }
     var timerInitialMinutes by remember { mutableStateOf(10) }
     var showTimerMenu by remember { mutableStateOf(false) }
+
+    // Substitution dialog state
+    var showSubstitutionDialog by remember { mutableStateOf(false) }
+    var selectedIngredientForSub by remember { mutableStateOf<Triple<String, Double?, String>?>(null) } // ingredient, quantity, unit
 
     // Get user's unit preferences from settings
     val settings by settingsViewModel.settings.collectAsState()
@@ -438,21 +447,27 @@ fun RecipeDetailScreen(
                 recipe.ingredients.forEachIndexed { index, ingredient ->
                     val isChecked = index in checkedIngredients
 
+                    // Parse ingredient for substitution lookup
+                    val parsed = parseIngredientForSubstitution(ingredient)
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
-                            .then(
-                                if (cookModeEnabled) {
-                                    Modifier.clickable {
+                            .combinedClickable(
+                                onClick = {
+                                    if (cookModeEnabled) {
                                         checkedIngredients = if (isChecked) {
                                             checkedIngredients - index
                                         } else {
                                             checkedIngredients + index
                                         }
                                     }
-                                } else {
-                                    Modifier
+                                },
+                                onLongClick = {
+                                    // Show substitution dialog
+                                    selectedIngredientForSub = parsed
+                                    showSubstitutionDialog = true
                                 }
                             ),
                         verticalAlignment = Alignment.CenterVertically,
@@ -574,6 +589,17 @@ fun RecipeDetailScreen(
                     Text("Cancel")
                 }
             }
+        )
+    }
+
+    // Substitution dialog
+    if (showSubstitutionDialog && selectedIngredientForSub != null) {
+        SubstitutionDialog(
+            ingredient = selectedIngredientForSub!!.first,
+            quantity = selectedIngredientForSub!!.second,
+            unit = selectedIngredientForSub!!.third,
+            viewModel = substitutionViewModel,
+            onDismiss = { showSubstitutionDialog = false }
         )
     }
 }
@@ -834,4 +860,91 @@ private fun FlowRow(
             }
         }
     }
+}
+
+/**
+ * Parse ingredient string to extract name, quantity, and unit for substitution lookup
+ * Returns Triple<ingredient, quantity, unit>
+ * Example: "2 cups butter" -> Triple("butter", 2.0, "cups")
+ */
+private fun parseIngredientForSubstitution(ingredient: String): Triple<String, Double?, String> {
+    val trimmed = ingredient.trim()
+
+    // Common units (singular forms for matching)
+    val knownUnits = listOf(
+        "cup", "tbsp", "tsp", "oz", "lb", "g", "kg", "ml", "l",
+        "can", "pack", "bottle", "jar", "tablespoon", "teaspoon",
+        "ounce", "pound", "gram", "kilogram", "liter", "milliliter"
+    )
+
+    // Try to parse quantity at the beginning
+    val quantityPattern = Regex("^([\\d./\\s-]+)\\s+(.+)")
+    val match = quantityPattern.find(trimmed)
+
+    if (match != null) {
+        val quantityStr = match.groupValues[1]
+        val remainder = match.groupValues[2]
+
+        // Parse quantity
+        val quantity = parseQuantity(quantityStr)
+
+        // Try to extract unit from remainder
+        val words = remainder.split(" ", limit = 3)
+        if (words.isNotEmpty()) {
+            val possibleUnit = words[0].lowercase().removeSuffix("s") // Handle plurals
+            val matchedUnit = knownUnits.find { it == possibleUnit }
+
+            if (matchedUnit != null) {
+                // Unit found, rest is ingredient
+                val ingredientName = if (words.size > 1) words.drop(1).joinToString(" ") else remainder
+                return Triple(ingredientName.trim(), quantity, words[0]) // Return original unit with plural
+            }
+        }
+
+        // No unit found, entire remainder is ingredient
+        return Triple(remainder.trim(), quantity, "")
+    }
+
+    // No quantity found, entire string is ingredient
+    return Triple(trimmed, null, "")
+}
+
+/**
+ * Parse a quantity string to a Double
+ * Handles: "1/2", "1 1/2", "0.5", "2", "2-3" (takes first number)
+ */
+private fun parseQuantity(quantityStr: String): Double? {
+    val trimmed = quantityStr.trim()
+
+    // Handle range (2-3) - take the first number
+    if (trimmed.contains('-')) {
+        val parts = trimmed.split('-')
+        if (parts.size == 2) {
+            return parseQuantity(parts[0].trim())
+        }
+    }
+
+    // Handle mixed numbers (1 1/2)
+    val mixedPattern = Regex("^(\\d+)\\s+(\\d+)/(\\d+)$")
+    val mixedMatch = mixedPattern.find(trimmed)
+    if (mixedMatch != null) {
+        val whole = mixedMatch.groupValues[1].toDoubleOrNull() ?: return null
+        val numerator = mixedMatch.groupValues[2].toDoubleOrNull() ?: return null
+        val denominator = mixedMatch.groupValues[3].toDoubleOrNull() ?: return null
+        if (denominator == 0.0) return null
+        return whole + (numerator / denominator)
+    }
+
+    // Handle fractions (1/2)
+    val fractionPattern = Regex("^(\\d+)/(\\d+)$")
+    val fractionMatch = fractionPattern.find(trimmed)
+    if (fractionMatch != null) {
+        val numerator = fractionMatch.groupValues[1].toDoubleOrNull() ?: return null
+        val denominator = fractionMatch.groupValues[2].toDoubleOrNull() ?: return null
+        if (denominator == 0.0) return null
+        return numerator / denominator
+    }
+
+    // Handle decimals and whole numbers
+    return trimmed.toDoubleOrNull()
 }
