@@ -22,7 +22,9 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestaurantMenu
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -42,6 +44,7 @@ import com.recipeindex.app.ui.viewmodels.SubstitutionViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.IngredientScaler
 import com.recipeindex.app.utils.IngredientUnitConverter
+import com.recipeindex.app.utils.ShareHelper
 import com.recipeindex.app.utils.TextFormatUtils
 import kotlinx.coroutines.delay
 
@@ -66,6 +69,7 @@ fun RecipeDetailScreen(
 ) {
     DebugConfig.debugLog(DebugConfig.Category.UI, "RecipeDetailScreen - ${recipe.title}")
 
+    val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showOverflowMenu by remember { mutableStateOf(false) }
     var selectedServings by remember { mutableStateOf(recipe.servings) }
@@ -126,42 +130,57 @@ fun RecipeDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(recipe.title) },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, "Back")
                     }
-                },
-                actions = {
-                    IconButton(onClick = { onToggleFavorite(!recipe.isFavorite) }) {
-                        Icon(
-                            if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            "Favorite"
-                        )
-                    }
-                    IconButton(onClick = onEdit) {
-                        Icon(Icons.Default.Edit, "Edit")
-                    }
-                    // Inline buttons for Add to Grocery List and Add to Meal Plan
-                    IconButton(onClick = onAddToGroceryList) {
-                        Icon(Icons.Default.ShoppingCart, "Add to Grocery List")
-                    }
-                    IconButton(onClick = onAddToMealPlan) {
-                        Icon(Icons.Default.CalendarMonth, "Add to Meal Plan")
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Title Row with Edit/Cook/Context buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = recipe.title,
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // Edit button
+                    FilledTonalButton(
+                        onClick = onEdit,
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Edit", style = MaterialTheme.typography.labelLarge)
                     }
                     // Cook mode toggle
-                    IconButton(onClick = { cookModeEnabled = !cookModeEnabled }) {
-                        Icon(
-                            Icons.Default.RestaurantMenu,
-                            "Cook Mode",
-                            tint = if (cookModeEnabled) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurface
-                            }
+                    FilledTonalButton(
+                        onClick = { cookModeEnabled = !cookModeEnabled },
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = if (cookModeEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
                         )
+                    ) {
+                        Icon(Icons.Default.RestaurantMenu, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Cook", style = MaterialTheme.typography.labelLarge)
                     }
-                    // Overflow menu with delete option only
+                    // Context menu
                     Box {
                         IconButton(onClick = { showOverflowMenu = true }) {
                             Icon(Icons.Default.MoreVert, "More options")
@@ -187,17 +206,130 @@ fun RecipeDetailScreen(
                         }
                     }
                 }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
+            }
+
+            // Compact info line (Servings | Prep | Cook | Total)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Servings with dropdown
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🍽️", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.width(4.dp))
+                    Box {
+                        TextButton(
+                            onClick = { showServingsMenu = true },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                            modifier = Modifier.height(32.dp)
+                        ) {
+                            Text(
+                                "$selectedServings",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
+                        }
+                        DropdownMenu(
+                            expanded = showServingsMenu,
+                            onDismissRequest = { showServingsMenu = false }
+                        ) {
+                            listOf(
+                                recipe.servings / 2,
+                                recipe.servings,
+                                recipe.servings * 2,
+                                recipe.servings * 3,
+                                recipe.servings * 4
+                            ).distinct().filter { it > 0 }.forEach { servings ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            if (servings == recipe.servings) "$servings (original)" else "$servings",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    },
+                                    onClick = {
+                                        selectedServings = servings
+                                        showServingsMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                recipe.prepTimeMinutes?.let {
+                    Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("⏱️ ${it}m prep", style = MaterialTheme.typography.bodyMedium)
+                }
+                recipe.cookTimeMinutes?.let {
+                    Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("🔥 ${it}m cook", style = MaterialTheme.typography.bodyMedium)
+                }
+                recipe.prepTimeMinutes?.let { prep ->
+                    recipe.cookTimeMinutes?.let { cook ->
+                        Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("⏰ ${prep + cook}m total", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+
+            // Action buttons row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onAddToGroceryList,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Text("Grocery", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                OutlinedButton(
+                    onClick = onAddToMealPlan,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Text("Meal Plan", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                OutlinedButton(
+                    onClick = {
+                        ShareHelper.shareRecipe(context, recipe, recipe.photoPath)
+                    },
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Text("Share", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                OutlinedButton(
+                    onClick = { onToggleFavorite(!recipe.isFavorite) },
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = if (recipe.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                    )
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(
+                            if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text("Favorite", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+
             // Recipe Photo
             recipe.photoPath?.let { photoUrl ->
                 AsyncImage(
@@ -211,103 +343,13 @@ fun RecipeDetailScreen(
                 )
             }
 
-            // Servings and Time Info Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        // Servings dropdown
-                        Column {
-                            Text(
-                                text = "Servings",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Box {
-                                OutlinedButton(
-                                    onClick = { showServingsMenu = true },
-                                    modifier = Modifier.height(40.dp),
-                                    contentPadding = PaddingValues(horizontal = 12.dp)
-                                ) {
-                                    Text(
-                                        text = selectedServings.toString(),
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Icon(
-                                        Icons.Default.ArrowDropDown,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                                DropdownMenu(
-                                    expanded = showServingsMenu,
-                                    onDismissRequest = { showServingsMenu = false }
-                                ) {
-                                    // Servings options: half, original, double, custom multiples
-                                    listOf(
-                                        recipe.servings / 2,
-                                        recipe.servings,
-                                        recipe.servings * 2,
-                                        recipe.servings * 3,
-                                        recipe.servings * 4
-                                    ).distinct().filter { it > 0 }.forEach { servings ->
-                                        DropdownMenuItem(
-                                            text = {
-                                                Row(
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Text(servings.toString())
-                                                    if (servings == recipe.servings) {
-                                                        Text(
-                                                            "(original)",
-                                                            style = MaterialTheme.typography.bodySmall,
-                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
-                                                    }
-                                                }
-                                            },
-                                            onClick = {
-                                                selectedServings = servings
-                                                showServingsMenu = false
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        recipe.prepTimeMinutes?.let {
-                            InfoItem(label = "Prep", value = "$it min")
-                        }
-                        recipe.cookTimeMinutes?.let {
-                            InfoItem(label = "Cook", value = "$it min")
-                        }
-                    }
-                    recipe.prepTimeMinutes?.let { prep ->
-                        recipe.cookTimeMinutes?.let { cook ->
-                            InfoItem(label = "Total", value = "${prep + cook} min")
-                        }
-                    }
-                }
-            }
-
             // Cook Mode: Timer and Controls
             if (cookModeEnabled) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
                     )
                 ) {
                     Column(

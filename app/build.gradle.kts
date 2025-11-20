@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.ktor.client.logging)
     implementation(libs.jsoup)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.gson)
 
     // Image Loading
     implementation(libs.coil.compose)
