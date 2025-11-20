@@ -1,5 +1,7 @@
 package com.recipeindex.app.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,9 +15,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.data.entities.GroceryList
+import com.recipeindex.app.ui.MainActivity
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.ShareHelper
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -40,9 +44,48 @@ fun GroceryListScreen(
     var listToDelete by remember { mutableStateOf<GroceryList?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var newListName by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    // File picker for import
+    val filePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            scope.launch {
+                try {
+                    val json = context.contentResolver.openInputStream(it)
+                        ?.bufferedReader()
+                        ?.use { reader -> reader.readText() }
+
+                    if (json != null) {
+                        // Store in MainActivity for import dialog handling
+                        MainActivity.pendingImportJson = json
+                        snackbarHostState.showSnackbar(
+                            message = "Import file loaded. Navigate to Recipes screen to complete import.",
+                            duration = SnackbarDuration.Long
+                        )
+                        DebugConfig.debugLog(DebugConfig.Category.UI, "Import file loaded from GroceryListScreen")
+                    } else {
+                        snackbarHostState.showSnackbar(
+                            message = "Failed to read file",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                } catch (e: Exception) {
+                    DebugConfig.error(DebugConfig.Category.UI, "Import file error", e)
+                    snackbarHostState.showSnackbar(
+                        message = "Error: ${e.message}",
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Grocery Lists") },
@@ -52,6 +95,11 @@ fun GroceryListScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = {
+                        filePicker.launch(arrayOf("application/json", "text/plain"))
+                    }) {
+                        Icon(Icons.Default.FileUpload, contentDescription = "Import")
+                    }
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }

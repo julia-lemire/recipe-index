@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 20, 2025: Accessible Import from Multiple Entry Points
+- **Decision**: Added "Import from File" option to ImportSourceSelectionScreen (4th card in Import tab) and import icon buttons to MealPlanningScreen and GroceryListScreen top bars, making Settings import a backup catch-all
+- **Rationale**: Users shouldn't have to navigate to Settings for file import - it should be accessible from the same screens where they add/view content; Settings remains as fallback for users who don't know where else to find it
+- **Implementation**: ImportSourceSelectionScreen shows FileUpload card launching file picker with OpenDocument contract storing JSON in MainActivity.pendingImportJson, MealPlanningScreen and GroceryListScreen add FileUpload icon button in TopAppBar actions launching same file picker flow, all three use identical snackbar feedback pattern ("Import file loaded. Navigate to Recipes screen to complete import.")
+
 #### Nov 20, 2025: Share/Import System with Duplicate Detection
 - **Decision**: Implemented comprehensive share/import system using ShareHelper (JSON format with base64 photo encoding and text fallback), ImportManager (duplicate detection via title+sourceUrl matching), ImportDialog components (Replace/Keep Both/Skip actions), share buttons in context menus/action rows across all card types and detail screens, Android share sheet integration, manual import from Settings with file picker, share target via ACTION_SEND/ACTION_VIEW intent filters
 - **Rationale**: Users need to share recipes/meal plans/grocery lists across devices or with friends via email/messaging apps (Samsung Quick Share, Messenger, SMS), and import shared content without creating duplicates; app-to-app JSON format with photos enables full recipe transfer while human-readable text ensures compatibility with any share target; duplicate detection prevents database bloat and offers user choice for handling conflicts
