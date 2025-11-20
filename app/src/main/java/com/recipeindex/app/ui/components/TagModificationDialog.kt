@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -73,14 +74,15 @@ fun TagModificationDialog(
                         val mod = modifications[index]
                         val currentTag = editedTags[index]
                         val isEditing = editingIndex == index
+                        val isMarkedForDeletion = currentTag.isBlank()
 
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (mod.wasModified) {
-                                    MaterialTheme.colorScheme.secondaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.surfaceVariant
+                                containerColor = when {
+                                    isMarkedForDeletion -> MaterialTheme.colorScheme.errorContainer
+                                    mod.wasModified -> MaterialTheme.colorScheme.secondaryContainer
+                                    else -> MaterialTheme.colorScheme.surfaceVariant
                                 }
                             )
                         ) {
@@ -127,7 +129,20 @@ fun TagModificationDialog(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
-                                            if (mod.wasModified) {
+                                            if (isMarkedForDeletion) {
+                                                // Marked for deletion
+                                                Text(
+                                                    text = mod.original,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.error,
+                                                    textDecoration = TextDecoration.LineThrough
+                                                )
+                                                Text(
+                                                    text = "Marked for removal",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.error
+                                                )
+                                            } else if (mod.wasModified) {
                                                 // Show original → standardized
                                                 Row(
                                                     verticalAlignment = Alignment.CenterVertically,
@@ -173,17 +188,42 @@ fun TagModificationDialog(
                                             }
                                         }
 
-                                        IconButton(
-                                            onClick = {
-                                                editingIndex = index
-                                                editText = currentTag
+                                        if (isMarkedForDeletion) {
+                                            // Show restore button
+                                            TextButton(
+                                                onClick = {
+                                                    editedTags[index] = mod.standardized
+                                                }
+                                            ) {
+                                                Text("Restore")
                                             }
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Edit,
-                                                contentDescription = "Edit tag",
-                                                tint = MaterialTheme.colorScheme.primary
-                                            )
+                                        } else {
+                                            // Show delete and edit buttons
+                                            Row {
+                                                IconButton(
+                                                    onClick = {
+                                                        editedTags[index] = ""
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.Remove,
+                                                        contentDescription = "Remove tag",
+                                                        tint = MaterialTheme.colorScheme.error
+                                                    )
+                                                }
+                                                IconButton(
+                                                    onClick = {
+                                                        editingIndex = index
+                                                        editText = currentTag
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.Edit,
+                                                        contentDescription = "Edit tag",
+                                                        tint = MaterialTheme.colorScheme.primary
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }

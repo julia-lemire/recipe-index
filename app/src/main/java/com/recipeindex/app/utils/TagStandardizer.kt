@@ -60,11 +60,17 @@ object TagStandardizer {
         "pan-fried" to "fried",
         "deep fried" to "fried",
         "deep-fried" to "fried",
-        "slow cooker" to "slow-cook",
-        "crockpot" to "slow-cook",
-        "crock pot" to "slow-cook",
+        "slow cooker" to "slow cooker",
+        "slow cooker recipes" to "slow cooker",
+        "crockpot" to "slow cooker",
+        "crock pot" to "slow cooker",
         "pressure cooker" to "instant pot",
+        "instant pot recipes" to "instant pot",
+        "air fryer" to "air fryer",
+        "air fryer recipes" to "air fryer",
         "stovetop" to "stove-top",
+        "freezer meals" to "freezer-friendly",
+        "freezer" to "freezer-friendly",
 
         // Speed/difficulty
         "quick recipe" to "quick",
@@ -89,19 +95,31 @@ object TagStandardizer {
         "vegan meals" to "vegan",
         "gluten free" to "gluten-free",
         "dairy free" to "dairy-free",
+        "dairy free recipes" to "dairy-free",
+        "egg free recipes" to "egg-free",
+        "egg free" to "egg-free",
         "low carb" to "low-carb",
         "keto diet" to "keto",
+        "keto recipes" to "keto",
         "paleo diet" to "paleo",
         "plant based" to "plant-based",
         "plant-based meals" to "plant-based",
+        "whole30 recipes" to "paleo",
+        "whole30" to "paleo",
 
-        // Proteins
+        // Proteins (including specific cuts -> general)
         "chicken recipe" to "chicken",
         "chicken recipes" to "chicken",
         "chicken meals" to "chicken",
+        "chicken breast" to "chicken",
+        "chicken breast recipes" to "chicken",
+        "chicken thigh" to "chicken",
+        "chicken thigh recipes" to "chicken",
         "beef recipe" to "beef",
         "beef recipes" to "beef",
         "beef meals" to "beef",
+        "ground beef" to "beef",
+        "ground beef recipes" to "beef",
         "pork recipe" to "pork",
         "pork recipes" to "pork",
         "pork meals" to "pork",
@@ -132,14 +150,61 @@ object TagStandardizer {
         "sandwich recipe" to "sandwich",
         "sandwich recipes" to "sandwich",
         "pizza recipe" to "pizza",
-        "pizza recipes" to "pizza"
+        "pizza recipes" to "pizza",
+
+        // Holidays -> special occasion
+        "valentines day" to "special occasion",
+        "valentines day recipes" to "special occasion",
+        "valentine's day" to "special occasion",
+        "valentine's day recipes" to "special occasion",
+        "christmas" to "special occasion",
+        "christmas recipes" to "special occasion",
+        "thanksgiving" to "special occasion",
+        "thanksgiving recipes" to "special occasion",
+        "easter" to "special occasion",
+        "easter recipes" to "special occasion",
+        "halloween" to "special occasion",
+        "halloween recipes" to "special occasion",
+        "new year" to "special occasion",
+        "new years" to "special occasion",
+        "new year's" to "special occasion",
+        "mothers day" to "special occasion",
+        "mother's day" to "special occasion",
+        "fathers day" to "special occasion",
+        "father's day" to "special occasion",
+        "4th of july" to "special occasion",
+        "fourth of july" to "special occasion",
+        "independence day" to "special occasion",
+        "memorial day" to "special occasion",
+        "labor day" to "special occasion",
+        "super bowl" to "special occasion",
+        "game day" to "special occasion"
     )
 
     // Words to remove from tags (noise)
     private val noiseWords = setOf(
         "recipe", "recipes", "food", "meal", "meals", "dish", "cuisine", "cooking", "cook",
         "homemade", "delicious", "tasty", "yummy", "perfect", "best",
-        "traditional", "authentic", "classic", "modern", "new"
+        "traditional", "authentic", "classic", "modern", "new",
+        "ideas", "tips", "guide", "how", "to", "make", "making"
+    )
+
+    // Tags to completely filter out (even if alone)
+    private val junkTags = setOf(
+        "recipes", "recipe", "meals", "meal", "food", "dishes", "dish",
+        "ideas", "cooking", "cook", "dinner ideas",
+        "weight watchers", "ww", "weight watchers ww"
+    )
+
+    // Phrases that indicate junk tags
+    private val junkPhrases = listOf(
+        "how to make",
+        "how to cook",
+        "best recipes",
+        "top recipes",
+        "easy recipes",
+        "simple recipes",
+        "for beginners"
     )
 
     /**
@@ -165,6 +230,7 @@ object TagStandardizer {
             .map { applyStandardMapping(it) }
             .map { removeNoiseWords(it) }
             .filter { it.isNotBlank() }
+            .filter { !isJunkTag(it) }
             .distinct()
             .toList()
     }
@@ -220,6 +286,13 @@ object TagStandardizer {
                 val isValid = it.standardized.isNotBlank()
                 if (!isValid) {
                     filteredOut.add(it.original to "noise words removed all content")
+                }
+                isValid
+            }
+            .filter {
+                val isValid = !isJunkTag(it.standardized)
+                if (!isValid) {
+                    filteredOut.add(it.original to "junk tag filtered")
                 }
                 isValid
             }
@@ -295,6 +368,25 @@ object TagStandardizer {
     }
 
     /**
+     * Check if a tag is junk and should be filtered out
+     */
+    private fun isJunkTag(tag: String): Boolean {
+        val normalized = tag.trim().lowercase()
+
+        // Check if in junk tags set
+        if (normalized in junkTags) return true
+
+        // Check if contains junk phrases
+        if (junkPhrases.any { normalized.contains(it) }) return true
+
+        // Filter overly long tags (>4 words = likely junk)
+        val wordCount = normalized.split(" ").size
+        if (wordCount > 4) return true
+
+        return false
+    }
+
+    /**
      * Validate tag quality
      * Returns true if tag is worth keeping
      */
@@ -309,6 +401,9 @@ object TagStandardizer {
 
         // Just numbers
         if (normalized.all { it.isDigit() }) return false
+
+        // Check if junk
+        if (isJunkTag(normalized)) return false
 
         return true
     }
