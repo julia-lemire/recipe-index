@@ -82,6 +82,7 @@ com.recipeindex.app/
 │   │
 │   ├── managers/
 │   │   ├── GroceryListManager.kt
+│   │   ├── ImportManager.kt
 │   │   ├── MealPlanManager.kt
 │   │   ├── RecipeManager.kt
 │   │   ├── SettingsManager.kt
@@ -108,6 +109,7 @@ com.recipeindex.app/
 │   │   ├── AppNavigationDrawer.kt
 │   │   ├── DatePickerDialog.kt
 │   │   ├── GroceryListPickerDialog.kt
+│   │   ├── ImportDialog.kt
 │   │   ├── MealPlanPickerDialog.kt
 │   │   ├── SubstitutionDialog.kt
 │   │   └── TagModificationDialog.kt
@@ -152,6 +154,8 @@ com.recipeindex.app/
     ├── ErrorHandler.kt
     ├── IngredientScaler.kt
     ├── IngredientUnitConverter.kt
+    ├── ShareHelper.kt
+    ├── ShareModels.kt
     ├── SubstitutionData.kt
     ├── TagStandardizer.kt
     ├── TextFormatUtils.kt
@@ -191,6 +195,18 @@ com.recipeindex.app/
 - ImportPhotoScreen → ImportPhotoViewModel → PhotoRecipeParser → TextRecipeParser → RecipeManager
 - SchemaOrgRecipeParser → Jsoup (HTML parsing), kotlinx-serialization (JSON parsing)
 - PdfRecipeParser → PdfBox-Android (PDF text extraction)
+
+### Share/Import Flow
+- MainActivity → ImportManager → RecipeManager, MealPlanManager, GroceryListManager
+- MainActivity.handleIncomingIntent() → ACTION_SEND/ACTION_VIEW intent filters → ImportManager.importFromJson()
+- ShareHelper.shareRecipe/shareMealPlan/shareGroceryList() → Android share sheet (email, Quick Share, Messenger, SMS)
+- ShareHelper.encodePhoto() → Base64 encoding (max 1920px, 10MB limit)
+- ImportManager.importFromJson() → ShareHelper.importFromJson() → duplicate detection → ImportDialog
+- ImportDialog → RecipeDuplicateDialog, MealPlanImportDialog, GroceryListImportDialog
+- SettingsScreen → File picker (OpenDocument) → MainActivity.pendingImportJson → ImportManager
+- RecipeCard/MealPlanCard/GroceryListCard → Share button → ShareHelper
+- GroceryListDetailScreen → Share icon button → ShareHelper
+- RecipeDetailScreen → Share action button → ShareHelper
 
 ### Meal Planning Flow
 - MealPlanningScreen → MealPlanViewModel, RecipeViewModel, GroceryListViewModel
@@ -240,6 +256,7 @@ com.recipeindex.app/
 ### Data - Managers
 - **RecipeManager.kt** - Recipe business logic: validation, CRUD operations with cascading deletion (removes recipe from meal plans before deleting to maintain referential integrity), favorite toggle, recipe scaling stub, recipe log operations (delegates to RecipeDao and MealPlanDao)
 - **GroceryListManager.kt** - Grocery list business logic: list/item CRUD operations, intelligent ingredient consolidation (removes modifiers, sums quantities), canned item parsing, recipe-to-list conversion with ingredient count tracking, meal plan-to-list conversion (delegates to GroceryListDao, GroceryItemDao, RecipeDao, MealPlanDao)
+- **ImportManager.kt** - Import business logic: importFromJson() with duplicate detection (title+sourceUrl matching), importRecipeWithAction() for Replace/Keep Both/Skip actions, importMealPlanFromJson() with per-recipe duplicate handling, importGroceryListFromJson() (always creates new), photo decoding and storage, delegates to RecipeManager/MealPlanManager/GroceryListManager
 - **SubstitutionManager.kt** - Substitution business logic: CRUD operations, database initialization with defaults, quantity conversion calculations (calculateConvertedAmount), amount formatting (formatConvertedAmount prefers fractions), ingredient validation
 
 ### Data - Parsers
@@ -281,6 +298,7 @@ com.recipeindex.app/
 - **AppNavigationDrawer.kt** - Responsive navigation drawer: Modal for phones, permanent for tablets with collapse button, accepts content parameter, drawer header with logo/name, UI only
 - **DatePickerDialog.kt** - Reusable Material3 date picker dialog: AppDatePickerDialog component for selecting dates across the app, replaces placeholder "Set Today" dialogs, used by AddEditMealPlanScreen
 - **GroceryListPickerDialog.kt** - Reusable grocery list picker dialog: Select existing list or create new, used by RecipeListScreen/RecipeDetailScreen/MealPlanningScreen for "Add to Grocery List" actions
+- **ImportDialog.kt** - Import dialogs for share/import system: RecipeDuplicateDialog (Replace/Keep Both/Skip actions with side-by-side preview), MealPlanImportDialog (per-recipe duplicate selection with mutable state), GroceryListImportDialog (simple confirmation with item count), used by MainActivity intent handling and Settings import
 - **MealPlanPickerDialog.kt** - Reusable meal plan picker dialog: Select existing plan or create new, used by RecipeListScreen/RecipeDetailScreen for "Add to Meal Plan" actions from calendar icon
 - **SubstitutionDialog.kt** - Ingredient substitution lookup dialog: Shows substitutes for ingredient from recipe (triggered by long-press), displays converted amounts based on quantity/unit from parsed ingredient string, substitutes ordered by suitability, shows dietary tags
 - **TagModificationDialog.kt** - Tag standardization review dialog: Shows original→standardized tag transformations during recipe import, allows users to edit/remove each tag before accepting with minus icon button, visual feedback for deleted tags (red background, strikethrough), restore button to undo deletions, prevents silent modifications (e.g., "vegan bowls"→"vegan"), used by ImportUrlScreen/ImportPdfScreen/ImportPhotoScreen
@@ -312,6 +330,8 @@ com.recipeindex.app/
 - **ErrorHandler.kt** - Error handling utility: User-friendly error messages (network, validation, state errors), handleResult() for Result<T> processing, executeSafely() and executeWithRetry() for suspending operations
 - **IngredientScaler.kt** - Ingredient quantity parsing and scaling: scaleIngredient() parses fractions (1/2), mixed numbers (1 1/2), decimals, ranges (2-3), scales by factor, formats output preferring common fractions (1/4, 1/2, 3/4), preserves units
 - **IngredientUnitConverter.kt** - Ingredient unit formatting based on user preferences: formatIngredient() detects liquid vs weight units, applies liquidVolumePreference and weightPreference conversions, supports BOTH mode showing "1 cup (237 ml)" inline, uses UnitConverter for conversions
+- **ShareHelper.kt** - Share utility for app-to-app and text sharing: shareRecipe()/shareMealPlan()/shareGroceryList() launch Android share sheet with JSON (app-to-app) and text fallback, encodePhoto() with base64 encoding (max 1920px, 10MB limit), decodePhoto() for import, importFromJson() with duplicate detection, generateIncrementedTitle() for "Keep Both" action
+- **ShareModels.kt** - Share data models: SharePackage (container for all share types with version/type/content/photos map), ShareRecipe/ShareMealPlan/ShareGroceryList (serializable versions of entities), ShareType enum (RECIPE/MEAL_PLAN/GROCERY_LIST), ImportResult sealed class (Success/DuplicateDetected/Error), DuplicateAction enum (REPLACE/KEEP_BOTH/SKIP)
 - **TagStandardizer.kt** - Tag normalization utility: Converts tag variations to standard forms (e.g., "italian food" → "italian"), removes noise words ("recipe", "food"), filters junk tags/phrases ("how to make...", "Weight Watchers"), consolidates holidays to "special occasion", consolidates ingredient types (chicken thigh → chicken), filters >4 word tags, maps common patterns, deduplicates, standardize() returns cleaned tags, standardizeWithTracking() returns TagModification objects showing original→standardized transformations with wasModified flag, used by TextRecipeParser and ImportViewModel during import
 - **TextFormatUtils.kt** - Text formatting utilities: highlightNumbersInText() uses AnnotatedString to bold numbers (temps/times) in instruction text with regex pattern matching, supports ranges (350-375°F) and decimals (1.5 hours)
 - **UnitConverter.kt** - Cooking unit conversions: Imperial↔Metric (volume: cups/tbsp/tsp↔ml/L, weight: oz/lb↔g/kg, temperature: F↔C), smart helpers (volumeToMetric chooses ml/L), formatNumber
