@@ -306,8 +306,9 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 ### Tag Management Improvements
 - ✅ **Tag Modification Dialog**: Import screens now show a detailed dialog when tags are standardized, displaying original→standardized transformations (e.g., "vegan bowls"→"vegan") with explanations
 - ✅ **Inline Tag Editing**: Users can edit each tag individually in the modification dialog before accepting changes
-- ✅ **Tag Auto-Suggestion**: Import screens suggest existing tags as you type (appears after 2 characters, click to add)
+- ✅ **Tag Auto-Suggestion**: Import screens suggest existing tags as you type (appears after 2 characters, click to add), with smart filtering to avoid duplicates/subsets (e.g., won't suggest "creamy soup" if "soup" already exists)
 - ✅ **Tag Tracking**: Added `TagStandardizer.standardizeWithTracking()` method that returns `TagModification` objects showing what changed
+- ✅ **Tag Standardization Logging**: Comprehensive logging of all tag transformations during import (original tags → normalized → mapped → final, filtered tags, duplicates removed, final saved tags) for improving standardizer mappings and noise words
 
 ### UI/UX Enhancements
 - ✅ **Reusable Date Picker**: Created `AppDatePickerDialog` component (Material3 DatePicker) in `ui/components/`

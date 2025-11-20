@@ -19,7 +19,8 @@ object DebugConfig {
         UI,
         MANAGER,
         SETTINGS,
-        GENERAL
+        GENERAL,
+        TAG_STANDARDIZATION
     }
 
     /**

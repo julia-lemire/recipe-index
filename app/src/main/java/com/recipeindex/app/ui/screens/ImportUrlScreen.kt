@@ -360,7 +360,17 @@ private fun EditRecipeContent(
         if (tagInput.length >= 2) {
             existingTags
                 .filter { it.contains(tagInput, ignoreCase = true) }
-                .filter { !recipe.tags.contains(it) }
+                .filter { candidate ->
+                    // Don't suggest if already in recipe tags
+                    if (recipe.tags.contains(candidate)) return@filter false
+
+                    // Don't suggest if it's a duplicate/subset of existing tags
+                    // e.g., don't suggest "creamy soup" if "soup" is already there
+                    recipe.tags.none { existing ->
+                        candidate.contains(existing, ignoreCase = true) ||
+                        existing.contains(candidate, ignoreCase = true)
+                    }
+                }
                 .take(5)
         } else {
             emptyList()

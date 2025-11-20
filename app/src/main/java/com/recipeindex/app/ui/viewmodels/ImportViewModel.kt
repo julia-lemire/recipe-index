@@ -44,6 +44,10 @@ class ImportViewModel(
 
                     // Track tag modifications if tags were standardized
                     val tagModifications = if (recipe.tags.isNotEmpty()) {
+                        DebugConfig.debugLog(
+                            DebugConfig.Category.TAG_STANDARDIZATION,
+                            "Recipe: \"${recipe.title}\" from URL"
+                        )
                         TagStandardizer.standardizeWithTracking(recipe.tags)
                     } else {
                         null
@@ -109,6 +113,10 @@ class ImportViewModel(
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
                     "Successfully saved recipe: ${recipe.title}"
+                )
+                DebugConfig.debugLog(
+                    DebugConfig.Category.TAG_STANDARDIZATION,
+                    "Saved to database - Recipe: \"${recipe.title}\" with tags: ${recipe.tags.joinToString(", ") { "\"$it\"" }}"
                 )
                 _uiState.value = UiState.Saved
             }.onFailure { error ->

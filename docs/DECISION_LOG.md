@@ -46,6 +46,31 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 20, 2025: Icon-Over-Text Button Pattern for Grocery List Actions
+- **Decision**: Replace all OutlinedButtons in GroceryListDetailScreen with icon-over-text Column layout pattern (icon stacked above text label)
+- **Rationale**: Icon-over-text provides better touch targets on mobile while using less horizontal space than icon+text side-by-side, creates visual consistency with other bottom action bars
+- **Implementation**: Replaced Row with OutlinedButtons with Row of clickable Columns, each containing Icon (24dp) + Spacer(4dp) + Text(labelSmall), applied to Select All, Clear, Recipes, and Meal Plans buttons
+
+#### Nov 20, 2025: Smart Toggle Button for Select/Deselect All
+- **Decision**: Consolidate "Select All" and "Deselect All" into single toggle button that changes icon and text based on current state (all checked → show "Deselect", not all checked → show "Select All")
+- **Rationale**: Reduces button clutter by eliminating redundant option, makes action more predictable (one button for bulk selection state), follows common UI pattern for state toggles
+- **Implementation**: Single clickable Column with conditional icon (allChecked ? RadioButtonUnchecked : CheckCircle), conditional text (allChecked ? "Deselect" : "Select All"), clicks call checkAllItems() or uncheckAllItems() based on state
+
+#### Nov 20, 2025: Reusable AppDatePickerDialog Component
+- **Decision**: Extract Material3 DatePickerDialog into reusable AppDatePickerDialog component in ui/components/DatePickerDialog.kt
+- **Rationale**: Multiple screens need date selection (AddEditMealPlanScreen now, future features), placeholder "Set Today" dialog was insufficient, centralized component ensures consistent UX
+- **Implementation**: AppDatePickerDialog with initialDate, onDateSelected, onDismiss parameters, wraps Material3 DatePickerDialog with DatePicker and rememberDatePickerState, used in AddEditMealPlanScreen for start/end dates
+
+#### Nov 20, 2025: Tag Auto-Suggestion from Existing Tags
+- **Decision**: Add auto-suggestion to import screens showing existing tags as SuggestionChips when user types in tag input field (appears after 2 characters)
+- **Rationale**: Encourages tag consistency by surfacing already-used tags, reduces typos and duplicate variations, speeds up tagging workflow
+- **Implementation**: ImportViewModel.getAllExistingTags() collects all tags from recipes using Flow.first(), EditRecipeContent filters by tagInput with contains(ignoreCase), displays up to 5 suggestions as clickable SuggestionChips
+
+#### Nov 20, 2025: Tag Modification Dialog with Tracking
+- **Decision**: Add TagModificationDialog showing original→standardized tag transformations during import with per-tag edit capability before accepting changes
+- **Rationale**: Users need visibility into tag standardization (e.g., "vegan bowls"→"vegan") to understand what changed, prevents silent data modification, allows correction of over-aggressive standardization
+- **Implementation**: TagStandardizer.standardizeWithTracking() returns TagModification objects with original/standardized/wasModified fields, TagModificationDialog shows Cards with strikethrough original + arrow + standardized, Edit icon per tag opens inline TextField, ImportViewModel stores tagModifications in UiState.Editing
+
 #### Nov 20, 2025: AddEditSubstitutionScreen for User-Editable Substitutions
 - **Decision**: Add comprehensive add/edit screen for user-created substitutions with multiple substitute options per ingredient
 - **Rationale**: Users need to add custom substitutions for regional ingredients, personal preferences, and dietary restrictions beyond pre-populated defaults
