@@ -224,6 +224,16 @@
 - [ ] MealPlanCard context menu includes Share option (planned - UI test)
 - [ ] GroceryListCard action row includes Share button (planned - UI test)
 - [ ] GroceryListDetailScreen top bar includes Share icon button (planned - UI test)
+- [ ] ImportSourceSelectionScreen shows "From File" card in Import tab (planned - UI test)
+- [ ] ImportSourceSelectionScreen file picker launches when "From File" clicked (planned - UI test)
+- [ ] ImportSourceSelectionScreen stores imported JSON in pendingImportJson (planned - UI test)
+- [ ] ImportSourceSelectionScreen shows success feedback after file selection (planned - UI test)
+- [ ] MealPlanningScreen shows FileUpload icon button in top bar (planned - UI test)
+- [ ] MealPlanningScreen file picker launches when import button clicked (planned - UI test)
+- [ ] MealPlanningScreen shows snackbar feedback after file selection (planned - UI test)
+- [ ] GroceryListScreen shows FileUpload icon button in top bar (planned - UI test)
+- [ ] GroceryListScreen file picker launches when import button clicked (planned - UI test)
+- [ ] GroceryListScreen shows snackbar feedback after file selection (planned - UI test)
 
 ### Meal Planning
 - [x] Create meal plan with flexible date range (Sun-Thu, single day) (MealPlanManagerTest.kt:createMealPlan accepts flexible date range)
