@@ -351,11 +351,41 @@ private fun MealPlanCard(
 
             if (mealPlan.startDate != null || mealPlan.endDate != null) {
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = formatDateRange(mealPlan.startDate, mealPlan.endDate),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = formatDateRange(mealPlan.startDate, mealPlan.endDate),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        IconButton(onClick = onEdit) {
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = "Edit",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(
+                            onClick = onGenerateList,
+                            enabled = mealPlan.recipeIds.isNotEmpty()
+                        ) {
+                            Icon(
+                                Icons.Default.ShoppingCart,
+                                contentDescription = "Generate Grocery List",
+                                tint = if (mealPlan.recipeIds.isNotEmpty()) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                }
+                            )
+                        }
+                    }
+                }
             }
 
             // Tags
@@ -409,35 +439,6 @@ private fun MealPlanCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(8.dp)
                 )
-            }
-
-            // Action icon buttons
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                IconButton(onClick = onEdit) {
-                    Icon(
-                        Icons.Default.Edit,
-                        contentDescription = "Edit",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-                IconButton(
-                    onClick = onGenerateList,
-                    enabled = mealPlan.recipeIds.isNotEmpty()
-                ) {
-                    Icon(
-                        Icons.Default.ShoppingCart,
-                        contentDescription = "Generate Grocery List",
-                        tint = if (mealPlan.recipeIds.isNotEmpty()) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                        }
-                    )
-                }
             }
         }
     }

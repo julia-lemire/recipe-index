@@ -205,10 +205,13 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Recipe editor: Chip-based tag UI replacing comma-separated input (removable chips + add field for mobile-friendly editing)
 - ✅ Meal plan cards: Icon-only buttons (Edit, Generate List), context menu for Duplicate/Delete, entire card clickable to navigate to detail
 - ✅ Meal plan detail: Enhanced recipe cards with servings, time, and tags (was simple text list)
-- ✅ Meal plan: Auto-populate name from selected dates ("Nov 18-22" format)
+- ✅ Meal plan: Auto-populate name from selected dates ("Nov 18-22" format), full Material3 date picker for start/end dates
 - ✅ Meal plan picker: Reusable dialog for adding recipes to plans from cards/detail screen (select existing or create new)
+- ✅ Date picker: Reusable AppDatePickerDialog component (Material3 DatePicker in ui/components, replaced placeholder "Set Today" dialog)
 - ✅ Import screens: Chip-based tag UI on all verification screens (URL/PDF/Photo), notes field removed (user-added only)
 - ✅ Import: Tag standardization during parsing (normalizes "italian food"→"italian", removes noise words, deduplicates, 100+ mappings)
+- ✅ Import: Tag modification dialog showing original→standardized transformations with user edit/accept controls (prevents silent modifications like "vegan bowls"→"vegan")
+- ✅ Import: Tag auto-suggestion from existing tags (appears after 2 chars, click to add, integrated in all import screens)
 - ✅ Import: Notes NOT populated during import from any source (user-added only per design)
 - ✅ Import: Discard button with confirmation dialog for escaping auto-save
 - ✅ Grocery lists: Select All/Deselect All buttons with smart enable logic (only enabled when applicable)
