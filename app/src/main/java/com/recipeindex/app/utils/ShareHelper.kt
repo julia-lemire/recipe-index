@@ -136,7 +136,16 @@ object ShareHelper {
             putExtra(Intent.EXTRA_TEXT, humanText)
         }
 
-        val chooser = Intent.createChooser(shareIntent, title)
+        // Create chooser and exclude Recipe Index from appearing in its own share sheet
+        val chooser = Intent.createChooser(shareIntent, title).apply {
+            // Exclude Recipe Index from the share options
+            val componentName = android.content.ComponentName(
+                context.packageName,
+                "${context.packageName}.ui.MainActivity"
+            )
+            putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, arrayOf(componentName))
+        }
+
         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(chooser)
 

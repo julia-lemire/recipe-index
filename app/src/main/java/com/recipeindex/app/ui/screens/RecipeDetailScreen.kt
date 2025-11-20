@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
@@ -160,25 +161,17 @@ fun RecipeDetailScreen(
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     // Edit button
-                    FilledTonalButton(
-                        onClick = onEdit,
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Edit", style = MaterialTheme.typography.labelLarge)
+                    IconButton(onClick = onEdit) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit")
                     }
                     // Cook mode toggle
-                    FilledTonalButton(
+                    IconButton(
                         onClick = { cookModeEnabled = !cookModeEnabled },
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = if (cookModeEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = if (cookModeEnabled) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
                         )
                     ) {
-                        Icon(Icons.Default.RestaurantMenu, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Cook", style = MaterialTheme.typography.labelLarge)
+                        Icon(Icons.Default.RestaurantMenu, contentDescription = "Cook mode")
                     }
                     // Context menu
                     Box {
@@ -348,8 +341,8 @@ fun RecipeDetailScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface
+                        containerColor = Color.White,
+                        contentColor = Color.Black
                     )
                 ) {
                     Column(
@@ -364,7 +357,7 @@ fun RecipeDetailScreen(
                             Text(
                                 text = "Cook Mode",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = Color.Black
                             )
                             // Deselect all button
                             TextButton(
@@ -1034,7 +1027,7 @@ private fun RecipeLogSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Mark as Made button
-                TextButton(onClick = { showMarkAsMadeDialog = true }) {
+                FilledTonalButton(onClick = { showMarkAsMadeDialog = true }) {
                     Icon(
                         Icons.Default.CheckCircle,
                         contentDescription = "Mark as Made",
