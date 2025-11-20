@@ -117,7 +117,7 @@ fun GroceryListScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(groceryLists, key = { it.id }) { groceryList ->
-                            val items by groceryListViewModel.getItemsForList(groceryList.id).collectAsState(initial = emptyList())
+                            val items by groceryListViewModel.getItems(groceryList.id).collectAsState(initial = emptyList())
 
                             GroceryListCard(
                                 groceryList = groceryList,
