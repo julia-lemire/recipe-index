@@ -150,6 +150,19 @@ com.recipeindex.app/
 │   └── Navigation.kt
 │
 └── utils/
+    ├── filtersort/
+    │   ├── core/
+    │   │   ├── Filter.kt
+    │   │   ├── FilterSortGroupManager.kt
+    │   │   ├── GroupBy.kt
+    │   │   └── Sort.kt
+    │   ├── recipe/
+    │   │   ├── RecipeFilters.kt
+    │   │   ├── RecipeGroupings.kt
+    │   │   └── RecipeSorts.kt
+    │   └── ui/
+    │       ├── FilterChipRow.kt
+    │       └── SortMenu.kt
     ├── DebugConfig.kt
     ├── ErrorHandler.kt
     ├── IngredientScaler.kt
@@ -325,7 +338,18 @@ com.recipeindex.app/
 ### Substitutions
 - **SubstitutionData.kt** - Pre-populated substitution defaults: getDefaultSubstitutions() returns List<IngredientSubstitution> with ~100 substitutes across 22 common ingredients (butter, milk, eggs, flour, sugar, oils, vinegars, herbs, spices, condiments), includes suitability ratings, conversion ratios, dietary tags
 
-### Utils
+### Utils - FilterSortGroup Library
+- **Filter.kt** - Generic filter interface: Filter<T> with id/label/matches() method, AndFilter and OrFilter for composite filters with multiple conditions
+- **Sort.kt** - Generic sort interface: Sort<T> with id/label/direction/comparator, SortDirection enum (ASC/DESC with reversed()), BaseSort abstract implementation with getBaseComparator() and automatic direction handling
+- **GroupBy.kt** - Generic grouping interface: GroupBy<T,K> with id/label/extractKey() method, optional formatKeyLabel() for display text, optional compareKeys() for custom group ordering
+- **FilterSortGroupManager.kt** - Reactive state manager for filtering/sorting/grouping: Combines source Flow with search/filters/sort/groupBy using Flow.combine(), exposes filteredItems and groupedItems StateFlows, provides setSearchQuery/addFilter/removeFilter/setSort/setGroupBy/toggleSortDirection methods, handles AND logic for multiple filters, applies grouping with sorted keys, 100% generic with zero app dependencies
+- **RecipeFilters.kt** - Recipe filter implementations: FavoriteFilter (favorites only), TagFilter (by tag name), SourceFilter (URL/PDF/Photo/Manual), CookTimeFilter (≤30/≤60/>60 min ranges), ServingsFilter (min/max range), HasPhotoFilter, HasNotesFilter
+- **RecipeSorts.kt** - Recipe sort implementations: TitleSort (alphabetical), DateCreatedSort (newest first default), CookTimeSort (shortest first default, recipes without time sorted last), ServingsSort (fewest first default), FavoriteSort (favorites first default)
+- **RecipeGroupings.kt** - Recipe grouping implementations: SourceGrouping (by RecipeSource enum), FavoriteGrouping (Favorites/Other Recipes with favorites first), TagGrouping (by first tag or "Untagged"), CookTimeGrouping (Quick ≤30min / Medium 31-60min / Long >60min / Unknown), ServingsGrouping (Single 1-2 / Small 3-4 / Medium 5-6 / Large 7+)
+- **FilterChipRow.kt** - Horizontal scrollable row of filter chips: Takes availableFilters list and activeFilterIds set, renders FilterChip for each with selected state, optional "Clear All" AssistChip with leading close icon, onFilterToggle callback, horizontalScroll modifier
+- **SortMenu.kt** - Sort dropdown menu: IconButton with Sort icon, DropdownMenu with sort options, shows checkmark for active sort, shows direction arrow (up/down) for active sort, "Clear Sort" option when sort active, clicking active sort toggles direction, clicking inactive sort selects it
+
+### Utils - Core
 - **DebugConfig.kt** - Centralized logging: Category-based filtering (NAVIGATION, DATABASE, IMPORT, UI, MANAGER, SETTINGS, GENERAL), replaces android.util.Log
 - **ErrorHandler.kt** - Error handling utility: User-friendly error messages (network, validation, state errors), handleResult() for Result<T> processing, executeSafely() and executeWithRetry() for suspending operations
 - **IngredientScaler.kt** - Ingredient quantity parsing and scaling: scaleIngredient() parses fractions (1/2), mixed numbers (1 1/2), decimals, ranges (2-3), scales by factor, formats output preferring common fractions (1/4, 1/2, 3/4), preserves units

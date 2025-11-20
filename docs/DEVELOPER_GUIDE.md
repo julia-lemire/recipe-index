@@ -112,6 +112,13 @@
 - **Intent Handling**: `ui/MainActivity.kt` (handleIncomingIntent for ACTION_SEND/ACTION_VIEW, AndroidManifest intent filters)
 - **Share Buttons**: RecipeCard/MealPlanCard context menus, GroceryListCard action row, GroceryListDetailScreen top bar
 
+### Filter, Sort, and Group Lists
+- **Core Library**: `utils/filtersort/core/` (Filter<T>, Sort<T>, GroupBy<T,K>, FilterSortGroupManager)
+- **Recipe Implementations**: `utils/filtersort/recipe/` (RecipeFilters, RecipeSorts, RecipeGroupings)
+- **UI Components**: `utils/filtersort/ui/` (FilterChipRow, SortMenu)
+- **Usage**: Create FilterSortGroupManager in ViewModel with source flow and search predicate, expose filteredItems/groupedItems StateFlow, use toggleFilter/setSort/setGroupBy functions
+- **Extractable**: Zero app dependencies, 100% type-safe generics, ready to extract as standalone library
+
 ### Handle App Settings
 - **Settings**: `data/AppSettings.kt`
 - **StateFlow-based**: Exposes preferences as StateFlow for reactive UI
