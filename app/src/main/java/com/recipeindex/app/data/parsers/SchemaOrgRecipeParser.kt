@@ -68,7 +68,11 @@ class SchemaOrgRecipeParser(
 
                 // Parse first recipe found
                 recipes.firstOrNull()?.let { recipeJson ->
-                    return parseRecipeFromJsonLd(recipeJson)
+                    val parsedData = parseRecipeFromJsonLd(recipeJson)
+
+                    // Also parse HTML categories and add them to tags
+                    val htmlCategories = parseHtmlCategories(document)
+                    return parsedData.copy(tags = parsedData.tags + htmlCategories)
                 }
             } catch (e: Exception) {
                 // Continue to next script tag
@@ -93,8 +97,7 @@ class SchemaOrgRecipeParser(
             cookTimeMinutes = parseIsoDuration(json["cookTime"]?.jsonPrimitive?.contentOrNull),
             totalTimeMinutes = parseIsoDuration(json["totalTime"]?.jsonPrimitive?.contentOrNull),
             tags = parseJsonArrayToStrings(json["recipeCategory"]) +
-                   parseJsonArrayToStrings(json["recipeCuisine"]) +
-                   parseJsonArrayToStrings(json["keywords"]),
+                   parseJsonArrayToStrings(json["recipeCuisine"]),
             imageUrl = parseImage(json["image"])
         )
     }
@@ -275,6 +278,16 @@ class SchemaOrgRecipeParser(
             }
             else -> emptyList()
         }
+    }
+
+    /**
+     * Parse HTML category and tag links from document
+     * Looks for links with rel="category" or rel="tag" (common in WordPress and other CMS)
+     */
+    private fun parseHtmlCategories(document: Document): List<String> {
+        return document.select("a[rel*=category], a[rel*=tag]")
+            .map { it.text().trim() }
+            .filter { it.isNotBlank() }
     }
 
     /**
