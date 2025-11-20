@@ -62,7 +62,7 @@ class ImportViewModel(
 
                     _uiState.value = UiState.Editing(
                         recipe = standardizedRecipe,
-                        tagModifications = tagModifications?.filter { it.wasModified }
+                        tagModifications = tagModifications
                     )
                 }.onFailure { error ->
                     DebugConfig.debugLog(
