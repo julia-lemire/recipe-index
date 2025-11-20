@@ -194,7 +194,14 @@
 - [x] Delete meal plan preserves associated recipes (MealPlanManagerTest.kt:deleteMealPlan preserves recipes)
 - [ ] Search meal plans by name (planned)
 - [ ] RecipePickerBottomSheet filters recipes by search query (planned)
+- [ ] RecipePickerBottomSheet defaults to Existing tab (planned - UI test)
+- [ ] DateRangePickerDialog allows selecting single date (planned - UI test)
+- [ ] DateRangePickerDialog allows selecting date range (planned - UI test)
+- [ ] DateRangePickerDialog shows Clear button when dates selected (planned - UI test)
+- [ ] AddEditMealPlanScreen shows selected dates as supporting text (planned - UI test)
 - [ ] Meal plan persists across app restarts (planned - integration test needed)
+- [ ] Adding meal plan to grocery list shows success snackbar (planned - UI test)
+- [ ] Success snackbar includes meal plan name and list name (planned - UI test)
 
 ### Grocery Lists - Ingredient Consolidation
 - [x] Parse ingredient with quantity and unit (e.g., "2 lbs chicken breast") (GroceryListManagerTest.kt:parseIngredient extracts quantity and unit)
