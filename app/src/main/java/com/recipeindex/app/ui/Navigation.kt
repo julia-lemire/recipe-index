@@ -147,6 +147,7 @@ fun RecipeIndexNavigation(
                     recipe = recipe,
                     settingsViewModel = settingsViewModel,
                     substitutionViewModel = substitutionViewModel,
+                    recipeViewModel = recipeViewModel,
                     onEdit = {
                         navController.navigate(Screen.EditRecipe.createRoute(recipeId))
                     },

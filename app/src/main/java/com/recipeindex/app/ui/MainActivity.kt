@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
 
         // Setup dependencies
         val database = AppDatabase.getDatabase(applicationContext)
-        val recipeManager = RecipeManager(database.recipeDao())
+        val recipeManager = RecipeManager(database.recipeDao(), database.recipeLogDao())
         val mealPlanManager = MealPlanManager(database.mealPlanDao(), database.recipeDao())
         val groceryListManager = GroceryListManager(
             database.groceryListDao(),

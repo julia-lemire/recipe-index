@@ -3,6 +3,7 @@ package com.recipeindex.app.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.recipeindex.app.data.entities.Recipe
+import com.recipeindex.app.data.entities.RecipeLog
 import com.recipeindex.app.data.managers.RecipeManager
 import com.recipeindex.app.utils.DebugConfig
 import kotlinx.coroutines.flow.*
@@ -181,6 +182,53 @@ class RecipeViewModel(
             } catch (e: Exception) {
                 _error.value = "Failed to update favorite: ${e.message}"
                 DebugConfig.error(DebugConfig.Category.UI, "toggleFavorite failed", e)
+            }
+        }
+    }
+
+    /**
+     * Get logs for a recipe
+     */
+    fun getLogsForRecipe(recipeId: Long): Flow<List<RecipeLog>> {
+        return recipeManager.getLogsForRecipe(recipeId)
+    }
+
+    /**
+     * Mark recipe as made
+     */
+    fun markRecipeAsMade(recipeId: Long, notes: String? = null, rating: Int? = null, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                val result = recipeManager.markRecipeAsMade(recipeId, notes, rating)
+                result.onSuccess {
+                    DebugConfig.debugLog(DebugConfig.Category.UI, "Recipe marked as made: $recipeId")
+                    onSuccess()
+                }.onFailure { exception ->
+                    _error.value = "Failed to mark recipe as made: ${exception.message}"
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to mark recipe as made: ${e.message}"
+                DebugConfig.error(DebugConfig.Category.UI, "markRecipeAsMade failed", e)
+            }
+        }
+    }
+
+    /**
+     * Delete a log entry
+     */
+    fun deleteLog(logId: Long, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                val result = recipeManager.deleteLog(logId)
+                result.onSuccess {
+                    DebugConfig.debugLog(DebugConfig.Category.UI, "Log deleted: $logId")
+                    onSuccess()
+                }.onFailure { exception ->
+                    _error.value = "Failed to delete log: ${exception.message}"
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to delete log: ${e.message}"
+                DebugConfig.error(DebugConfig.Category.UI, "deleteLog failed", e)
             }
         }
     }
