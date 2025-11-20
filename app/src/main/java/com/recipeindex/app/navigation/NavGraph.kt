@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -21,6 +22,7 @@ sealed class Screen(
 ) {
     object Home : Screen("home", "Home", Icons.Default.Home)
     object RecipeIndex : Screen("recipe_index", "Recipe Index", Icons.Default.List)
+    object Search : Screen("search", "Search", Icons.Default.Search)
     object MealPlanning : Screen("meal_planning", "Meal Planning", Icons.Default.DateRange)
     object GroceryLists : Screen("grocery_lists", "Grocery Lists", Icons.Default.ShoppingCart)
     object SubstitutionGuide : Screen("substitution_guide", "Substitution Guide", Icons.Default.SwapHoriz)
@@ -59,6 +61,6 @@ sealed class Screen(
     }
 
     companion object {
-        val drawerScreens = listOf(Home, RecipeIndex, MealPlanning, GroceryLists, SubstitutionGuide, Settings)
+        val drawerScreens = listOf(Home, RecipeIndex, Search, MealPlanning, GroceryLists, SubstitutionGuide, Settings)
     }
 }
