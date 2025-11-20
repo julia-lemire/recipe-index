@@ -289,6 +289,8 @@ fun RecipeIndexNavigation(
 
             val currentPlan by mealPlanViewModel.currentMealPlan.collectAsState()
             val recipes by recipeViewModel.recipes.collectAsState()
+            val groceryLists by groceryListViewModel.groceryLists.collectAsState()
+            var showListPicker by remember { mutableStateOf(false) }
 
             currentPlan?.let { plan ->
                 AddEditMealPlanScreen(
@@ -305,8 +307,29 @@ fun RecipeIndexNavigation(
                     },
                     onCancel = {
                         navController.popBackStack()
+                    },
+                    onAddToGroceryList = {
+                        showListPicker = true
                     }
                 )
+
+                // Grocery list picker dialog
+                if (showListPicker) {
+                    GroceryListPickerDialog(
+                        availableLists = groceryLists,
+                        onDismiss = { showListPicker = false },
+                        onListSelected = { listId ->
+                            groceryListViewModel.addRecipesToList(listId, plan.recipeIds)
+                            showListPicker = false
+                        },
+                        onCreateNew = { listName ->
+                            groceryListViewModel.createList(listName) { listId ->
+                                groceryListViewModel.addRecipesToList(listId, plan.recipeIds)
+                            }
+                            showListPicker = false
+                        }
+                    )
+                }
             }
         }
 

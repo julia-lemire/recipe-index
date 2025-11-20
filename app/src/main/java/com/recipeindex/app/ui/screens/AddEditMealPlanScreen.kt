@@ -36,7 +36,8 @@ fun AddEditMealPlanScreen(
     mealPlan: MealPlan? = null,
     availableRecipes: List<Recipe>,
     onSave: (MealPlan) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onAddToGroceryList: (() -> Unit)? = null
 ) {
     DebugConfig.debugLog(DebugConfig.Category.UI, "AddEditMealPlanScreen - editing: ${mealPlan != null}")
 
@@ -51,6 +52,7 @@ fun AddEditMealPlanScreen(
     var errorMessage by remember { mutableStateOf("") }
     var showRecipePicker by remember { mutableStateOf(false) }
     var showDateRangePicker by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
 
     // Auto-set name from dates if user hasn't manually edited it
     LaunchedEffect(startDate, endDate) {
@@ -110,6 +112,30 @@ fun AddEditMealPlanScreen(
                 navigationIcon = {
                     IconButton(onClick = { handleBack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    // Only show menu for existing meal plans with recipes
+                    if (mealPlan != null && selectedRecipeIds.isNotEmpty() && onAddToGroceryList != null) {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                        }
+
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Add to Grocery List") },
+                                onClick = {
+                                    showMenu = false
+                                    onAddToGroceryList()
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.ShoppingCart, contentDescription = null)
+                                }
+                            )
+                        }
                     }
                 }
             )

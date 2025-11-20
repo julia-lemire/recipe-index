@@ -527,19 +527,28 @@ private fun MealPlanCard(
                         text = formatDateRange(mealPlan.startDate, mealPlan.endDate),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f, fill = false)
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        IconButton(onClick = onEdit) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.wrapContentWidth()
+                    ) {
+                        IconButton(
+                            onClick = onEdit,
+                            modifier = Modifier.size(40.dp)
+                        ) {
                             Icon(
                                 Icons.Default.Edit,
                                 contentDescription = "Edit",
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                         IconButton(
                             onClick = onGenerateList,
-                            enabled = mealPlan.recipeIds.isNotEmpty()
+                            enabled = mealPlan.recipeIds.isNotEmpty(),
+                            modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
                                 Icons.Default.ShoppingCart,
@@ -548,7 +557,8 @@ private fun MealPlanCard(
                                     MaterialTheme.colorScheme.primary
                                 } else {
                                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                                }
+                                },
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
