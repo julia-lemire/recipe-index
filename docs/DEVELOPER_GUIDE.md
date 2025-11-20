@@ -103,7 +103,12 @@
 - **Models**: `utils/ShareModels.kt` (SharePackage, ImportResult, DuplicateAction)
 - **Import Manager**: `data/managers/ImportManager.kt` (importFromJson with duplicate detection, importRecipeWithAction, importMealPlanFromJson, importGroceryListFromJson)
 - **Import Dialogs**: `ui/components/ImportDialog.kt` (RecipeDuplicateDialog, MealPlanImportDialog, GroceryListImportDialog)
-- **Manual Import**: `ui/screens/SettingsScreen.kt` (file picker with OpenDocument contract)
+- **Manual Import (Multiple Entry Points)**:
+  - `ui/screens/ImportSourceSelectionScreen.kt` (4th card "From File" in Import tab - primary location)
+  - `ui/screens/MealPlanningScreen.kt` (FileUpload icon button in TopAppBar)
+  - `ui/screens/GroceryListScreen.kt` (FileUpload icon button in TopAppBar)
+  - `ui/screens/SettingsScreen.kt` (backup catch-all location)
+  - All use OpenDocument contract, store JSON in MainActivity.pendingImportJson, show snackbar feedback
 - **Intent Handling**: `ui/MainActivity.kt` (handleIncomingIntent for ACTION_SEND/ACTION_VIEW, AndroidManifest intent filters)
 - **Share Buttons**: RecipeCard/MealPlanCard context menus, GroceryListCard action row, GroceryListDetailScreen top bar
 
