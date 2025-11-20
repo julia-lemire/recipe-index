@@ -89,7 +89,7 @@ class SubstitutionManager(
         )
 
         val id = dao.insertSubstitution(substitution)
-        DebugConfig.debugLog(DebugConfig.Category.DATA, "Created substitution for: $normalizedIngredient")
+        DebugConfig.debugLog(DebugConfig.Category.DATABASE, "Created substitution for: $normalizedIngredient")
         return id
     }
 
@@ -123,7 +123,7 @@ class SubstitutionManager(
         )
 
         dao.updateSubstitution(substitution)
-        DebugConfig.debugLog(DebugConfig.Category.DATA, "Updated substitution for: $normalizedIngredient")
+        DebugConfig.debugLog(DebugConfig.Category.DATABASE, "Updated substitution for: $normalizedIngredient")
     }
 
     /**
@@ -131,7 +131,7 @@ class SubstitutionManager(
      */
     suspend fun deleteSubstitution(id: Long) {
         dao.deleteSubstitutionById(id)
-        DebugConfig.debugLog(DebugConfig.Category.DATA, "Deleted substitution: $id")
+        DebugConfig.debugLog(DebugConfig.Category.DATABASE, "Deleted substitution: $id")
     }
 
     /**
@@ -142,9 +142,9 @@ class SubstitutionManager(
         val count = dao.getSubstitutionCount()
 
         if (count == 0) {
-            DebugConfig.debugLog(DebugConfig.Category.DATA, "Populating substitution database with default data")
+            DebugConfig.debugLog(DebugConfig.Category.DATABASE, "Populating substitution database with default data")
             dao.insertAll(SubstitutionData.getDefaultSubstitutions())
-            DebugConfig.debugLog(DebugConfig.Category.DATA, "Populated ${SubstitutionData.getDefaultSubstitutions().size} default substitutions")
+            DebugConfig.debugLog(DebugConfig.Category.DATABASE, "Populated ${SubstitutionData.getDefaultSubstitutions().size} default substitutions")
         }
     }
 
