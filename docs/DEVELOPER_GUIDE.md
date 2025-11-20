@@ -214,12 +214,19 @@
 **Structure**:
 - Use `TagStandardizer.standardize()` for silent standardization (returns List<String>)
 - Use `TagStandardizer.standardizeWithTracking()` when user needs visibility into changes (returns List<TagModification>)
-- Show TagModificationDialog for tracked changes, allowing per-tag editing before accepting
+- Show TagModificationDialog for tracked changes, allowing per-tag editing/removal before accepting
 - Store `tagModifications` in ViewModel UiState to trigger dialog display
 - Apply accepted tags via ViewModel update function
 - All standardization is automatically logged via `DebugConfig.Category.TAG_STANDARDIZATION` for analysis
 
-**Example**: ImportViewModel calls `TagStandardizer.standardizeWithTracking()`, stores modifications in `UiState.Editing`, ImportUrlScreen shows TagModificationDialog with original→standardized arrows, user can edit each tag before accepting
+**Filtering Layers** (applied in order):
+1. Normalize (lowercase, trim, remove special chars)
+2. Apply standard mappings (variations → canonical forms, holidays → "special occasion", ingredient types → general)
+3. Remove noise words ("recipe", "meal", "dish", "ideas", etc.)
+4. Filter junk tags (standalone noise, junk phrases like "how to make", >4 words, branded terms)
+5. Deduplicate
+
+**Example**: ImportViewModel calls `TagStandardizer.standardizeWithTracking()`, stores modifications in `UiState.Editing`, ImportUrlScreen shows TagModificationDialog with original→standardized arrows and remove buttons, user can edit/remove each tag before accepting
 
 **Debugging Tag Standardization**:
 To analyze tag transformations and improve standardizer mappings, filter Android Studio Logcat by:
@@ -227,6 +234,18 @@ To analyze tag transformations and improve standardizer mappings, filter Android
 - **Search**: `TAG_STANDARDIZATION`
 
 Logs show: recipe name, original tags, step-by-step transformations (normalized → mapped → final), filtered tags with reasons, duplicates removed, and final saved tags
+
+### Tabbed Screen Pattern
+**Use when**: Single screen needs to present multiple related but distinct content views or workflows
+**Structure**:
+- Use Material 3 TabRow with Tab composables for navigation
+- Store selectedTab index in remember { mutableStateOf(0) }
+- Use when expression to show content based on selectedTab
+- Extract tab content into private @Composable functions (e.g., ImportTabContent, CreateTabContent)
+- Use icons + text for tab clarity on mobile
+- Default to most common use case tab (index 0)
+
+**Example**: ImportSourceSelectionScreen has 2 tabs (Import showing URL/PDF/Photo cards, Create showing manual entry), TabRow with CloudDownload and Add icons, when(selectedTab) switches between ImportTabContent and CreateTabContent functions, provides unified entry point for recipe creation
 
 ### Reusable Component Pattern
 **Use when**: Multiple screens need the same UI component (dialogs, pickers, specialized inputs)
