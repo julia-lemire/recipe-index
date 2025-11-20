@@ -231,6 +231,7 @@
 - [ ] Update item quantity/unit/notes (planned)
 - [ ] Delete item removes from list (planned)
 - [ ] Delete list removes all items (cascade) (planned)
+- [ ] Create list and add recipes uses callback pattern to ensure list exists before inserting items (planned - integration test)
 - [ ] Search lists by name (planned)
 - [ ] getItemCount returns correct count (planned - DAO integration test)
 - [ ] getCheckedCount returns correct checked count (planned - DAO integration test)
