@@ -143,6 +143,15 @@ object TagStandardizer {
     )
 
     /**
+     * Result of tag standardization, tracking what changed
+     */
+    data class TagModification(
+        val original: String,
+        val standardized: String,
+        val wasModified: Boolean
+    )
+
+    /**
      * Standardize a list of tags
      * @param tags Raw tags from import
      * @return Cleaned, standardized, and deduplicated tags
@@ -157,6 +166,32 @@ object TagStandardizer {
             .map { removeNoiseWords(it) }
             .filter { it.isNotBlank() }
             .distinct()
+            .toList()
+    }
+
+    /**
+     * Standardize tags with tracking of modifications
+     * @param tags Raw tags from import
+     * @return List of TagModification objects showing what changed
+     */
+    fun standardizeWithTracking(tags: List<String>): List<TagModification> {
+        return tags
+            .asSequence()
+            .map { it.trim() }
+            .filter { it.isNotBlank() && it.length >= 2 }
+            .map { original ->
+                val normalized = normalizeTag(original.lowercase())
+                val mapped = applyStandardMapping(normalized)
+                val final = removeNoiseWords(mapped)
+
+                TagModification(
+                    original = original,
+                    standardized = final,
+                    wasModified = original.lowercase() != final
+                )
+            }
+            .filter { it.standardized.isNotBlank() }
+            .distinctBy { it.standardized }
             .toList()
     }
 

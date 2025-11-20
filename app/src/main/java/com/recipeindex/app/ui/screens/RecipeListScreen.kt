@@ -536,3 +536,4 @@ private fun prioritizeAndLimitTags(tags: List<String>, maxTags: Int = 3): List<S
     // Sort by score (descending) and take top N
     return scoredTags.sortedByDescending { it.second }.take(maxTags).map { it.first }
 }
+
