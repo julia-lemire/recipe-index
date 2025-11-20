@@ -67,6 +67,7 @@ fun RecipeIndexNavigation(
                 viewModel = recipeViewModel,
                 groceryListViewModel = groceryListViewModel,
                 mealPlanViewModel = mealPlanViewModel,
+                settingsViewModel = settingsViewModel,
                 onAddRecipe = {
                     navController.navigate(Screen.AddRecipe.route)
                 },

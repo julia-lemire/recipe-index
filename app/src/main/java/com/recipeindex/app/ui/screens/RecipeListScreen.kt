@@ -20,11 +20,13 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.clip
@@ -34,10 +36,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.recipeindex.app.data.RecipeViewMode
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.ui.components.GroceryListPickerDialog
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
+import com.recipeindex.app.ui.viewmodels.SettingsViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.ShareHelper
 import com.recipeindex.app.utils.filtersort.recipe.*
@@ -55,6 +59,7 @@ fun RecipeListScreen(
     viewModel: RecipeViewModel,
     groceryListViewModel: GroceryListViewModel,
     mealPlanViewModel: com.recipeindex.app.ui.viewmodels.MealPlanViewModel,
+    settingsViewModel: SettingsViewModel,
     onAddRecipe: () -> Unit,
     onImportRecipe: () -> Unit = {},
     onRecipeClick: (Long) -> Unit,
@@ -73,6 +78,10 @@ fun RecipeListScreen(
     var recipeForMealPlan by remember { mutableStateOf<Recipe?>(null) }
     var showSearchBar by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    // View mode from settings
+    val settings by settingsViewModel.settings.collectAsState()
+    val viewMode = settings.recipeViewMode
 
     // Available filters and sorts
     val availableFilters = remember {
@@ -112,6 +121,29 @@ fun RecipeListScreen(
                 actions = {
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
+                    IconButton(
+                        onClick = {
+                            val newMode = if (viewMode == RecipeViewMode.CARD) {
+                                RecipeViewMode.LIST
+                            } else {
+                                RecipeViewMode.CARD
+                            }
+                            settingsViewModel.setRecipeViewMode(newMode)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = if (viewMode == RecipeViewMode.CARD) {
+                                Icons.Default.ViewAgenda
+                            } else {
+                                Icons.Default.GridView
+                            },
+                            contentDescription = if (viewMode == RecipeViewMode.CARD) {
+                                "Switch to list view"
+                            } else {
+                                "Switch to card view"
+                            }
+                        )
                     }
                     IconButton(onClick = { showFilterSheet = true }) {
                         Icon(
@@ -188,6 +220,36 @@ fun RecipeListScreen(
                     }
                     recipes.isEmpty() -> {
                         EmptyState(modifier = Modifier.align(Alignment.Center))
+                    }
+                    viewMode == RecipeViewMode.LIST -> {
+                        // Compact list view
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(recipes, key = { it.id }) { recipe ->
+                                RecipeListItem(
+                                    recipe = recipe,
+                                    onClick = { onRecipeClick(recipe.id) },
+                                    onToggleFavorite = { viewModel.toggleFavorite(recipe.id, !recipe.isFavorite) },
+                                    onAddToGroceryList = {
+                                        recipeForGroceryList = recipe
+                                        showListPicker = true
+                                    },
+                                    onAddToMealPlan = {
+                                        recipeForMealPlan = recipe
+                                        showMealPlanPicker = true
+                                    },
+                                    onShare = {
+                                        ShareHelper.shareRecipe(context, recipe, recipe.photoPath)
+                                    },
+                                    onDelete = {
+                                        viewModel.deleteRecipe(recipe.id) {}
+                                    }
+                                )
+                            }
+                        }
                     }
                     isLandscape -> {
                     // Grid layout for landscape (2 columns)
@@ -511,6 +573,168 @@ private fun RecipeCard(
                                 label = { Text(tag, style = MaterialTheme.typography.labelSmall) }
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Compact list item for recipes
+ */
+@Composable
+private fun RecipeListItem(
+    recipe: Recipe,
+    onClick: () -> Unit,
+    onToggleFavorite: () -> Unit,
+    onAddToGroceryList: () -> Unit,
+    onAddToMealPlan: () -> Unit,
+    onShare: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var showMenu by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left side: Title and info
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = recipe.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Info row: Servings, Prep, Cook
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "${recipe.servings} servings",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (recipe.prepTimeMinutes != null || recipe.cookTimeMinutes != null) {
+                        Text(
+                            text = "•",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        val totalTime = (recipe.prepTimeMinutes ?: 0) + (recipe.cookTimeMinutes ?: 0)
+                        if (totalTime > 0) {
+                            Text(
+                                text = "$totalTime min",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Right side: Actions
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Show favorite icon only if favorited
+                if (recipe.isFavorite) {
+                    IconButton(onClick = onToggleFavorite) {
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = "Unfavorite",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                // Add to meal plan button
+                IconButton(onClick = onAddToMealPlan) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = "Add to Meal Plan",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                // Context menu button
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More options",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Add to Grocery List") },
+                            onClick = {
+                                showMenu = false
+                                onAddToGroceryList()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.ShoppingCart, contentDescription = null)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Share") },
+                            onClick = {
+                                showMenu = false
+                                onShare()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Share, contentDescription = null)
+                            }
+                        )
+                        if (!recipe.isFavorite) {
+                            DropdownMenuItem(
+                                text = { Text("Mark as Favorite") },
+                                onClick = {
+                                    showMenu = false
+                                    onToggleFavorite()
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Favorite, contentDescription = null)
+                                }
+                            )
+                        }
+                        DropdownMenuItem(
+                            text = { Text("Delete") },
+                            onClick = {
+                                showMenu = false
+                                onDelete()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            },
+                            colors = MenuDefaults.itemColors(
+                                textColor = MaterialTheme.colorScheme.error
+                            )
+                        )
                     }
                 }
             }

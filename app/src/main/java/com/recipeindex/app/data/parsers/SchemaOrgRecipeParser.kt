@@ -46,28 +46,62 @@ class SchemaOrgRecipeParser(
         // Find script tags with type="application/ld+json"
         val jsonLdScripts = document.select("script[type=application/ld+json]")
 
-        for (script in jsonLdScripts) {
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "[IMPORT] Found ${jsonLdScripts.size} JSON-LD script tags"
+        )
+
+        for ((index, script) in jsonLdScripts.withIndex()) {
             try {
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "[IMPORT] Parsing JSON-LD script tag ${index + 1}"
+                )
+
                 val json = Json.parseToJsonElement(script.data())
 
                 // Handle both single object and array of objects
                 val recipes = when {
                     json is JsonObject && json["@type"]?.jsonPrimitive?.content == "Recipe" -> {
+                        DebugConfig.debugLog(
+                            DebugConfig.Category.IMPORT,
+                            "[IMPORT] Found Recipe object (single)"
+                        )
                         listOf(json)
                     }
                     json is JsonArray -> {
-                        json.filterIsInstance<JsonObject>()
+                        val recipeList = json.filterIsInstance<JsonObject>()
                             .filter { it["@type"]?.jsonPrimitive?.content == "Recipe" }
+                        DebugConfig.debugLog(
+                            DebugConfig.Category.IMPORT,
+                            "[IMPORT] Found ${recipeList.size} Recipe objects in array"
+                        )
+                        recipeList
                     }
                     json is JsonObject && json["@graph"] is JsonArray -> {
-                        (json["@graph"] as JsonArray).filterIsInstance<JsonObject>()
+                        val recipeList = (json["@graph"] as JsonArray).filterIsInstance<JsonObject>()
                             .filter { it["@type"]?.jsonPrimitive?.content == "Recipe" }
+                        DebugConfig.debugLog(
+                            DebugConfig.Category.IMPORT,
+                            "[IMPORT] Found ${recipeList.size} Recipe objects in @graph"
+                        )
+                        recipeList
                     }
-                    else -> emptyList()
+                    else -> {
+                        DebugConfig.debugLog(
+                            DebugConfig.Category.IMPORT,
+                            "[IMPORT] No Recipe objects found in this script tag"
+                        )
+                        emptyList()
+                    }
                 }
 
                 // Parse first recipe found
                 recipes.firstOrNull()?.let { recipeJson ->
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.IMPORT,
+                        "[IMPORT] Parsing recipe data from JSON-LD"
+                    )
                     val parsedData = parseRecipeFromJsonLd(recipeJson)
 
                     // Also parse HTML categories and add them to tags
@@ -75,11 +109,19 @@ class SchemaOrgRecipeParser(
                     return parsedData.copy(tags = parsedData.tags + htmlCategories)
                 }
             } catch (e: Exception) {
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "[IMPORT] Error parsing JSON-LD script tag ${index + 1}: ${e.message}"
+                )
                 // Continue to next script tag
                 continue
             }
         }
 
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "[IMPORT] No Recipe objects found in any JSON-LD script tags"
+        )
         return null
     }
 
@@ -90,19 +132,19 @@ class SchemaOrgRecipeParser(
         // Log available fields for debugging
         DebugConfig.debugLog(
             DebugConfig.Category.IMPORT,
-            "Recipe JSON-LD fields: ${json.keys.joinToString(", ")}"
+            "[IMPORT] Recipe JSON-LD fields: ${json.keys.joinToString(", ")}"
         )
 
         val ingredients = parseJsonArrayToStrings(json["recipeIngredient"])
         DebugConfig.debugLog(
             DebugConfig.Category.IMPORT,
-            "Parsed ${ingredients.size} ingredients from recipeIngredient field"
+            "[IMPORT] Parsed ${ingredients.size} ingredients from recipeIngredient field"
         )
 
         val instructions = parseInstructions(json["recipeInstructions"])
         DebugConfig.debugLog(
             DebugConfig.Category.IMPORT,
-            "Parsed ${instructions.size} instructions from recipeInstructions field"
+            "[IMPORT] Parsed ${instructions.size} instructions from recipeInstructions field"
         )
 
         return ParsedRecipeData(
