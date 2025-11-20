@@ -186,7 +186,8 @@ object TagStandardizer {
         "recipe", "recipes", "food", "meal", "meals", "dish", "cuisine", "cooking", "cook",
         "homemade", "delicious", "tasty", "yummy", "perfect", "best",
         "traditional", "authentic", "classic", "modern", "new",
-        "ideas", "tips", "guide", "how", "to", "make", "making"
+        "ideas", "tips", "guide", "how", "to", "make", "making",
+        "dinner", "dinners", "lunch", "lunches", "breakfast", "breakfasts"
     )
 
     // Tags to completely filter out (even if alone)
