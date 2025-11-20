@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 20, 2025: Callback Pattern for Async List Creation
+- **Decision**: Removed createListAndReturn() method and enforced callback pattern for all async list creation operations (createList with onSuccess callback)
+- **Rationale**: createListAndReturn() launched a coroutine but immediately returned 0, causing FOREIGN KEY constraint failures when subsequent addRecipesToList() tried to insert items with foreign key to non-existent list ID 0, creating a race condition
+- **Implementation**: Removed createListAndReturn() from GroceryListViewModel, updated RecipeListScreen.kt and Navigation.kt to use createList(name) { listId -> addRecipesToList(listId, ...) } pattern ensuring items are only added after list creation completes successfully
+
 #### Nov 20, 2025: LaunchedEffect for Navigation Data Loading
 - **Decision**: Wrap ViewModel data loading calls in LaunchedEffect with proper keys and add DisposableEffect cleanup when navigating to detail/edit screens
 - **Rationale**: Calling ViewModel methods directly in composable body (e.g., Navigation.kt loadMealPlan) runs on every recomposition, causing race conditions where shared ViewModel state gets overwritten with wrong data, leading to meal plans showing incorrect metadata or data corruption
