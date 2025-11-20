@@ -1,19 +1,26 @@
 package com.recipeindex.app.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.data.TemperatureUnit
 import com.recipeindex.app.data.UnitSystem
+import com.recipeindex.app.ui.MainActivity
 import com.recipeindex.app.ui.viewmodels.SettingsViewModel
 import com.recipeindex.app.utils.DebugConfig
+import kotlinx.coroutines.launch
 
 /**
  * Settings Screen - App preferences and configuration
@@ -253,6 +260,79 @@ fun SettingsScreen(
                                 selected = settings.defaultServings == servings,
                                 onClick = { viewModel.setDefaultServings(servings) },
                                 label = { Text(servings.toString()) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            // Import/Export Section
+            SettingsSection(title = "Import / Export") {
+                val context = LocalContext.current
+                val scope = rememberCoroutineScope()
+                var importResult by remember { mutableStateOf<String?>(null) }
+
+                // File picker for import
+                val filePicker = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.OpenDocument()
+                ) { uri ->
+                    uri?.let {
+                        scope.launch {
+                            try {
+                                val json = context.contentResolver.openInputStream(it)
+                                    ?.bufferedReader()
+                                    ?.use { reader -> reader.readText() }
+
+                                if (json != null) {
+                                    // Store in MainActivity for import dialog handling
+                                    MainActivity.pendingImportJson = json
+                                    importResult = "File loaded. Navigate to Recipes screen to complete import."
+                                    DebugConfig.debugLog(DebugConfig.Category.UI, "Import file loaded from settings")
+                                } else {
+                                    importResult = "Failed to read file"
+                                }
+                            } catch (e: Exception) {
+                                DebugConfig.error(DebugConfig.Category.UI, "Import file error", e)
+                                importResult = "Error: ${e.message}"
+                            }
+                        }
+                    }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "Import recipes, meal plans, or grocery lists shared from other devices",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    OutlinedButton(
+                        onClick = {
+                            filePicker.launch(arrayOf("application/json", "text/plain"))
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.FileUpload, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Import from File")
+                    }
+
+                    importResult?.let { result ->
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (result.startsWith("Error") || result.startsWith("Failed")) {
+                                    MaterialTheme.colorScheme.errorContainer
+                                } else {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                }
+                            )
+                        ) {
+                            Text(
+                                text = result,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(12.dp)
                             )
                         }
                     }
