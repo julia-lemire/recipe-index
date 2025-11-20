@@ -5,15 +5,23 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import android.view.WindowManager
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +36,8 @@ import com.recipeindex.app.ui.viewmodels.SettingsViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.IngredientScaler
 import com.recipeindex.app.utils.IngredientUnitConverter
+import com.recipeindex.app.utils.TextFormatUtils
+import kotlinx.coroutines.delay
 
 /**
  * RecipeDetailScreen - View recipe details
@@ -53,15 +63,52 @@ fun RecipeDetailScreen(
     var selectedServings by remember { mutableStateOf(recipe.servings) }
     var showServingsMenu by remember { mutableStateOf(false) }
 
+    // Cook mode state (persists while on this screen, resets on navigation away)
+    var cookModeEnabled by remember { mutableStateOf(false) }
+    var checkedIngredients by remember { mutableStateOf(setOf<Int>()) }
+    var checkedInstructions by remember { mutableStateOf(setOf<Int>()) }
+    var timerSecondsRemaining by remember { mutableStateOf(0) }
+    var timerRunning by remember { mutableStateOf(false) }
+    var timerInitialMinutes by remember { mutableStateOf(10) }
+    var showTimerMenu by remember { mutableStateOf(false) }
+
     // Get user's unit preferences from settings
     val settings by settingsViewModel.settings.collectAsState()
 
     // Calculate scaling factor for ingredients
     val scaleFactor = selectedServings.toDouble() / recipe.servings.toDouble()
 
+    // Parse instructions into steps for cook mode
+    val instructionSteps = remember(recipe.instructions) {
+        TextFormatUtils.parseInstructionsIntoSteps(recipe.instructions)
+    }
+
     // Handle system back button
     BackHandler {
         onBack()
+    }
+
+    // Keep screen awake when in cook mode
+    val view = LocalView.current
+    DisposableEffect(cookModeEnabled) {
+        if (cookModeEnabled) {
+            view.keepScreenOn = true
+        }
+        onDispose {
+            view.keepScreenOn = false
+        }
+    }
+
+    // Timer countdown logic
+    LaunchedEffect(timerRunning, timerSecondsRemaining) {
+        if (timerRunning && timerSecondsRemaining > 0) {
+            delay(1000L)
+            timerSecondsRemaining--
+        } else if (timerSecondsRemaining == 0 && timerRunning) {
+            // Timer finished - stop it
+            timerRunning = false
+            // TODO: Could add notification/sound here
+        }
     }
 
     Scaffold(
@@ -89,6 +136,18 @@ fun RecipeDetailScreen(
                     }
                     IconButton(onClick = onAddToMealPlan) {
                         Icon(Icons.Default.CalendarMonth, "Add to Meal Plan")
+                    }
+                    // Cook mode toggle
+                    IconButton(onClick = { cookModeEnabled = !cookModeEnabled }) {
+                        Icon(
+                            Icons.Default.RestaurantMenu,
+                            "Cook Mode",
+                            tint = if (cookModeEnabled) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            }
+                        )
                     }
                     // Overflow menu with delete option only
                     Box {
@@ -231,8 +290,132 @@ fun RecipeDetailScreen(
                 }
             }
 
+            // Cook Mode: Timer and Controls
+            if (cookModeEnabled) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Cook Mode",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            // Deselect all button
+                            TextButton(
+                                onClick = {
+                                    checkedIngredients = setOf()
+                                    checkedInstructions = setOf()
+                                }
+                            ) {
+                                Text("Deselect All")
+                            }
+                        }
+
+                        // Timer section
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Timer:",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                                // Time dropdown
+                                Box {
+                                    OutlinedButton(
+                                        onClick = {
+                                            if (!timerRunning) {
+                                                showTimerMenu = true
+                                            }
+                                        },
+                                        modifier = Modifier.height(36.dp),
+                                        contentPadding = PaddingValues(horizontal = 8.dp),
+                                        enabled = !timerRunning
+                                    ) {
+                                        Text("${timerInitialMinutes} min")
+                                        Icon(
+                                            Icons.Default.ArrowDropDown,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                    DropdownMenu(
+                                        expanded = showTimerMenu,
+                                        onDismissRequest = { showTimerMenu = false }
+                                    ) {
+                                        listOf(5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60).forEach { minutes ->
+                                            DropdownMenuItem(
+                                                text = { Text("$minutes min") },
+                                                onClick = {
+                                                    timerInitialMinutes = minutes
+                                                    showTimerMenu = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Timer display
+                                Text(
+                                    text = String.format(
+                                        "%02d:%02d",
+                                        timerSecondsRemaining / 60,
+                                        timerSecondsRemaining % 60
+                                    ),
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                // Start/Pause button
+                                FilledTonalIconButton(
+                                    onClick = {
+                                        if (timerSecondsRemaining == 0) {
+                                            // Start new timer
+                                            timerSecondsRemaining = timerInitialMinutes * 60
+                                            timerRunning = true
+                                        } else {
+                                            // Toggle pause/resume
+                                            timerRunning = !timerRunning
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        if (timerRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                        contentDescription = if (timerRunning) "Pause" else "Start"
+                                    )
+                                }
+
+                                // Reset button
+                                FilledTonalIconButton(
+                                    onClick = {
+                                        timerSecondsRemaining = 0
+                                        timerRunning = false
+                                    },
+                                    enabled = timerSecondsRemaining > 0
+                                ) {
+                                    Icon(Icons.Default.Refresh, contentDescription = "Reset")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Ingredients - scaled based on selected servings
-            // TODO: Add "Cook Mode" feature with checkable ingredients to help track while cooking
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -252,12 +435,43 @@ fun RecipeDetailScreen(
                         )
                     }
                 }
-                recipe.ingredients.forEach { ingredient ->
+                recipe.ingredients.forEachIndexed { index, ingredient ->
+                    val isChecked = index in checkedIngredients
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
+                            .then(
+                                if (cookModeEnabled) {
+                                    Modifier.clickable {
+                                        checkedIngredients = if (isChecked) {
+                                            checkedIngredients - index
+                                        } else {
+                                            checkedIngredients + index
+                                        }
+                                    }
+                                } else {
+                                    Modifier
+                                }
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        // Show checkbox in cook mode
+                        if (cookModeEnabled) {
+                            Checkbox(
+                                checked = isChecked,
+                                onCheckedChange = {
+                                    checkedIngredients = if (it) {
+                                        checkedIngredients + index
+                                    } else {
+                                        checkedIngredients - index
+                                    }
+                                }
+                            )
+                        }
+
                         // Scale ingredient based on servings
                         var processedIngredient = if (scaleFactor != 1.0) {
                             IngredientScaler.scaleIngredient(ingredient, scaleFactor)
@@ -273,15 +487,30 @@ fun RecipeDetailScreen(
                         )
 
                         Text(
-                            text = "• $processedIngredient",
-                            style = MaterialTheme.typography.bodyLarge
+                            text = if (!cookModeEnabled) "• $processedIngredient" else processedIngredient,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontStyle = if (isChecked && cookModeEnabled) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal
+                            ),
+                            modifier = Modifier.alpha(if (isChecked && cookModeEnabled) 0.5f else 1f)
                         )
                     }
                 }
             }
 
             // Instructions (with sections if present)
-            InstructionsSection(instructions = recipe.instructions)
+            InstructionsSection(
+                instructions = recipe.instructions,
+                cookModeEnabled = cookModeEnabled,
+                instructionSteps = instructionSteps,
+                checkedInstructions = checkedInstructions,
+                onInstructionToggle = { stepIndex ->
+                    checkedInstructions = if (stepIndex in checkedInstructions) {
+                        checkedInstructions - stepIndex
+                    } else {
+                        checkedInstructions + stepIndex
+                    }
+                }
+            )
 
             // Tags
             if (recipe.tags.isNotEmpty()) {
@@ -410,7 +639,13 @@ private fun parseInstructionSections(instructions: List<String>): List<Instructi
 }
 
 @Composable
-private fun InstructionsSection(instructions: List<String>) {
+private fun InstructionsSection(
+    instructions: List<String>,
+    cookModeEnabled: Boolean = false,
+    instructionSteps: List<String> = emptyList(),
+    checkedInstructions: Set<Int> = emptySet(),
+    onInstructionToggle: (Int) -> Unit = {}
+) {
     val sections = remember(instructions) { parseInstructionSections(instructions) }
 
     if (sections.isEmpty()) return
@@ -422,7 +657,51 @@ private fun InstructionsSection(instructions: List<String>) {
             color = MaterialTheme.colorScheme.primary
         )
 
-        if (sections.size > 1) {
+        // Cook mode: simple checkable list with bold numbers
+        if (cookModeEnabled) {
+            instructionSteps.forEachIndexed { index, step ->
+                val isChecked = index in checkedInstructions
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .clickable {
+                            onInstructionToggle(index)
+                        },
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Checkbox(
+                        checked = isChecked,
+                        onCheckedChange = {
+                            onInstructionToggle(index)
+                        }
+                    )
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Step ${index + 1}",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontStyle = if (isChecked) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal
+                            ),
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.alpha(if (isChecked) 0.5f else 1f)
+                        )
+                        Text(
+                            text = TextFormatUtils.highlightNumbersInText(step),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontStyle = if (isChecked) androidx.compose.ui.text.font.FontStyle.Italic else androidx.compose.ui.text.font.FontStyle.Normal
+                            ),
+                            modifier = Modifier.alpha(if (isChecked) 0.5f else 1f)
+                        )
+                    }
+                }
+            }
+        } else if (sections.size > 1) {
             // Multiple sections - use tabs
             var selectedTabIndex by remember { mutableIntStateOf(0) }
 
