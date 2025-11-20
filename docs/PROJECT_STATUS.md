@@ -223,6 +223,11 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Error handling: ErrorHandler utility, SnackbarHost for error display, BackHandler for system back button
 - ✅ Search bars: Toggle-able search bar added to RecipeListScreen (matching MealPlanningScreen and GroceryListScreen functionality)
 - ✅ Global search: Dedicated SearchScreen accessible from navigation drawer for searching recipes across the app, displays results as clickable cards with recipe details
+- ✅ Recipe view mode toggle: Card/List view switcher in RecipeListScreen TopAppBar, persisted preference in AppSettings (defaults to CARD), compact RecipeListItem for list view with horizontal layout
+- ✅ Grocery list UX: Removed confusing info icon from grocery list items (non-clickable decoration)
+- ✅ Meal plan UX: Fixed button spacing on meal plan cards for better display on all devices (explicit sizes and weights)
+- ✅ Meal plan context menu: Added "Add to Grocery List" option in meal plan detail page with GroceryListPickerDialog
+- ✅ Import logging: Enhanced Schema.org parser with comprehensive [IMPORT]-prefixed logs for debugging (JSON-LD script counts, field inspection, ingredient/instruction parsing details)
 
 ### Advanced Features (Phase 5)
 - ✅ Portion scaling: Servings dropdown in RecipeDetailScreen (half, original, 2x, 3x, 4x) with automatic ingredient quantity scaling
