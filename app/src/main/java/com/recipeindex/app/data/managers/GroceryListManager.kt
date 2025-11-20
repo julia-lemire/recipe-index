@@ -376,7 +376,8 @@ class GroceryListManager(
             )
 
             // Add all recipes from the meal plan
-            addRecipesToList(listId, mealPlan.recipeIds)
+            val result = addRecipesToList(listId, mealPlan.recipeIds)
+            result
         } catch (e: Exception) {
             DebugConfig.error(DebugConfig.Category.MANAGER, "addMealPlanToList failed", e)
             Result.failure(e)
