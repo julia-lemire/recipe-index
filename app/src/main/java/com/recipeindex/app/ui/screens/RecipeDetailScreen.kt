@@ -341,8 +341,8 @@ fun RecipeDetailScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface
+                        containerColor = Color.White,
+                        contentColor = Color.Black
                     )
                 ) {
                     Column(
@@ -357,7 +357,7 @@ fun RecipeDetailScreen(
                             Text(
                                 text = "Cook Mode",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = Color.Black
                             )
                             // Deselect all button
                             TextButton(
