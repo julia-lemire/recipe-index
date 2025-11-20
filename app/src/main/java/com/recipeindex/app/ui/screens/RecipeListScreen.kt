@@ -60,12 +60,14 @@ fun RecipeListScreen(
 
     val recipes by viewModel.filterSortManager.filteredItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
     val groceryLists by groceryListViewModel.groceryLists.collectAsState()
     val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
     var showListPicker by remember { mutableStateOf(false) }
     var recipeForGroceryList by remember { mutableStateOf<Recipe?>(null) }
     var showMealPlanPicker by remember { mutableStateOf(false) }
     var recipeForMealPlan by remember { mutableStateOf<Recipe?>(null) }
+    var showSearchBar by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     // Available filters and sorts
@@ -99,6 +101,9 @@ fun RecipeListScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { showSearchBar = !showSearchBar }) {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
                     SortMenu(
                         availableSorts = availableSorts,
                         currentSort = currentSort,
@@ -129,6 +134,27 @@ fun RecipeListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Search bar
+            if (showSearchBar) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { viewModel.searchRecipes(it) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    placeholder = { Text("Search recipes...") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.searchRecipes("") }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear")
+                            }
+                        }
+                    },
+                    singleLine = true
+                )
+            }
+
             // Filter chips
             FilterChipRow(
                 availableFilters = availableFilters,
