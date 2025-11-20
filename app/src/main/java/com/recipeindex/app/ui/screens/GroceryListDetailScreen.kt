@@ -470,13 +470,6 @@ private fun GroceryItemRow(
                 )
             }
         }
-
-        Icon(
-            Icons.Default.Info,
-            contentDescription = "Details",
-            modifier = Modifier.size(20.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-        )
     }
 }
 
