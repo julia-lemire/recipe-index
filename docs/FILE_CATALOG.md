@@ -106,9 +106,11 @@ com.recipeindex.app/
 ├── ui/
 │   ├── components/
 │   │   ├── AppNavigationDrawer.kt
+│   │   ├── DatePickerDialog.kt
 │   │   ├── GroceryListPickerDialog.kt
 │   │   ├── MealPlanPickerDialog.kt
-│   │   └── SubstitutionDialog.kt
+│   │   ├── SubstitutionDialog.kt
+│   │   └── TagModificationDialog.kt
 │   │
 │   ├── screens/
 │   │   ├── AddEditMealPlanScreen.kt
@@ -263,10 +265,11 @@ com.recipeindex.app/
 - **AddEditRecipeScreen.kt** - Recipe add/edit form: Single screen with title, servings, times, ingredients, instructions, tags, notes, validation, auto-save on back
 - **RecipeDetailScreen.kt** - Recipe detail view: Photo (240dp), servings dropdown with auto-scaling, cook mode (checkable ingredients/instructions, timer, keep awake), long-press ingredient for substitution lookup, tabbed instruction sections, tags, notes, favorite/edit/delete actions, Coil AsyncImage
 - **ImportSourceSelectionScreen.kt** - Import source selection: Choose URL/PDF/Photo import source with cards (all three enabled)
-- **ImportUrlScreen.kt** - URL import flow: URL input → loading → recipe preview/edit with photo → save, auto-save on back navigation, Coil AsyncImage
+- **ImportUrlScreen.kt** - URL import flow: URL input → loading → recipe preview/edit with photo → save, auto-save on back navigation, tag auto-suggestion from existing tags (appears after 2 chars), TagModificationDialog for reviewing standardization changes, Coil AsyncImage
 - **ImportPdfScreen.kt** - PDF import flow: File picker (ActivityResultContracts.GetContent) → loading → recipe preview/edit → save, auto-save on back navigation
 - **ImportPhotoScreen.kt** - Photo import flow: Camera/gallery pickers (GetMultipleContents for multiple photos) → photo preview grid → loading → recipe preview/edit → save, auto-save on back navigation
 - **MealPlanningScreen.kt** - Meal planning list: Card-based list with search, duplicate/delete dialogs, shows all recipes and tags, enhanced recipe cards with servings/time/tags, full-screen recipe picker grid, auto-naming from dates
+- **AddEditMealPlanScreen.kt** - Meal plan add/edit form: Name field, optional start/end date selection with Material3 AppDatePickerDialog, full-screen recipe picker grid (2 columns, search), notes field, auto-save on back navigation, auto-naming from selected dates
 - **GroceryListScreen.kt** - Grocery lists: Card-based list with progress indicators (checked/total), create/delete dialogs, search
 - **GroceryListDetailScreen.kt** - Grocery list detail: Quick-entry text field at top, item checkboxes, item detail dialog showing source recipes, Select All/Deselect All buttons, bottom actions for clear checked/add recipes/add meal plans
 - **SettingsScreen.kt** - Settings UI: Granular unit preferences (liquid volume, weight) with IMPERIAL/METRIC/BOTH radio buttons, temperature unit, display preferences, recipe defaults
@@ -275,13 +278,15 @@ com.recipeindex.app/
 
 ### UI - Components
 - **AppNavigationDrawer.kt** - Responsive navigation drawer: Modal for phones, permanent for tablets with collapse button, accepts content parameter, drawer header with logo/name, UI only
+- **DatePickerDialog.kt** - Reusable Material3 date picker dialog: AppDatePickerDialog component for selecting dates across the app, replaces placeholder "Set Today" dialogs, used by AddEditMealPlanScreen
 - **GroceryListPickerDialog.kt** - Reusable grocery list picker dialog: Select existing list or create new, used by RecipeListScreen/RecipeDetailScreen/MealPlanningScreen for "Add to Grocery List" actions
 - **MealPlanPickerDialog.kt** - Reusable meal plan picker dialog: Select existing plan or create new, used by RecipeListScreen/RecipeDetailScreen for "Add to Meal Plan" actions from calendar icon
 - **SubstitutionDialog.kt** - Ingredient substitution lookup dialog: Shows substitutes for ingredient from recipe (triggered by long-press), displays converted amounts based on quantity/unit from parsed ingredient string, substitutes ordered by suitability, shows dietary tags
+- **TagModificationDialog.kt** - Tag standardization review dialog: Shows original→standardized tag transformations during recipe import, allows users to edit each tag before accepting, prevents silent modifications (e.g., "vegan bowls"→"vegan"), used by ImportUrlScreen/ImportPdfScreen/ImportPhotoScreen
 
 ### UI - ViewModels
 - **RecipeViewModel.kt** - Recipe UI state: StateFlow for recipes/currentRecipe/isLoading/error, delegates all business logic to RecipeManager, event functions (loadRecipes, createRecipe, updateRecipe, deleteRecipe, toggleFavorite, searchRecipes)
-- **ImportViewModel.kt** - URL import UI state: StateFlow<UiState> (Input → Loading → Editing → Saved), fetchRecipeFromUrl(), updateRecipe(), saveRecipe(), reset()
+- **ImportViewModel.kt** - URL import UI state: StateFlow<UiState> (Input → Loading → Editing(recipe, errorMessage, tagModifications) → Saved), fetchRecipeFromUrl() with tag standardization tracking, applyTagModifications(), getAllExistingTags() for auto-suggestion, updateRecipe(), saveRecipe(), reset()
 - **ImportPdfViewModel.kt** - PDF import UI state: StateFlow<UiState> (SelectFile → Loading → Editing → Saved), fetchRecipeFromPdf(Uri), updateRecipe(), saveRecipe(), reset()
 - **ImportPhotoViewModel.kt** - Photo import UI state: StateFlow<UiState> (SelectPhoto → Loading → Editing → Saved), fetchRecipeFromPhoto(Uri), fetchRecipeFromPhotos(List<Uri>), updateRecipe(), saveRecipe(), reset()
 - **SubstitutionViewModel.kt** - Substitution UI state: StateFlow for searchQuery/selectedCategory/selectedDietaryTag/substitutions/categories, reactive filtering using Flow operators (combine, flatMapLatest, map), getSubstitutionByIngredient(), observeSubstitutionById(), createOrUpdateSubstitution(), deleteSubstitution(), calculateConvertedAmount(), formatAmount(), initializeDefaultSubstitutions(), delegates CRUD to SubstitutionManager
@@ -306,7 +311,7 @@ com.recipeindex.app/
 - **ErrorHandler.kt** - Error handling utility: User-friendly error messages (network, validation, state errors), handleResult() for Result<T> processing, executeSafely() and executeWithRetry() for suspending operations
 - **IngredientScaler.kt** - Ingredient quantity parsing and scaling: scaleIngredient() parses fractions (1/2), mixed numbers (1 1/2), decimals, ranges (2-3), scales by factor, formats output preferring common fractions (1/4, 1/2, 3/4), preserves units
 - **IngredientUnitConverter.kt** - Ingredient unit formatting based on user preferences: formatIngredient() detects liquid vs weight units, applies liquidVolumePreference and weightPreference conversions, supports BOTH mode showing "1 cup (237 ml)" inline, uses UnitConverter for conversions
-- **TagStandardizer.kt** - Tag normalization utility: Converts tag variations to standard forms (e.g., "italian food" → "italian"), removes noise words ("recipe", "food"), maps common patterns, deduplicates, used by TextRecipeParser during import
+- **TagStandardizer.kt** - Tag normalization utility: Converts tag variations to standard forms (e.g., "italian food" → "italian"), removes noise words ("recipe", "food"), maps common patterns, deduplicates, standardize() returns cleaned tags, standardizeWithTracking() returns TagModification objects showing original→standardized transformations with wasModified flag, used by TextRecipeParser and ImportViewModel during import
 - **TextFormatUtils.kt** - Text formatting utilities: highlightNumbersInText() uses AnnotatedString to bold numbers (temps/times) in instruction text with regex pattern matching, supports ranges (350-375°F) and decimals (1.5 hours)
 - **UnitConverter.kt** - Cooking unit conversions: Imperial↔Metric (volume: cups/tbsp/tsp↔ml/L, weight: oz/lb↔g/kg, temperature: F↔C), smart helpers (volumeToMetric chooses ml/L), formatNumber
 
