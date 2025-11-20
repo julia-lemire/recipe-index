@@ -303,7 +303,42 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 
 ## Recent Updates (Latest Session)
 
-### Import & Preview Enhancements
+### Recipe Creation Flow Simplification
+- ✅ **Tabbed Add Recipe Screen**: Consolidated recipe creation into single `ImportSourceSelectionScreen` with 2 tabs
+  - **Import tab**: Shows 3 import sources (URL, PDF, Photo)
+  - **Create tab**: Button to create recipe manually
+  - FAB now goes directly to this screen (removed expandable FAB menu)
+  - Reduces clicks and provides cleaner, more intuitive flow
+
+### Tag Filtering & Quality Improvements
+- ✅ **Schema.org Keywords Removed**: Stopped parsing `keywords` field which contained garbage phrases ("easy slow cooker chicken recipe", recipe titles, etc)
+- ✅ **HTML Category Parsing**: Added parsing of `<a rel="category">` and `<a rel="tag">` links from WordPress/CMS (captures legitimate categories like "Low Carb")
+- ✅ **Comprehensive Tag Filters**: Enhanced `TagStandardizer` with multiple filter layers
+  - Standalone noise words: "recipes", "meals", "ideas", "cooking", "dinner ideas"
+  - Junk phrases: "how to make", "for beginners", "best recipes"
+  - Long tags: >4 words automatically filtered as junk
+  - Branded diets: "Weight Watchers", "WW" removed
+- ✅ **Holiday Consolidation**: All holidays now map to "special occasion" (Valentine's, Christmas, Thanksgiving, etc)
+- ✅ **Ingredient Consolidation**: Specific cuts map to general protein to avoid duplicates
+  - "chicken thigh" → "chicken"
+  - "chicken breast" → "chicken"
+  - "ground beef" → "beef"
+- ✅ **Consistent Mappings**: Standardized air fryer, slow cooker, freezer-friendly, Whole30→paleo, egg-free, dairy-free
+
+### Tag Management UI
+- ✅ **Remove Button in Dialog**: Added minus icon button to `TagModificationDialog` to delete tags without accepting first
+  - Visual feedback: deleted tags show in red with strikethrough
+  - Restore button to undo deletion
+  - Eliminates need to accept then manually remove tags
+
+### Recipe List Improvements
+- ✅ **Delete from Card Menu**: Added "Delete" option to recipe card context menu (⋮ button)
+  - Shows in red with trash icon
+  - Allows deleting recipes directly from list view without opening detail screen
+
+### Previous Session Features
+
+#### Import & Preview Enhancements
 - ✅ **Preview-First Import UI**: Replaced text-field-heavy edit screen with `RecipePreviewContent` - clean, card-based layout showing recipe as it will appear
   - Inline tag editing with auto-suggestions directly in preview
   - Edit dialogs for title, metadata, ingredients, and instructions
@@ -311,14 +346,14 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
   - Prominent "Save Recipe" button with clear validation messages
   - WYSIWYG experience - users see final result while making quick edits
 
-### Meal Planning Workflow Improvements
+#### Meal Planning Workflow Improvements
 - ✅ **Tabbed Recipe Picker**: Simplified meal plan creation with two-tab interface in `RecipePickerBottomSheet`
   - **Import tab** (default): Shows URL/PDF/Photo import options for importing recipes directly while creating meal plan
   - **Existing tab**: Shows existing recipes to select from
   - Reduces clicks significantly - no more navigating between screens to import then select
   - After import, automatically switches to Existing tab to select newly imported recipe
 
-### Tag Management Improvements
+#### Tag Management Improvements
 - ✅ **Tag Modification Dialog**: Import screens show detailed dialog when tags are standardized, displaying original→standardized transformations
 - ✅ **Tag Auto-Suggestion**: Import screens suggest existing tags as you type (appears after 2 characters), with smart filtering to avoid duplicates/subsets
 - ✅ **Tag Tracking**: Added `TagStandardizer.standardizeWithTracking()` method returning `TagModification` objects
@@ -326,14 +361,14 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
   - Filter Logcat by tag `RecipeIndex` + search `TAG_STANDARDIZATION` to review imports
   - Helps identify patterns for improving standardizer mappings and noise words
 
-### UI/UX Enhancements
+#### UI/UX Enhancements
 - ✅ **Reusable Date Picker**: Created `AppDatePickerDialog` component (Material3 DatePicker) in `ui/components/`
 - ✅ **Fixed Meal Planner Date Picker**: Replaced placeholder "Set Today" dialog with full-featured Material3 date picker
 - ✅ **Icon-Over-Text Buttons**: Grocery list detail screen uses consistent icon-over-text pattern for all actions
 - ✅ **Smart Toggle Button**: Consolidated "Select All" and "Deselect All" into single toggle that changes based on state
 - ✅ **Compact Meal Plan Cards**: Action buttons (Edit, Generate List) now appear inline with date range
 
-### Bug Fixes
+#### Bug Fixes
 - ✅ **Grocery List Generation**: Fixed `addMealPlanToList()` not returning result
 - ✅ **Build Errors**: Fixed `Icons.Default.Star` references to use `Icons.Default.Favorite`
 - ✅ **Flow Handling**: Fixed `getAllExistingTags()` to properly collect from Flow using `.first()`

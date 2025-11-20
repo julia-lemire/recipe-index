@@ -46,6 +46,46 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 20, 2025: Remove Button in Tag Modification Dialog
+- **Decision**: Added minus icon button to `TagModificationDialog` allowing users to mark individual tags for deletion before accepting changes
+- **Rationale**: Users had to accept all changes then manually remove unwanted tags from the preview screen; direct deletion streamlines workflow and reduces friction
+- **Implementation**: IconButton with Remove icon next to Edit button, clicking sets tag to empty string, visual feedback shows red background with strikethrough text and "Marked for removal" message, Restore button to undo deletion
+
+#### Nov 20, 2025: Delete Option in Recipe Card Context Menu
+- **Decision**: Added "Delete" menu item to recipe card context menu (⋮ button) in `RecipeListScreen`
+- **Rationale**: Users had to open recipe detail screen to delete recipes, adding unnecessary navigation; list view should support common bulk management tasks
+- **Implementation**: DropdownMenuItem with Delete text and trash icon in red, calls `viewModel.deleteRecipe()` directly from list, positioned after "Add to Grocery List" and "Mark as Favorite" options
+
+#### Nov 20, 2025: Tabbed Add Recipe Screen
+- **Decision**: Consolidated recipe creation into single `ImportSourceSelectionScreen` with 2 tabs (Import showing URL/PDF/Photo cards, Create showing manual entry button), FAB goes directly to this screen
+- **Rationale**: Expandable FAB menu with Create/Import options required too many clicks and was visually cluttered; unified tabbed interface provides cleaner entry point for all recipe creation methods
+- **Implementation**: TabRow with Import/Create tabs using CloudDownload and Add icons, Import tab shows existing 3-card layout, Create tab shows single "Create Recipe" card, removed expandable FAB logic from RecipeListScreen
+
+#### Nov 20, 2025: Comprehensive Tag Filtering System
+- **Decision**: Enhanced `TagStandardizer` with multi-layered filtering: standalone noise tags set, junk phrase detection, >4 word filter, and branded diet removal
+- **Rationale**: Schema.org keywords field and HTML parsing introduced garbage tags ("recipes", "how to make...", "Weight Watchers WW"); needed systematic filtering beyond simple noise word removal
+- **Implementation**: Added `junkTags` set (recipes, meals, ideas, dinner ideas, weight watchers), `junkPhrases` list (how to make, for beginners), `isJunkTag()` function checks all conditions including word count >4, filters applied after noise word removal in `standardize()` and `standardizeWithTracking()`
+
+#### Nov 20, 2025: Holiday Consolidation to "Special Occasion"
+- **Decision**: Map all holiday-specific tags (Valentine's Day, Christmas, Thanksgiving, etc) to single "special occasion" tag in `TagStandardizer`
+- **Rationale**: Holiday tags fragment recipe organization (same recipe for multiple holidays), users think in terms of "special occasions" rather than specific holidays for meal planning
+- **Implementation**: Added 15+ holiday mappings to `standardMappings` (valentines day, christmas, thanksgiving, easter, halloween, new year, mother's/father's day, 4th of july, super bowl, game day) all mapping to "special occasion"
+
+#### Nov 20, 2025: Ingredient Type Consolidation
+- **Decision**: Map specific protein cuts to general protein type in `TagStandardizer` ("chicken thigh" → "chicken", "ground beef" → "beef")
+- **Rationale**: Specific cuts create duplicate tags for same protein type, users search by protein not cut, cut-level detail belongs in ingredients list not tags
+- **Implementation**: Added mappings for chicken breast/thigh recipes → chicken, ground beef recipes → beef, applied in `standardMappings` before noise word removal to ensure consistent consolidation
+
+#### Nov 20, 2025: Schema.org Keywords Field Removal
+- **Decision**: Stop parsing Schema.org `keywords` field in `SchemaOrgRecipeParser`, only parse `recipeCategory` and `recipeCuisine`
+- **Rationale**: Keywords field contained garbage phrases ("easy slow cooker chicken recipe"), recipe titles, and marketing copy instead of meaningful tags; contributed 90% of junk tags
+- **Implementation**: Removed `parseJsonArrayToStrings(json["keywords"])` from line 97 in parseRecipeFromJsonLd(), tags now only include recipeCategory + recipeCuisine + HTML categories
+
+#### Nov 20, 2025: HTML Category Link Parsing
+- **Decision**: Parse `<a rel="category">` and `<a rel="tag">` links from HTML document in `SchemaOrgRecipeParser` to supplement Schema.org tags
+- **Rationale**: WordPress and CMS sites store legitimate category taxonomies (Low Carb, Gluten Free) in HTML links rather than Schema.org fields, Schema.org alone misses valuable categorization
+- **Implementation**: Added `parseHtmlCategories()` function selecting `a[rel*=category], a[rel*=tag]` with JSoup, extracts text content, combines with Schema.org tags in `parseSchemaOrg()` via `parsedData.copy(tags = parsedData.tags + htmlCategories)`
+
 #### Nov 20, 2025: Preview-First Recipe Import UI
 - **Decision**: Replaced `EditRecipeContent` with `RecipePreviewContent` that shows imported recipes in a formatted, WYSIWYG preview with inline tag editing and per-field edit dialogs
 - **Rationale**: Users should see how the recipe will look before saving rather than staring at text fields; most imports don't need editing and inline tag editing is the most common adjustment
