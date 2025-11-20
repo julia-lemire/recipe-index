@@ -258,7 +258,7 @@ com.recipeindex.app/
 
 ### UI - MainActivity
 - **MainActivity.kt** - Orchestrator only: Setup dependencies (AppDatabase, RecipeManager, SubstitutionManager, HttpClient, parsers, ViewModelFactory), wire theme and navigation, NO business/navigation logic
-- **Navigation.kt** - All navigation logic: NavHost with routes for Home, RecipeIndex, MealPlanning, GroceryLists, SubstitutionGuide, Settings (drawer), AddRecipe, EditRecipe, RecipeDetail, AddEditSubstitution, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto, LaunchedEffect initializes substitution database with defaults
+- **Navigation.kt** - All navigation logic: NavHost with routes for Home, RecipeIndex, MealPlanning, GroceryLists, SubstitutionGuide, Settings (drawer), AddRecipe, EditRecipe, RecipeDetail, AddEditSubstitution, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto, uses LaunchedEffect for ViewModel data loading on detail/edit screens (prevents recomposition race conditions), DisposableEffect cleanup for shared ViewModel state, LaunchedEffect initializes substitution database with defaults
 
 ### UI - Screens
 - **HomeScreen.kt** - Landing page: This week's meal plans, recipe suggestions

@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 20, 2025: LaunchedEffect for Navigation Data Loading
+- **Decision**: Wrap ViewModel data loading calls in LaunchedEffect with proper keys and add DisposableEffect cleanup when navigating to detail/edit screens
+- **Rationale**: Calling ViewModel methods directly in composable body (e.g., Navigation.kt loadMealPlan) runs on every recomposition, causing race conditions where shared ViewModel state gets overwritten with wrong data, leading to meal plans showing incorrect metadata or data corruption
+- **Implementation**: Changed Navigation.kt EditMealPlan route to use LaunchedEffect(planId) { loadMealPlan(planId) } instead of direct call, added DisposableEffect cleanup to clear currentMealPlan on screen disposal, ensures data loads exactly once per navigation and state is cleared when leaving screen
+
 #### Nov 20, 2025: Cascading Recipe Deletion to Maintain Referential Integrity
 - **Decision**: RecipeManager.deleteRecipe() now removes recipe IDs from all meal plans before deleting the recipe, ensuring no orphaned references remain
 - **Rationale**: Deleting recipes without cleaning up meal plan references created data integrity issues where meal plans referenced non-existent recipes, causing 0 ingredients when generating grocery lists and confusing users with inaccurate counts
