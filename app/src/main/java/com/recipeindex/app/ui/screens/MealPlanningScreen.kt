@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -29,7 +30,7 @@ import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.ShareHelper
 import com.recipeindex.app.utils.filtersort.mealplan.*
-import com.recipeindex.app.utils.filtersort.ui.FilterChipRow
+import com.recipeindex.app.utils.filtersort.ui.FilterBottomSheet
 import com.recipeindex.app.utils.filtersort.ui.SortMenu
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -84,6 +85,10 @@ fun MealPlanningScreen(
     var duplicateName by remember { mutableStateOf("") }
     var showListPicker by remember { mutableStateOf(false) }
     var planForGroceryList by remember { mutableStateOf<MealPlan?>(null) }
+    var showFilterSheet by remember { mutableStateOf(false) }
+    val filterSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true  // Always open to full height
+    )
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -143,6 +148,17 @@ fun MealPlanningScreen(
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
+                    IconButton(onClick = { showFilterSheet = true }) {
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = "Filters",
+                            tint = if (activeFilterIds.isNotEmpty()) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                LocalContentColor.current
+                            }
+                        )
+                    }
                     SortMenu(
                         availableSorts = availableSorts,
                         currentSort = currentSort,
@@ -193,14 +209,6 @@ fun MealPlanningScreen(
                     singleLine = true
                 )
             }
-
-            // Filter chips
-            FilterChipRow(
-                availableFilters = availableFilters,
-                activeFilterIds = activeFilterIds,
-                onFilterToggle = { mealPlanViewModel.toggleFilter(it) },
-                onClearAll = { mealPlanViewModel.clearFilters() }
-            )
 
             when {
                 isLoading -> {
@@ -408,6 +416,18 @@ fun MealPlanningScreen(
                 showListPicker = false
                 planForGroceryList = null
             }
+        )
+    }
+
+    // Filter bottom sheet
+    if (showFilterSheet) {
+        FilterBottomSheet(
+            availableFilters = availableFilters,
+            activeFilterIds = activeFilterIds,
+            onFilterToggle = { mealPlanViewModel.toggleFilter(it) },
+            onClearAll = { mealPlanViewModel.clearFilters() },
+            onDismiss = { showFilterSheet = false },
+            sheetState = filterSheetState
         )
     }
 }

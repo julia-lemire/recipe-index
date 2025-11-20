@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -39,7 +41,7 @@ import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.ShareHelper
 import com.recipeindex.app.utils.filtersort.recipe.*
-import com.recipeindex.app.utils.filtersort.ui.FilterChipRow
+import com.recipeindex.app.utils.filtersort.ui.FilterBottomSheet
 import com.recipeindex.app.utils.filtersort.ui.SortMenu
 
 /**
@@ -93,6 +95,11 @@ fun RecipeListScreen(
     val activeFilterIds by viewModel.filterSortManager.activeFilterIds.collectAsState()
     val currentSort by viewModel.filterSortManager.currentSort.collectAsState()
 
+    var showFilterSheet by remember { mutableStateOf(false) }
+    val filterSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true  // Always open to full height
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -105,6 +112,17 @@ fun RecipeListScreen(
                 actions = {
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
+                    IconButton(onClick = { showFilterSheet = true }) {
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = "Filters",
+                            tint = if (activeFilterIds.isNotEmpty()) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                LocalContentColor.current
+                            }
+                        )
                     }
                     SortMenu(
                         availableSorts = availableSorts,
@@ -156,14 +174,6 @@ fun RecipeListScreen(
                     singleLine = true
                 )
             }
-
-            // Filter chips
-            FilterChipRow(
-                availableFilters = availableFilters,
-                activeFilterIds = activeFilterIds,
-                onFilterToggle = { viewModel.toggleFilter(it) },
-                onClearAll = { viewModel.clearFilters() }
-            )
 
             // Check orientation for layout choice
             val configuration = LocalConfiguration.current
@@ -290,6 +300,18 @@ fun RecipeListScreen(
                     recipeForMealPlan = null
                 }
             }
+        )
+    }
+
+    // Filter bottom sheet
+    if (showFilterSheet) {
+        FilterBottomSheet(
+            availableFilters = availableFilters,
+            activeFilterIds = activeFilterIds,
+            onFilterToggle = { viewModel.toggleFilter(it) },
+            onClearAll = { viewModel.clearFilters() },
+            onDismiss = { showFilterSheet = false },
+            sheetState = filterSheetState
         )
     }
 }
