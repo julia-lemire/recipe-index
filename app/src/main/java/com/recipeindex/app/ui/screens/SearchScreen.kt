@@ -164,24 +164,24 @@ private fun SearchResultCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            if (recipe.description.isNotBlank()) {
+            if (recipe.notes != null && recipe.notes.isNotBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = recipe.description,
+                    text = recipe.notes,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2
                 )
             }
 
-            if (recipe.cookTime > 0 || recipe.servings > 0) {
+            if ((recipe.cookTimeMinutes != null && recipe.cookTimeMinutes > 0) || recipe.servings > 0) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    if (recipe.cookTime > 0) {
+                    if (recipe.cookTimeMinutes != null && recipe.cookTimeMinutes > 0) {
                         Text(
-                            text = "${recipe.cookTime} min",
+                            text = "${recipe.cookTimeMinutes} min",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
