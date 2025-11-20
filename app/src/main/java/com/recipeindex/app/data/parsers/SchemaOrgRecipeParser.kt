@@ -87,11 +87,29 @@ class SchemaOrgRecipeParser(
      * Parse Recipe from Schema.org JSON-LD object
      */
     private fun parseRecipeFromJsonLd(json: JsonObject): ParsedRecipeData {
+        // Log available fields for debugging
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "Recipe JSON-LD fields: ${json.keys.joinToString(", ")}"
+        )
+
+        val ingredients = parseJsonArrayToStrings(json["recipeIngredient"])
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "Parsed ${ingredients.size} ingredients from recipeIngredient field"
+        )
+
+        val instructions = parseInstructions(json["recipeInstructions"])
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "Parsed ${instructions.size} instructions from recipeInstructions field"
+        )
+
         return ParsedRecipeData(
             title = json["name"]?.jsonPrimitive?.contentOrNull,
             description = json["description"]?.jsonPrimitive?.contentOrNull,
-            ingredients = parseJsonArrayToStrings(json["recipeIngredient"]),
-            instructions = parseInstructions(json["recipeInstructions"]),
+            ingredients = ingredients,
+            instructions = instructions,
             servings = parseServings(json["recipeYield"]),
             prepTimeMinutes = parseIsoDuration(json["prepTime"]?.jsonPrimitive?.contentOrNull),
             cookTimeMinutes = parseIsoDuration(json["cookTime"]?.jsonPrimitive?.contentOrNull),
