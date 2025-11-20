@@ -98,6 +98,15 @@
 - **Import Screens**: `ui/screens/ImportSourceSelectionScreen.kt`, `ui/screens/ImportUrlScreen.kt`
 - **ViewModel**: `ui/viewmodels/ImportViewModel.kt`
 
+### Share/Import Content
+- **Share Helper**: `utils/ShareHelper.kt` (shareRecipe/shareMealPlan/shareGroceryList, photo encoding/decoding, duplicate detection)
+- **Models**: `utils/ShareModels.kt` (SharePackage, ImportResult, DuplicateAction)
+- **Import Manager**: `data/managers/ImportManager.kt` (importFromJson with duplicate detection, importRecipeWithAction, importMealPlanFromJson, importGroceryListFromJson)
+- **Import Dialogs**: `ui/components/ImportDialog.kt` (RecipeDuplicateDialog, MealPlanImportDialog, GroceryListImportDialog)
+- **Manual Import**: `ui/screens/SettingsScreen.kt` (file picker with OpenDocument contract)
+- **Intent Handling**: `ui/MainActivity.kt` (handleIncomingIntent for ACTION_SEND/ACTION_VIEW, AndroidManifest intent filters)
+- **Share Buttons**: RecipeCard/MealPlanCard context menus, GroceryListCard action row, GroceryListDetailScreen top bar
+
 ### Handle App Settings
 - **Settings**: `data/AppSettings.kt`
 - **StateFlow-based**: Exposes preferences as StateFlow for reactive UI
