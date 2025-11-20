@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -23,6 +24,7 @@ import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.ui.viewmodels.MealPlanViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.ShareHelper
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -58,6 +60,7 @@ fun MealPlanningScreen(
     var planForGroceryList by remember { mutableStateOf<MealPlan?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -142,6 +145,9 @@ fun MealPlanningScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             items(mealPlans, key = { it.id }) { mealPlan ->
+                                val planRecipes = recipes.filter { it.id in mealPlan.recipeIds }
+                                val recipePhotos = planRecipes.associate { it.id to (it.photoPath ?: "") }
+
                                 MealPlanCard(
                                     mealPlan = mealPlan,
                                     recipes = recipes,
@@ -154,6 +160,9 @@ fun MealPlanningScreen(
                                         planToDuplicate = mealPlan
                                         duplicateName = "${mealPlan.name} (Copy)"
                                         showDuplicateDialog = true
+                                    },
+                                    onShare = {
+                                        ShareHelper.shareMealPlan(context, mealPlan, planRecipes, recipePhotos)
                                     },
                                     onGenerateList = {
                                         planForGroceryList = mealPlan
@@ -170,6 +179,9 @@ fun MealPlanningScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             items(mealPlans, key = { it.id }) { mealPlan ->
+                                val planRecipes = recipes.filter { it.id in mealPlan.recipeIds }
+                                val recipePhotos = planRecipes.associate { it.id to (it.photoPath ?: "") }
+
                                 MealPlanCard(
                                     mealPlan = mealPlan,
                                     recipes = recipes,
@@ -182,6 +194,9 @@ fun MealPlanningScreen(
                                         planToDuplicate = mealPlan
                                         duplicateName = "${mealPlan.name} (Copy)"
                                         showDuplicateDialog = true
+                                    },
+                                    onShare = {
+                                        ShareHelper.shareMealPlan(context, mealPlan, planRecipes, recipePhotos)
                                     },
                                     onGenerateList = {
                                         planForGroceryList = mealPlan
@@ -323,6 +338,7 @@ private fun MealPlanCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onDuplicate: () -> Unit,
+    onShare: () -> Unit,
     onGenerateList: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -369,6 +385,16 @@ private fun MealPlanCard(
                             },
                             leadingIcon = {
                                 Icon(Icons.Default.ContentCopy, contentDescription = null)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Share") },
+                            onClick = {
+                                showMenu = false
+                                onShare()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Share, contentDescription = null)
                             }
                         )
                         DropdownMenuItem(

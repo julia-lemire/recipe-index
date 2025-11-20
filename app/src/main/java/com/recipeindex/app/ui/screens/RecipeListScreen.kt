@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,6 +35,7 @@ import com.recipeindex.app.ui.components.GroceryListPickerDialog
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.ShareHelper
 
 /**
  * Recipe Index Screen - Browse and search recipes
@@ -60,6 +63,7 @@ fun RecipeListScreen(
     var recipeForGroceryList by remember { mutableStateOf<Recipe?>(null) }
     var showMealPlanPicker by remember { mutableStateOf(false) }
     var recipeForMealPlan by remember { mutableStateOf<Recipe?>(null) }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -128,6 +132,9 @@ fun RecipeListScreen(
                                     recipeForMealPlan = recipe
                                     showMealPlanPicker = true
                                 },
+                                onShare = {
+                                    ShareHelper.shareRecipe(context, recipe, recipe.photoPath)
+                                },
                                 onDelete = {
                                     viewModel.deleteRecipe(recipe.id) {}
                                 }
@@ -154,6 +161,9 @@ fun RecipeListScreen(
                                 onAddToMealPlan = {
                                     recipeForMealPlan = recipe
                                     showMealPlanPicker = true
+                                },
+                                onShare = {
+                                    ShareHelper.shareRecipe(context, recipe, recipe.photoPath)
                                 },
                                 onDelete = {
                                     viewModel.deleteRecipe(recipe.id) {}
@@ -241,6 +251,7 @@ private fun RecipeCard(
     onToggleFavorite: () -> Unit,
     onAddToGroceryList: () -> Unit,
     onAddToMealPlan: () -> Unit,
+    onShare: () -> Unit,
     onDelete: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -324,6 +335,16 @@ private fun RecipeCard(
                                     },
                                     leadingIcon = {
                                         Icon(Icons.Default.ShoppingCart, contentDescription = null)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Share") },
+                                    onClick = {
+                                        showMenu = false
+                                        onShare()
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Share, contentDescription = null)
                                     }
                                 )
                                 if (!recipe.isFavorite) {

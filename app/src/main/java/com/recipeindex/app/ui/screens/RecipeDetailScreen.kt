@@ -498,7 +498,7 @@ fun RecipeDetailScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp)
+                            .padding(vertical = if (cookModeEnabled) 2.dp else 4.dp)
                             .combinedClickable(
                                 onClick = {
                                     if (cookModeEnabled) {
@@ -744,7 +744,7 @@ private fun InstructionsSection(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(vertical = 4.dp)
                         .clickable {
                             onInstructionToggle(index)
                         },
