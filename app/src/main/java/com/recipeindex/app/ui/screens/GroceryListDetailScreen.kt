@@ -21,6 +21,7 @@ import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.utils.DebugConfig
+import kotlinx.coroutines.launch
 
 /**
  * Grocery List Detail Screen - Shopping list with quick entry and checkboxes
@@ -45,6 +46,7 @@ fun GroceryListDetailScreen(
     val groceryList by groceryListViewModel.getCurrentList(listId).collectAsState(initial = null)
     val items by groceryListViewModel.getItems(listId).collectAsState(initial = emptyList())
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     var manualEntryText by remember { mutableStateOf("") }
     var showItemDetailDialog by remember { mutableStateOf(false) }
@@ -341,7 +343,19 @@ fun GroceryListDetailScreen(
             availableRecipes = availableRecipes,
             onDismiss = { showRecipePicker = false },
             onRecipesSelected = { recipeIds ->
-                groceryListViewModel.addRecipesToList(listId, recipeIds)
+                groceryListViewModel.addRecipesToList(listId, recipeIds) { count ->
+                    scope.launch {
+                        val message = if (count > 0) {
+                            "Added $count ingredient${if (count == 1) "" else "s"}"
+                        } else {
+                            "No ingredients found - recipes may be empty"
+                        }
+                        snackbarHostState.showSnackbar(
+                            message = message,
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                }
                 showRecipePicker = false
             }
         )
@@ -353,7 +367,19 @@ fun GroceryListDetailScreen(
             availableMealPlans = availableMealPlans,
             onDismiss = { showMealPlanPicker = false },
             onMealPlanSelected = { planId ->
-                groceryListViewModel.addMealPlanToList(listId, planId)
+                groceryListViewModel.addMealPlanToList(listId, planId) { count ->
+                    scope.launch {
+                        val message = if (count > 0) {
+                            "Added $count ingredient${if (count == 1) "" else "s"}"
+                        } else {
+                            "No ingredients found - recipes may be missing"
+                        }
+                        snackbarHostState.showSnackbar(
+                            message = message,
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                }
                 showMealPlanPicker = false
             }
         )
