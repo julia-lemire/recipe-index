@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.ui.components.SubstitutionDialog
+import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.ui.viewmodels.SettingsViewModel
 import com.recipeindex.app.ui.viewmodels.SubstitutionViewModel
 import com.recipeindex.app.utils.DebugConfig
@@ -55,6 +56,7 @@ fun RecipeDetailScreen(
     recipe: Recipe,
     settingsViewModel: SettingsViewModel,
     substitutionViewModel: SubstitutionViewModel,
+    recipeViewModel: RecipeViewModel,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onBack: () -> Unit,
@@ -565,6 +567,14 @@ fun RecipeDetailScreen(
                 }
             }
 
+            // Recipe Log (only show when not in cook mode)
+            if (!cookModeEnabled) {
+                RecipeLogSection(
+                    recipeId = recipe.id,
+                    recipeViewModel = recipeViewModel
+                )
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
@@ -948,4 +958,262 @@ private fun parseQuantity(quantityStr: String): Double? {
 
     // Handle decimals and whole numbers
     return trimmed.toDoubleOrNull()
+}
+
+/**
+ * RecipeLogSection - Shows when the recipe was last made and history
+ */
+@Composable
+private fun RecipeLogSection(
+    recipeId: Long,
+    recipeViewModel: RecipeViewModel
+) {
+    val logs by recipeViewModel.getLogsForRecipe(recipeId).collectAsState(initial = emptyList())
+    var expanded by remember { mutableStateOf(false) }
+    var showMarkAsMadeDialog by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Header with expand/collapse and "Mark as Made" button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Cooking Log",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Mark as Made button
+                TextButton(onClick = { showMarkAsMadeDialog = true }) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = "Mark as Made",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Mark as Made")
+                }
+
+                // Expand/Collapse if there are logs
+                if (logs.isNotEmpty()) {
+                    IconButton(onClick = { expanded = !expanded }) {
+                        Icon(
+                            if (expanded) Icons.Default.ArrowDropDown else Icons.Default.ArrowBack,
+                            contentDescription = if (expanded) "Collapse" else "Expand"
+                        )
+                    }
+                }
+            }
+        }
+
+        // Summary info
+        if (logs.isNotEmpty()) {
+            val lastLog = logs.first() // Already sorted by timestamp DESC
+            val timeAgo = formatTimeAgo(lastLog.timestamp)
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Last made $timeAgo",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Made ${logs.size} time${if (logs.size == 1) "" else "s"}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            Text(
+                text = "Not made yet",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        // Expanded log history
+        if (expanded && logs.isNotEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "History",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+
+                    logs.forEach { log ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(
+                                    text = formatDate(log.timestamp),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                log.notes?.let { notes ->
+                                    Text(
+                                        text = notes,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                log.rating?.let { rating ->
+                                    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        repeat(rating) {
+                                            Icon(
+                                                Icons.Default.Star,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            IconButton(
+                                onClick = {
+                                    recipeViewModel.deleteLog(log.id)
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = "Delete log",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+
+                        if (log != logs.last()) {
+                            Divider()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Mark as Made Dialog
+    if (showMarkAsMadeDialog) {
+        var notes by remember { mutableStateOf("") }
+        var rating by remember { mutableIntStateOf(0) }
+
+        AlertDialog(
+            onDismissRequest = { showMarkAsMadeDialog = false },
+            title = { Text("Mark as Made") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Rating
+                    Text(
+                        text = "Rating (optional)",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        (1..5).forEach { star ->
+                            IconButton(
+                                onClick = { rating = if (rating == star) 0 else star }
+                            ) {
+                                Icon(
+                                    Icons.Default.Star,
+                                    contentDescription = "$star stars",
+                                    tint = if (star <= rating)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                                )
+                            }
+                        }
+                    }
+
+                    // Notes
+                    OutlinedTextField(
+                        value = notes,
+                        onValueChange = { notes = it },
+                        label = { Text("Notes (optional)") },
+                        placeholder = { Text("e.g., Added extra garlic") },
+                        maxLines = 3,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        recipeViewModel.markRecipeAsMade(
+                            recipeId = recipeId,
+                            notes = notes.ifBlank { null },
+                            rating = if (rating > 0) rating else null
+                        )
+                        showMarkAsMadeDialog = false
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMarkAsMadeDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+/**
+ * Format timestamp as relative time (e.g., "2 days ago")
+ */
+private fun formatTimeAgo(timestamp: Long): String {
+    val now = System.currentTimeMillis()
+    val diff = now - timestamp
+    val seconds = diff / 1000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+    val days = hours / 24
+    val weeks = days / 7
+    val months = days / 30
+
+    return when {
+        months > 0 -> "${months} month${if (months == 1L) "" else "s"} ago"
+        weeks > 0 -> "${weeks} week${if (weeks == 1L) "" else "s"} ago"
+        days > 0 -> "${days} day${if (days == 1L) "" else "s"} ago"
+        hours > 0 -> "${hours} hour${if (hours == 1L) "" else "s"} ago"
+        minutes > 0 -> "${minutes} minute${if (minutes == 1L) "" else "s"} ago"
+        else -> "just now"
+    }
+}
+
+/**
+ * Format timestamp as readable date
+ */
+private fun formatDate(timestamp: Long): String {
+    val date = java.util.Date(timestamp)
+    val format = java.text.SimpleDateFormat("MMM d, yyyy 'at' h:mm a", java.util.Locale.getDefault())
+    return format.format(date)
 }
