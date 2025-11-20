@@ -9,11 +9,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.data.entities.GroceryList
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.ShareHelper
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -38,6 +40,7 @@ fun GroceryListScreen(
     var listToDelete by remember { mutableStateOf<GroceryList?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var newListName by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -114,10 +117,15 @@ fun GroceryListScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(groceryLists, key = { it.id }) { groceryList ->
+                            val items by groceryListViewModel.getItemsForList(groceryList.id).collectAsState(initial = emptyList())
+
                             GroceryListCard(
                                 groceryList = groceryList,
                                 groceryListViewModel = groceryListViewModel,
                                 onView = { onViewList(groceryList.id) },
+                                onShare = {
+                                    ShareHelper.shareGroceryList(context, groceryList, items)
+                                },
                                 onDelete = {
                                     listToDelete = groceryList
                                     showDeleteDialog = true
@@ -198,6 +206,7 @@ private fun GroceryListCard(
     groceryList: GroceryList,
     groceryListViewModel: GroceryListViewModel,
     onView: () -> Unit,
+    onShare: () -> Unit,
     onDelete: () -> Unit
 ) {
     val itemCount by groceryListViewModel.getItemCount(groceryList.id).collectAsState(initial = 0)
@@ -265,6 +274,14 @@ private fun GroceryListCard(
                     Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("View")
+                }
+                OutlinedButton(
+                    onClick = onShare,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Share")
                 }
                 OutlinedButton(
                     onClick = onDelete,

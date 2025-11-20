@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.data.entities.GroceryItem
@@ -21,6 +22,7 @@ import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.ShareHelper
 import kotlinx.coroutines.launch
 
 /**
@@ -47,6 +49,7 @@ fun GroceryListDetailScreen(
     val items by groceryListViewModel.getItems(listId).collectAsState(initial = emptyList())
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     var manualEntryText by remember { mutableStateOf("") }
     var showItemDetailDialog by remember { mutableStateOf(false) }
@@ -75,6 +78,13 @@ fun GroceryListDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        ShareHelper.shareGroceryList(context, groceryList!!, items)
+                    }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share")
                     }
                 }
             )
