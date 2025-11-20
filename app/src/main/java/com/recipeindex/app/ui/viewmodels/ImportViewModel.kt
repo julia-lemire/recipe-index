@@ -152,8 +152,8 @@ class ImportViewModel(
      * Get all existing tags from the recipe database for auto-suggestion
      */
     suspend fun getAllExistingTags(): List<String> {
-        return recipeManager.getAllRecipes()
-            .getOrNull()
+        val result = recipeManager.getAllRecipes()
+        return result.getOrNull()
             ?.flatMap { it.tags }
             ?.distinct()
             ?.sorted()
