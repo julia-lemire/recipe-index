@@ -175,14 +175,40 @@ object TagStandardizer {
      * @return List of TagModification objects showing what changed
      */
     fun standardizeWithTracking(tags: List<String>): List<TagModification> {
-        return tags
+        DebugConfig.debugLog(
+            DebugConfig.Category.TAG_STANDARDIZATION,
+            "=== Tag Standardization Started ==="
+        )
+        DebugConfig.debugLog(
+            DebugConfig.Category.TAG_STANDARDIZATION,
+            "Original tags (${tags.size}): ${tags.joinToString(", ") { "\"$it\"" }}"
+        )
+
+        // Track filtered out tags
+        val filteredOut = mutableListOf<Pair<String, String>>()
+
+        val modifications = tags
             .asSequence()
             .map { it.trim() }
-            .filter { it.isNotBlank() && it.length >= 2 }
+            .filter {
+                val isValid = it.isNotBlank() && it.length >= 2
+                if (!isValid) {
+                    filteredOut.add(it to "too short or blank")
+                }
+                isValid
+            }
             .map { original ->
                 val normalized = normalizeTag(original.lowercase())
                 val mapped = applyStandardMapping(normalized)
                 val final = removeNoiseWords(mapped)
+
+                // Log the transformation steps for modified tags
+                if (original.lowercase() != final) {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.TAG_STANDARDIZATION,
+                        "  \"$original\" -> normalized: \"$normalized\" -> mapped: \"$mapped\" -> final: \"$final\""
+                    )
+                }
 
                 TagModification(
                     original = original,
@@ -190,9 +216,50 @@ object TagStandardizer {
                     wasModified = original.lowercase() != final
                 )
             }
-            .filter { it.standardized.isNotBlank() }
-            .distinctBy { it.standardized }
+            .filter {
+                val isValid = it.standardized.isNotBlank()
+                if (!isValid) {
+                    filteredOut.add(it.original to "noise words removed all content")
+                }
+                isValid
+            }
             .toList()
+
+        // Track duplicates removed
+        val beforeDedup = modifications.size
+        val result = modifications.distinctBy { it.standardized }
+        val duplicatesRemoved = beforeDedup - result.size
+
+        // Log summary
+        DebugConfig.debugLog(
+            DebugConfig.Category.TAG_STANDARDIZATION,
+            "Modified tags: ${result.count { it.wasModified }}, Unchanged: ${result.count { !it.wasModified }}"
+        )
+
+        if (filteredOut.isNotEmpty()) {
+            DebugConfig.debugLog(
+                DebugConfig.Category.TAG_STANDARDIZATION,
+                "Filtered out (${filteredOut.size}): ${filteredOut.joinToString(", ") { "\"${it.first}\" (${it.second})" }}"
+            )
+        }
+
+        if (duplicatesRemoved > 0) {
+            DebugConfig.debugLog(
+                DebugConfig.Category.TAG_STANDARDIZATION,
+                "Duplicates removed: $duplicatesRemoved"
+            )
+        }
+
+        DebugConfig.debugLog(
+            DebugConfig.Category.TAG_STANDARDIZATION,
+            "Final tags (${result.size}): ${result.joinToString(", ") { "\"${it.standardized}\"" }}"
+        )
+        DebugConfig.debugLog(
+            DebugConfig.Category.TAG_STANDARDIZATION,
+            "=== Tag Standardization Complete ==="
+        )
+
+        return result
     }
 
     /**
