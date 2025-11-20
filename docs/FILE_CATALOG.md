@@ -117,6 +117,7 @@ com.recipeindex.app/
 │   ├── screens/
 │   │   ├── AddEditMealPlanScreen.kt
 │   │   ├── AddEditRecipeScreen.kt
+│   │   ├── AddEditSubstitutionScreen.kt
 │   │   ├── GroceryListDetailScreen.kt
 │   │   ├── GroceryListScreen.kt
 │   │   ├── HomeScreen.kt
@@ -127,6 +128,7 @@ com.recipeindex.app/
 │   │   ├── MealPlanningScreen.kt
 │   │   ├── RecipeDetailScreen.kt
 │   │   ├── RecipeListScreen.kt
+│   │   ├── SearchScreen.kt
 │   │   ├── SettingsScreen.kt
 │   │   └── SubstitutionGuideScreen.kt
 │   │
@@ -201,6 +203,7 @@ com.recipeindex.app/
 - MainActivity → Navigation.kt → RecipeViewModel → RecipeManager → RecipeDao
 - AppNavigationDrawer → Navigation.kt (content parameter)
 - Navigation.kt → All screens with ViewModel integration
+- SearchScreen → RecipeViewModel → RecipeManager (global recipe search accessible from drawer)
 
 ### Recipe Management Flow
 - RecipeListScreen → RecipeViewModel → RecipeManager → RecipeDao → AppDatabase
@@ -292,15 +295,16 @@ com.recipeindex.app/
 - **Converters.kt** - Room type converters: List<String> ↔ delimited string, RecipeSource ↔ string, List<Substitute> ↔ JSON string (kotlinx.serialization), RecipeSourceType ↔ string
 
 ### Navigation
-- **NavGraph.kt** - Navigation routes sealed class: Home, RecipeIndex, MealPlanning, GroceryLists, SubstitutionGuide, Settings (drawer screens), AddRecipe, EditRecipe, RecipeDetail, AddEditSubstitution, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto (detail/import screens)
+- **NavGraph.kt** - Navigation routes sealed class: Home, RecipeIndex, Search, MealPlanning, GroceryLists, SubstitutionGuide, Settings (drawer screens), AddRecipe, EditRecipe, RecipeDetail, AddEditSubstitution, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto (detail/import screens)
 
 ### UI - MainActivity
 - **MainActivity.kt** - Orchestrator only: Setup dependencies (AppDatabase, RecipeManager, SubstitutionManager, HttpClient, parsers, ViewModelFactory), wire theme and navigation, NO business/navigation logic
-- **Navigation.kt** - All navigation logic: NavHost with routes for Home, RecipeIndex, MealPlanning, GroceryLists, SubstitutionGuide, Settings (drawer), AddRecipe, EditRecipe, RecipeDetail, AddEditSubstitution, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto, uses LaunchedEffect for ViewModel data loading on detail/edit screens (prevents recomposition race conditions), DisposableEffect cleanup for shared ViewModel state, LaunchedEffect initializes substitution database with defaults
+- **Navigation.kt** - All navigation logic: NavHost with routes for Home, RecipeIndex, Search, MealPlanning, GroceryLists, SubstitutionGuide, Settings (drawer), AddRecipe, EditRecipe, RecipeDetail, AddEditSubstitution, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto, uses LaunchedEffect for ViewModel data loading on detail/edit screens (prevents recomposition race conditions), DisposableEffect cleanup for shared ViewModel state, LaunchedEffect initializes substitution database with defaults
 
 ### UI - Screens
 - **HomeScreen.kt** - Landing page: This week's meal plans, recipe suggestions
-- **RecipeListScreen.kt** - Recipe browsing: LazyColumn with RecipeCards (photo, title, servings/times, tags), single FAB goes to tabbed add recipe screen, favorite toggle, delete from card menu, empty state, Coil AsyncImage for photos (180dp)
+- **RecipeListScreen.kt** - Recipe browsing: LazyColumn with RecipeCards (photo, title, servings/times, tags), toggle-able search bar (matching MealPlanningScreen), single FAB goes to tabbed add recipe screen, favorite toggle, delete from card menu, FilterChipRow and SortMenu integrated, empty state, Coil AsyncImage for photos (180dp)
+- **SearchScreen.kt** - Global recipe search: Dedicated search screen accessible from navigation drawer, always-visible search bar at top, displays results as clickable cards with recipe details (title, description, cook time, servings), empty state and loading indicators, navigates to RecipeDetailScreen on card click
 - **AddEditRecipeScreen.kt** - Recipe add/edit form: Single screen with title, servings, times, ingredients, instructions, tags, notes, validation, auto-save on back
 - **RecipeDetailScreen.kt** - Recipe detail view: Photo (240dp), servings dropdown with auto-scaling, cook mode (checkable ingredients/instructions, timer, keep awake), long-press ingredient for substitution lookup, tabbed instruction sections, tags, notes, favorite/edit/delete actions, Coil AsyncImage
 - **ImportSourceSelectionScreen.kt** - Import/create source selection: Tabbed interface with Import tab (URL/PDF/Photo/File cards) and Create tab (manual entry button), unified entry point for all recipe creation methods, File card launches OpenDocument file picker storing JSON in MainActivity.pendingImportJson with success feedback

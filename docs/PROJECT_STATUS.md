@@ -221,6 +221,8 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Navigation drawer: Collapse button even in landscape/tablet mode for more screen space (FloatingActionButton to re-expand)
 - ✅ Landscape mode: Recipe and meal plan cards display in 2-column grid
 - ✅ Error handling: ErrorHandler utility, SnackbarHost for error display, BackHandler for system back button
+- ✅ Search bars: Toggle-able search bar added to RecipeListScreen (matching MealPlanningScreen and GroceryListScreen functionality)
+- ✅ Global search: Dedicated SearchScreen accessible from navigation drawer for searching recipes across the app, displays results as clickable cards with recipe details
 
 ### Advanced Features (Phase 5)
 - ✅ Portion scaling: Servings dropdown in RecipeDetailScreen (half, original, 2x, 3x, 4x) with automatic ingredient quantity scaling
