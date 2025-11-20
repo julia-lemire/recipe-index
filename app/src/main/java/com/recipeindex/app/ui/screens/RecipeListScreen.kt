@@ -216,6 +216,7 @@ fun RecipeListScreen(
             }
         }
     }
+    }
 
     // Grocery list picker dialog
     if (showListPicker && recipeForGroceryList != null) {
