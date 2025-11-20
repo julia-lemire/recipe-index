@@ -50,8 +50,7 @@ fun AddEditMealPlanScreen(
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var showRecipePicker by remember { mutableStateOf(false) }
-    var showStartDatePicker by remember { mutableStateOf(false) }
-    var showEndDatePicker by remember { mutableStateOf(false) }
+    var showDateRangePicker by remember { mutableStateOf(false) }
 
     // Auto-set name from dates if user hasn't manually edited it
     LaunchedEffect(startDate, endDate) {
@@ -124,67 +123,47 @@ fun AddEditMealPlanScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Name field
-            OutlinedTextField(
-                value = name,
-                onValueChange = {
-                    name = it
-                    userHasEditedName = true
-                },
-                label = { Text("Name *") },
-                placeholder = { Text("e.g., Nov 18-22, Thanksgiving Dinner") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                isError = showError && name.isBlank()
-            )
-
-            // Date range section
-            Text(
-                text = "Date Range (Optional)",
-                style = MaterialTheme.typography.titleMedium
-            )
-
+            // Name field with inline calendar button
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Top
             ) {
-                OutlinedButton(
-                    onClick = { showStartDatePicker = true },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Start Date", style = MaterialTheme.typography.labelSmall)
-                        Text(
-                            text = startDate?.let { formatDate(it) } ?: "Not set",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        userHasEditedName = true
+                    },
+                    label = { Text("Name *") },
+                    placeholder = { Text("e.g., Nov 18-22, Thanksgiving Dinner") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    isError = showError && name.isBlank(),
+                    supportingText = {
+                        if (startDate != null || endDate != null) {
+                            Text(
+                                text = formatDateRange(startDate, endDate),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
-                }
+                )
 
-                OutlinedButton(
-                    onClick = { showEndDatePicker = true },
-                    modifier = Modifier.weight(1f)
+                // Calendar icon button
+                IconButton(
+                    onClick = { showDateRangePicker = true },
+                    modifier = Modifier.padding(top = 8.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("End Date", style = MaterialTheme.typography.labelSmall)
-                        Text(
-                            text = endDate?.let { formatDate(it) } ?: "Not set",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
-
-            if (startDate != null || endDate != null) {
-                TextButton(
-                    onClick = {
-                        startDate = null
-                        endDate = null
-                    }
-                ) {
-                    Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Clear Dates")
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = "Select dates",
+                        tint = if (startDate != null || endDate != null) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
                 }
             }
 
@@ -377,26 +356,22 @@ fun AddEditMealPlanScreen(
         )
     }
 
-    // Date pickers
-    if (showStartDatePicker) {
-        AppDatePickerDialog(
-            initialDate = startDate,
-            onDateSelected = { selectedDate ->
-                startDate = selectedDate
-                showStartDatePicker = false
+    // Date range picker
+    if (showDateRangePicker) {
+        DateRangePickerDialog(
+            initialStartDate = startDate,
+            initialEndDate = endDate,
+            onDatesSelected = { start, end ->
+                startDate = start
+                endDate = end
+                showDateRangePicker = false
             },
-            onDismiss = { showStartDatePicker = false }
-        )
-    }
-
-    if (showEndDatePicker) {
-        AppDatePickerDialog(
-            initialDate = endDate,
-            onDateSelected = { selectedDate ->
-                endDate = selectedDate
-                showEndDatePicker = false
+            onClear = {
+                startDate = null
+                endDate = null
+                showDateRangePicker = false
             },
-            onDismiss = { showEndDatePicker = false }
+            onDismiss = { showDateRangePicker = false }
         )
     }
 }
@@ -411,7 +386,7 @@ private fun RecipePickerBottomSheet(
 ) {
     var tempSelectedIds by remember { mutableStateOf(selectedRecipeIds) }
     var searchQuery by remember { mutableStateOf("") }
-    var selectedTab by remember { mutableStateOf(0) } // 0 = Import, 1 = Existing
+    var selectedTab by remember { mutableStateOf(1) } // 0 = Import, 1 = Existing (default to Existing)
 
     val filteredRecipes = if (searchQuery.isBlank()) {
         availableRecipes
@@ -742,4 +717,72 @@ private fun formatDateRange(startDate: Long?, endDate: Long?): String {
     }
 
     return "Until ${SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(endDate!!))}"
+}
+
+/**
+ * Date Range Picker Dialog - allows selecting single date or date range
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DateRangePickerDialog(
+    initialStartDate: Long?,
+    initialEndDate: Long?,
+    onDatesSelected: (startDate: Long?, endDate: Long?) -> Unit,
+    onClear: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val dateRangePickerState = rememberDateRangePickerState(
+        initialSelectedStartDateMillis = initialStartDate,
+        initialSelectedEndDateMillis = initialEndDate
+    )
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onDatesSelected(
+                        dateRangePickerState.selectedStartDateMillis,
+                        dateRangePickerState.selectedEndDateMillis
+                    )
+                }
+            ) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (initialStartDate != null || initialEndDate != null) {
+                    TextButton(onClick = onClear) {
+                        Text("Clear")
+                    }
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            }
+        }
+    ) {
+        DateRangePicker(
+            state = dateRangePickerState,
+            title = {
+                Text(
+                    text = "Select date range (optional)",
+                    modifier = Modifier.padding(16.dp)
+                )
+            },
+            headline = {
+                val start = dateRangePickerState.selectedStartDateMillis
+                val end = dateRangePickerState.selectedEndDateMillis
+                Text(
+                    text = when {
+                        start != null && end != null -> "${formatDate(start)} - ${formatDate(end)}"
+                        start != null -> "From ${formatDate(start)}"
+                        else -> "Select dates"
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+        )
+    }
 }

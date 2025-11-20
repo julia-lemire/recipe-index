@@ -23,6 +23,7 @@ import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.ui.viewmodels.MealPlanViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.utils.DebugConfig
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -55,8 +56,11 @@ fun MealPlanningScreen(
     var duplicateName by remember { mutableStateOf("") }
     var showListPicker by remember { mutableStateOf(false) }
     var planForGroceryList by remember { mutableStateOf<MealPlan?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Meal Planning") },
@@ -260,14 +264,33 @@ fun MealPlanningScreen(
             availableLists = groceryLists,
             onDismiss = { showListPicker = false },
             onListSelected = { listId ->
-                groceryListViewModel.addMealPlanToList(listId, planForGroceryList!!.id)
+                val selectedList = groceryLists.find { it.id == listId }
+                val listName = selectedList?.name ?: "list"
+
+                groceryListViewModel.addMealPlanToList(listId, planForGroceryList!!.id) {
+                    // Success callback - show snackbar
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = "Added ${planForGroceryList!!.name} ingredients to $listName",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                }
                 showListPicker = false
                 planForGroceryList = null
             },
             onCreateNew = { listName ->
                 // Create list first, then add meal plan in the success callback
                 groceryListViewModel.createList(listName) { newListId ->
-                    groceryListViewModel.addMealPlanToList(newListId, planForGroceryList!!.id)
+                    groceryListViewModel.addMealPlanToList(newListId, planForGroceryList!!.id) {
+                        // Success callback - show snackbar
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = "Added ${planForGroceryList!!.name} ingredients to $listName",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                    }
                 }
                 showListPicker = false
                 planForGroceryList = null
