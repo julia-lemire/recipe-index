@@ -21,7 +21,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
+import com.recipeindex.app.ui.components.TagModificationDialog
 import com.recipeindex.app.ui.viewmodels.ImportViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Import URL Screen - Enter URL and preview/edit imported recipe
@@ -37,6 +40,25 @@ fun ImportUrlScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDiscardDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    var showTagModificationDialog by remember { mutableStateOf(false) }
+    var existingTags by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    // Load existing tags for auto-suggestion
+    LaunchedEffect(Unit) {
+        existingTags = withContext(Dispatchers.IO) {
+            viewModel.getAllExistingTags()
+        }
+    }
+
+    // Show tag modification dialog when recipe is loaded with modifications
+    LaunchedEffect(uiState) {
+        if (uiState is ImportViewModel.UiState.Editing) {
+            val editingState = uiState as ImportViewModel.UiState.Editing
+            if (editingState.tagModifications?.isNotEmpty() == true && !showTagModificationDialog) {
+                showTagModificationDialog = true
+            }
+        }
+    }
 
     // Show error messages via Snackbar
     LaunchedEffect(uiState) {
@@ -174,6 +196,7 @@ fun ImportUrlScreen(
                         .fillMaxSize()
                         .padding(paddingValues),
                     recipe = state.recipe,
+                    existingTags = existingTags,
                     onRecipeChange = { viewModel.updateRecipe(it) },
                     onSave = {
                         viewModel.saveRecipe(state.recipe)
@@ -188,6 +211,24 @@ fun ImportUrlScreen(
                     onSaveComplete()
                 }
             }
+        }
+    }
+
+    // Tag modification dialog
+    if (showTagModificationDialog && uiState is ImportViewModel.UiState.Editing) {
+        val editingState = uiState as ImportViewModel.UiState.Editing
+        editingState.tagModifications?.let { modifications ->
+            TagModificationDialog(
+                modifications = modifications,
+                onAccept = { acceptedTags ->
+                    viewModel.applyTagModifications(acceptedTags)
+                    showTagModificationDialog = false
+                },
+                onDismiss = {
+                    // Keep the standardized tags
+                    showTagModificationDialog = false
+                }
+            )
         }
     }
 }
@@ -306,11 +347,25 @@ private fun LoadingContent(
 private fun EditRecipeContent(
     modifier: Modifier = Modifier,
     recipe: Recipe,
+    existingTags: List<String>,
     onRecipeChange: (Recipe) -> Unit,
     onSave: () -> Unit,
     errorMessage: String?
 ) {
     var tagInput by remember { mutableStateOf("") }
+    var showTagSuggestions by remember { mutableStateOf(false) }
+
+    // Filter existing tags based on user input
+    val suggestedTags = remember(tagInput, existingTags, recipe.tags) {
+        if (tagInput.length >= 2) {
+            existingTags
+                .filter { it.contains(tagInput, ignoreCase = true) }
+                .filter { !recipe.tags.contains(it) }
+                .take(5)
+        } else {
+            emptyList()
+        }
+    }
 
     Column(
         modifier = modifier
@@ -478,7 +533,7 @@ private fun EditRecipeContent(
                     if (tagInput.isNotBlank()) {
                         IconButton(
                             onClick = {
-                                val newTag = tagInput.trim()
+                                val newTag = tagInput.trim().lowercase()
                                 if (newTag.isNotBlank() && !recipe.tags.contains(newTag)) {
                                     val updatedTags = recipe.tags + newTag
                                     onRecipeChange(recipe.copy(tags = updatedTags))
@@ -491,6 +546,31 @@ private fun EditRecipeContent(
                     }
                 }
             )
+
+            // Suggested tags
+            if (suggestedTags.isNotEmpty()) {
+                Text(
+                    text = "Suggested:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalSpacing = 6.dp,
+                    verticalSpacing = 6.dp
+                ) {
+                    suggestedTags.forEach { tag ->
+                        SuggestionChip(
+                            onClick = {
+                                val updatedTags = recipe.tags + tag
+                                onRecipeChange(recipe.copy(tags = updatedTags))
+                                tagInput = ""
+                            },
+                            label = { Text(tag, style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+                }
+            }
         }
 
         // Save button

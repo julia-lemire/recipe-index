@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.data.entities.Recipe
+import com.recipeindex.app.ui.components.AppDatePickerDialog
 import com.recipeindex.app.utils.DebugConfig
 import java.text.SimpleDateFormat
 import java.util.*
@@ -375,9 +376,9 @@ fun AddEditMealPlanScreen(
         )
     }
 
-    // Date pickers (placeholder - will be replaced with proper Material3 date picker when available)
+    // Date pickers
     if (showStartDatePicker) {
-        SimpleDatePickerDialog(
+        AppDatePickerDialog(
             initialDate = startDate,
             onDateSelected = { selectedDate ->
                 startDate = selectedDate
@@ -388,7 +389,7 @@ fun AddEditMealPlanScreen(
     }
 
     if (showEndDatePicker) {
-        SimpleDatePickerDialog(
+        AppDatePickerDialog(
             initialDate = endDate,
             onDateSelected = { selectedDate ->
                 endDate = selectedDate
@@ -532,46 +533,6 @@ private fun RecipePickerBottomSheet(
             }
         }
     }
-}
-
-@Composable
-private fun SimpleDatePickerDialog(
-    initialDate: Long?,
-    onDateSelected: (Long) -> Unit,
-    onDismiss: () -> Unit
-) {
-    // Simple placeholder date picker
-    // In a real app, use Material3 DatePickerDialog when available or a library
-    val calendar = Calendar.getInstance()
-    if (initialDate != null) {
-        calendar.timeInMillis = initialDate
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Select Date") },
-        text = {
-            Column {
-                Text("Date: ${formatDate(calendar.timeInMillis)}")
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Note: Full date picker coming soon. For now, set to today.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onDateSelected(calendar.timeInMillis) }) {
-                Text("Set Today")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
 }
 
 private fun formatDate(timestamp: Long): String {

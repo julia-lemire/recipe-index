@@ -6,6 +6,7 @@ import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.data.managers.RecipeManager
 import com.recipeindex.app.data.parsers.RecipeParser
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.TagStandardizer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,7 +40,25 @@ class ImportViewModel(
                         DebugConfig.Category.IMPORT,
                         "Successfully parsed recipe: ${recipe.title}"
                     )
-                    _uiState.value = UiState.Editing(recipe = recipe)
+
+                    // Track tag modifications if tags were standardized
+                    val tagModifications = if (recipe.tags.isNotEmpty()) {
+                        TagStandardizer.standardizeWithTracking(recipe.tags)
+                    } else {
+                        null
+                    }
+
+                    // Apply standardized tags to recipe
+                    val standardizedRecipe = if (tagModifications != null) {
+                        recipe.copy(tags = tagModifications.map { it.standardized })
+                    } else {
+                        recipe
+                    }
+
+                    _uiState.value = UiState.Editing(
+                        recipe = standardizedRecipe,
+                        tagModifications = tagModifications?.filter { it.wasModified }
+                    )
                 }.onFailure { error ->
                     DebugConfig.debugLog(
                         DebugConfig.Category.IMPORT,
@@ -130,6 +149,28 @@ class ImportViewModel(
     }
 
     /**
+     * Get all existing tags from the recipe database for auto-suggestion
+     */
+    suspend fun getAllExistingTags(): List<String> {
+        return recipeManager.getAllRecipes()
+            .getOrNull()
+            ?.flatMap { it.tags }
+            ?.distinct()
+            ?.sorted()
+            ?: emptyList()
+    }
+
+    /**
+     * Apply tag modifications from the dialog
+     */
+    fun applyTagModifications(tags: List<String>) {
+        val currentState = _uiState.value
+        if (currentState is UiState.Editing) {
+            _uiState.value = currentState.copy(recipe = currentState.recipe.copy(tags = tags))
+        }
+    }
+
+    /**
      * UI State for import flow
      */
     sealed class UiState {
@@ -137,7 +178,8 @@ class ImportViewModel(
         data object Loading : UiState()
         data class Editing(
             val recipe: Recipe,
-            val errorMessage: String? = null
+            val errorMessage: String? = null,
+            val tagModifications: List<TagStandardizer.TagModification>? = null
         ) : UiState()
         data object Saved : UiState()
     }
