@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.data.entities.Recipe
@@ -410,6 +411,7 @@ private fun RecipePickerBottomSheet(
 ) {
     var tempSelectedIds by remember { mutableStateOf(selectedRecipeIds) }
     var searchQuery by remember { mutableStateOf("") }
+    var selectedTab by remember { mutableStateOf(0) } // 0 = Import, 1 = Existing
 
     val filteredRecipes = if (searchQuery.isBlank()) {
         availableRecipes
@@ -425,17 +427,19 @@ private fun RecipePickerBottomSheet(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Select Recipes") },
+                title = { Text("Add Recipes") },
                 navigationIcon = {
                     IconButton(onClick = onDismiss) {
                         Icon(Icons.Default.Close, "Cancel")
                     }
                 },
                 actions = {
-                    TextButton(
-                        onClick = { onRecipesSelected(tempSelectedIds) }
-                    ) {
-                        Text("Done (${tempSelectedIds.size})")
+                    if (selectedTab == 1) {
+                        TextButton(
+                            onClick = { onRecipesSelected(tempSelectedIds) }
+                        ) {
+                            Text("Done (${tempSelectedIds.size})")
+                        }
                     }
                 }
             )
@@ -446,10 +450,44 @@ private fun RecipePickerBottomSheet(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Search field
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+            // Tab Row
+            TabRow(
+                selectedTabIndex = selectedTab,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    text = { Text("Import") },
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) }
+                )
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    text = { Text("Existing") },
+                    icon = { Icon(Icons.Default.CheckCircle, contentDescription = null) }
+                )
+            }
+
+            // Tab content
+            when (selectedTab) {
+                0 -> {
+                    // Import tab - show import options
+                    ImportRecipesTab(
+                        modifier = Modifier.fillMaxSize(),
+                        onImportComplete = {
+                            // Switch to existing recipes tab to select the newly imported recipe
+                            selectedTab = 1
+                        }
+                    )
+                }
+                1 -> {
+                    // Existing recipes tab
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // Search field
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
                 placeholder = { Text("Search recipes...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier
@@ -529,6 +567,132 @@ private fun RecipePickerBottomSheet(
                             }
                         }
                     }
+                }
+            }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Import Recipes Tab - Shows import options (URL/PDF/Photo)
+ */
+@Composable
+private fun ImportRecipesTab(
+    modifier: Modifier = Modifier,
+    onImportComplete: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Import New Recipe",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Text(
+            text = "Import a recipe to add to this meal plan",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Import options
+        ImportSourceCard(
+            icon = Icons.Default.InsertLink,
+            title = "From URL",
+            description = "Import from recipe websites",
+            onClick = { /* TODO: Navigate to import URL screen */ }
+        )
+
+        ImportSourceCard(
+            icon = Icons.Default.PictureAsPdf,
+            title = "From PDF",
+            description = "Import from PDF files",
+            onClick = { /* TODO: Navigate to PDF import */ },
+            enabled = false
+        )
+
+        ImportSourceCard(
+            icon = Icons.Default.CameraAlt,
+            title = "From Photo",
+            description = "Import using camera or gallery",
+            onClick = { /* TODO: Navigate to photo import */ },
+            enabled = false
+        )
+    }
+}
+
+/**
+ * Import source card for meal plan recipe import
+ */
+@Composable
+private fun ImportSourceCard(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true
+) {
+    Card(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = if (enabled) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                }
+            )
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (enabled) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    }
+                )
+
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (enabled) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    }
+                )
+
+                if (!enabled) {
+                    Text(
+                        text = "Coming soon",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                    )
                 }
             }
         }
