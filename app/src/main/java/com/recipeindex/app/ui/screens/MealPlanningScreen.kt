@@ -28,6 +28,9 @@ import com.recipeindex.app.ui.viewmodels.MealPlanViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.ShareHelper
+import com.recipeindex.app.utils.filtersort.mealplan.*
+import com.recipeindex.app.utils.filtersort.ui.FilterChipRow
+import com.recipeindex.app.utils.filtersort.ui.SortMenu
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -47,11 +50,31 @@ fun MealPlanningScreen(
 ) {
     DebugConfig.debugLog(DebugConfig.Category.UI, "MealPlanningScreen composed")
 
-    val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
+    val mealPlans by mealPlanViewModel.filterSortManager.filteredItems.collectAsState()
     val recipes by recipeViewModel.recipes.collectAsState()
     val isLoading by mealPlanViewModel.isLoading.collectAsState()
     val searchQuery by mealPlanViewModel.searchQuery.collectAsState()
     val groceryLists by groceryListViewModel.groceryLists.collectAsState()
+
+    // Available filters and sorts
+    val availableFilters = remember(recipes) {
+        listOf(
+            HasDatesFilter(),
+            RecipeCountFilter(minRecipes = 3),
+            RecipeCountFilter(minRecipes = 5),
+            HasNotesFilter()
+        )
+    }
+    val availableSorts = remember {
+        listOf(
+            StartDateSort(),
+            NameSort(),
+            DateCreatedSort(),
+            RecipeCountSort()
+        )
+    }
+    val activeFilterIds by mealPlanViewModel.filterSortManager.activeFilterIds.collectAsState()
+    val currentSort by mealPlanViewModel.filterSortManager.currentSort.collectAsState()
 
     var showSearchBar by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -120,6 +143,12 @@ fun MealPlanningScreen(
                     IconButton(onClick = { showSearchBar = !showSearchBar }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
+                    SortMenu(
+                        availableSorts = availableSorts,
+                        currentSort = currentSort,
+                        onSortSelected = { mealPlanViewModel.setSort(it) },
+                        onSortDirectionToggle = { mealPlanViewModel.toggleSortDirection() }
+                    )
                 }
             )
         },
@@ -164,6 +193,14 @@ fun MealPlanningScreen(
                     singleLine = true
                 )
             }
+
+            // Filter chips
+            FilterChipRow(
+                availableFilters = availableFilters,
+                activeFilterIds = activeFilterIds,
+                onFilterToggle = { mealPlanViewModel.toggleFilter(it) },
+                onClearAll = { mealPlanViewModel.clearFilters() }
+            )
 
             when {
                 isLoading -> {

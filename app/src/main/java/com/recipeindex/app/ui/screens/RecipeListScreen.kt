@@ -36,6 +36,9 @@ import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.ShareHelper
+import com.recipeindex.app.utils.filtersort.recipe.*
+import com.recipeindex.app.utils.filtersort.ui.FilterChipRow
+import com.recipeindex.app.utils.filtersort.ui.SortMenu
 
 /**
  * Recipe Index Screen - Browse and search recipes
@@ -55,7 +58,7 @@ fun RecipeListScreen(
 ) {
     DebugConfig.debugLog(DebugConfig.Category.UI, "RecipeListScreen composed")
 
-    val recipes by viewModel.recipes.collectAsState()
+    val recipes by viewModel.filterSortManager.filteredItems.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val groceryLists by groceryListViewModel.groceryLists.collectAsState()
     val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
@@ -65,6 +68,27 @@ fun RecipeListScreen(
     var recipeForMealPlan by remember { mutableStateOf<Recipe?>(null) }
     val context = LocalContext.current
 
+    // Available filters and sorts
+    val availableFilters = remember {
+        listOf(
+            FavoriteFilter(favoritesOnly = true),
+            HasPhotoFilter(),
+            CookTimeFilter(maxMinutes = 30),
+            CookTimeFilter(maxMinutes = 60)
+        )
+    }
+    val availableSorts = remember {
+        listOf(
+            TitleSort(),
+            DateCreatedSort(),
+            CookTimeSort(),
+            ServingsSort(),
+            FavoriteSort()
+        )
+    }
+    val activeFilterIds by viewModel.filterSortManager.activeFilterIds.collectAsState()
+    val currentSort by viewModel.filterSortManager.currentSort.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -73,6 +97,14 @@ fun RecipeListScreen(
                     IconButton(onClick = onMenuClick) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")
                     }
+                },
+                actions = {
+                    SortMenu(
+                        availableSorts = availableSorts,
+                        currentSort = currentSort,
+                        onSortSelected = { viewModel.setSort(it) },
+                        onSortDirectionToggle = { viewModel.toggleSortDirection() }
+                    )
                 }
             )
         },
@@ -92,25 +124,34 @@ fun RecipeListScreen(
             }
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Filter chips
+            FilterChipRow(
+                availableFilters = availableFilters,
+                activeFilterIds = activeFilterIds,
+                onFilterToggle = { viewModel.toggleFilter(it) },
+                onClearAll = { viewModel.clearFilters() }
+            )
+
             // Check orientation for layout choice
             val configuration = LocalConfiguration.current
             val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
-            when {
-                isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                recipes.isEmpty() -> {
-                    EmptyState(modifier = Modifier.align(Alignment.Center))
-                }
-                isLandscape -> {
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    isLoading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                    recipes.isEmpty() -> {
+                        EmptyState(modifier = Modifier.align(Alignment.Center))
+                    }
+                    isLandscape -> {
                     // Grid layout for landscape (2 columns)
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
