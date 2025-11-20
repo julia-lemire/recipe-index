@@ -1,6 +1,8 @@
 package com.recipeindex.app.data.managers
 
+import com.recipeindex.app.data.dao.MealPlanDao
 import com.recipeindex.app.data.dao.RecipeDao
+import com.recipeindex.app.data.dao.RecipeLogDao
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.data.entities.RecipeSource
 import io.mockk.*
@@ -18,12 +20,20 @@ import org.junit.Test
 class RecipeManagerTest {
 
     private lateinit var recipeDao: RecipeDao
+    private lateinit var recipeLogDao: RecipeLogDao
+    private lateinit var mealPlanDao: MealPlanDao
     private lateinit var manager: RecipeManager
 
     @Before
     fun setup() {
         recipeDao = mockk(relaxed = true)
-        manager = RecipeManager(recipeDao)
+        recipeLogDao = mockk(relaxed = true)
+        mealPlanDao = mockk(relaxed = true)
+
+        // Default mock: no meal plans reference any recipes
+        coEvery { mealPlanDao.getAll() } returns flowOf(emptyList())
+
+        manager = RecipeManager(recipeDao, recipeLogDao, mealPlanDao)
     }
 
     // ========== CRUD Operation Tests ==========
@@ -221,6 +231,54 @@ class RecipeManagerTest {
 
         assertTrue("Should fail when DAO throws", result.isFailure)
         assertEquals("Should preserve exception", exception, result.exceptionOrNull())
+    }
+
+    @Test
+    fun `deleteRecipe removes recipe from meal plans`() = runTest {
+        val recipeId = 1L
+        val mealPlan1 = com.recipeindex.app.data.entities.MealPlan(
+            id = 1,
+            name = "Week 1",
+            recipeIds = listOf(1L, 2L, 3L)
+        )
+        val mealPlan2 = com.recipeindex.app.data.entities.MealPlan(
+            id = 2,
+            name = "Week 2",
+            recipeIds = listOf(4L, 5L)
+        )
+        val mealPlan3 = com.recipeindex.app.data.entities.MealPlan(
+            id = 3,
+            name = "Week 3",
+            recipeIds = listOf(1L, 6L)
+        )
+
+        // Mock meal plans: two contain the recipe to be deleted
+        coEvery { mealPlanDao.getAll() } returns flowOf(listOf(mealPlan1, mealPlan2, mealPlan3))
+        coEvery { mealPlanDao.update(any()) } returns Unit
+        coEvery { recipeDao.deleteRecipeById(recipeId) } returns Unit
+
+        val result = manager.deleteRecipe(recipeId)
+
+        assertTrue("Deleting recipe should succeed", result.isSuccess)
+
+        // Verify meal plans were updated to remove recipe ID 1
+        coVerify {
+            mealPlanDao.update(match {
+                it.id == 1L && it.recipeIds == listOf(2L, 3L)
+            })
+        }
+        coVerify {
+            mealPlanDao.update(match {
+                it.id == 3L && it.recipeIds == listOf(6L)
+            })
+        }
+        // Verify meal plan 2 was NOT updated (doesn't contain recipe 1)
+        coVerify(exactly = 0) {
+            mealPlanDao.update(match { it.id == 2L })
+        }
+
+        // Verify recipe was deleted
+        coVerify { recipeDao.deleteRecipeById(recipeId) }
     }
 
     // ========== Favorite Toggle Tests ==========
