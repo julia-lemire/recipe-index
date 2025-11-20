@@ -224,7 +224,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Unit conversions: IngredientUnitConverter automatically formats ingredients based on user's liquid/weight preferences, supports showing both units inline ("1 cup (237 ml)")
 - ✅ Recipe selection: Full-screen grid layout for meal plan recipe picker (2 columns, search, selection counter in TopAppBar)
 - ✅ Cook mode: Checkable ingredients/instructions, integrated timer (5-60 min), bold numbers in steps, keep screen awake, session-persistent state
-- ✅ Substitution guide: IngredientSubstitution entity with Room database, SubstitutionManager with pre-populated defaults (~100 substitutes for 22 common ingredients), SubstitutionGuideScreen with search/filters/quantity conversion, long-press ingredient in recipes for substitution lookup dialog, suitability-based ordering, dietary tags (vegan/gluten-free/etc.)
+- ✅ Substitution guide: IngredientSubstitution entity with Room database, SubstitutionManager with pre-populated defaults (~100 substitutes for 22 common ingredients), SubstitutionGuideScreen with search/filters/quantity conversion, AddEditSubstitutionScreen for user-editable substitutions, long-press ingredient in recipes for substitution lookup dialog, suitability-based ordering, dietary tags (vegan/gluten-free/etc.)
 
 ---
 
@@ -283,7 +283,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [x] Landscape mode: 2 cards per row (recipes/meal plans)
 - [x] Granular unit preferences by category (weight, liquid) - Separate settings for liquid volume and weight units
 - [x] Cook mode (checkable ingredients/instructions, timer, bold numbers, keep screen awake)
-- [x] Substitution guide (search, filters, quantity conversion, long-press from recipes, user-editable* - *edit UI deferred to Phase 6)
+- [x] Substitution guide (search, filters, quantity conversion, long-press from recipes, user-editable with add/edit screen)
 - [ ] Nutritional info
 - [ ] Recipe suggestions
 

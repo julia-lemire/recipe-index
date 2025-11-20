@@ -103,6 +103,13 @@ class SubstitutionViewModel(
     }
 
     /**
+     * Get substitution by ID as Flow (for Compose)
+     */
+    fun observeSubstitutionById(id: Long): Flow<IngredientSubstitution?> = flow {
+        emit(substitutionManager.getSubstitutionById(id))
+    }
+
+    /**
      * Create new substitution
      */
     fun createSubstitution(
@@ -141,6 +148,25 @@ class SubstitutionViewModel(
             } catch (e: Exception) {
                 onError(e.message ?: "Failed to update substitution")
             }
+        }
+    }
+
+    /**
+     * Create or update substitution (convenience method for AddEditScreen)
+     */
+    fun createOrUpdateSubstitution(
+        id: Long,
+        ingredient: String,
+        category: String,
+        substitutes: List<Substitute>,
+        isUserAdded: Boolean
+    ) {
+        if (id == 0L) {
+            // New substitution
+            createSubstitution(ingredient, category, substitutes)
+        } else {
+            // Update existing
+            updateSubstitution(id, ingredient, category, substitutes, isUserAdded)
         }
     }
 

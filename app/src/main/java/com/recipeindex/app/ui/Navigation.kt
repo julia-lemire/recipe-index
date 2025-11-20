@@ -339,6 +339,52 @@ fun RecipeIndexNavigation(
             )
         }
 
+        // Add/Edit Substitution
+        composable(
+            route = Screen.AddEditSubstitution.route,
+            arguments = listOf(navArgument("substitutionId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val substitutionId = backStackEntry.arguments?.getLong("substitutionId") ?: -1
+
+            if (substitutionId == -1L) {
+                // New substitution
+                AddEditSubstitutionScreen(
+                    substitution = null,
+                    viewModel = substitutionViewModel,
+                    onSave = {
+                        DebugConfig.debugLog(
+                            DebugConfig.Category.NAVIGATION,
+                            "Substitution created, navigating back"
+                        )
+                        navController.popBackStack()
+                    },
+                    onCancel = {
+                        navController.popBackStack()
+                    }
+                )
+            } else {
+                // Edit existing substitution
+                val substitution by substitutionViewModel.observeSubstitutionById(substitutionId).collectAsState(initial = null)
+
+                substitution?.let { sub ->
+                    AddEditSubstitutionScreen(
+                        substitution = sub,
+                        viewModel = substitutionViewModel,
+                        onSave = {
+                            DebugConfig.debugLog(
+                                DebugConfig.Category.NAVIGATION,
+                                "Substitution updated, navigating back"
+                            )
+                            navController.popBackStack()
+                        },
+                        onCancel = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
+        }
+
         // Import Source Selection
         composable(Screen.ImportSourceSelection.route) {
             ImportSourceSelectionScreen(

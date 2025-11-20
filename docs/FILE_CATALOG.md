@@ -271,6 +271,7 @@ com.recipeindex.app/
 - **GroceryListDetailScreen.kt** - Grocery list detail: Quick-entry text field at top, item checkboxes, item detail dialog showing source recipes, Select All/Deselect All buttons, bottom actions for clear checked/add recipes/add meal plans
 - **SettingsScreen.kt** - Settings UI: Granular unit preferences (liquid volume, weight) with IMPERIAL/METRIC/BOTH radio buttons, temperature unit, display preferences, recipe defaults
 - **SubstitutionGuideScreen.kt** - Substitution guide browsing: Search field, quantity/unit input for conversions, category filter chips, dietary filter chips (vegan/gluten-free/etc.), expandable cards with substitutes ordered by suitability, long-press card to edit, FAB to add new
+- **AddEditSubstitutionScreen.kt** - Substitution add/edit form: Ingredient name, category dropdown, substitutes list (each with name, conversion ratio, conversion note, notes, suitability slider 1-10, dietary tags), add/remove substitutes, auto-save on back, validation
 
 ### UI - Components
 - **AppNavigationDrawer.kt** - Responsive navigation drawer: Modal for phones, permanent for tablets with collapse button, accepts content parameter, drawer header with logo/name, UI only
@@ -283,7 +284,7 @@ com.recipeindex.app/
 - **ImportViewModel.kt** - URL import UI state: StateFlow<UiState> (Input → Loading → Editing → Saved), fetchRecipeFromUrl(), updateRecipe(), saveRecipe(), reset()
 - **ImportPdfViewModel.kt** - PDF import UI state: StateFlow<UiState> (SelectFile → Loading → Editing → Saved), fetchRecipeFromPdf(Uri), updateRecipe(), saveRecipe(), reset()
 - **ImportPhotoViewModel.kt** - Photo import UI state: StateFlow<UiState> (SelectPhoto → Loading → Editing → Saved), fetchRecipeFromPhoto(Uri), fetchRecipeFromPhotos(List<Uri>), updateRecipe(), saveRecipe(), reset()
-- **SubstitutionViewModel.kt** - Substitution UI state: StateFlow for searchQuery/selectedCategory/selectedDietaryTag/substitutions/categories, reactive filtering using Flow operators (combine, flatMapLatest, map), getSubstitutionByIngredient(), calculateConvertedAmount(), formatAmount(), initializeDefaultSubstitutions(), delegates CRUD to SubstitutionManager
+- **SubstitutionViewModel.kt** - Substitution UI state: StateFlow for searchQuery/selectedCategory/selectedDietaryTag/substitutions/categories, reactive filtering using Flow operators (combine, flatMapLatest, map), getSubstitutionByIngredient(), observeSubstitutionById(), createOrUpdateSubstitution(), deleteSubstitution(), calculateConvertedAmount(), formatAmount(), initializeDefaultSubstitutions(), delegates CRUD to SubstitutionManager
 - **ViewModelFactory.kt** - ViewModel dependency injection: Creates RecipeViewModel, MealPlanViewModel, GroceryListViewModel, ImportViewModel, ImportPdfViewModel, ImportPhotoViewModel, SettingsViewModel, SubstitutionViewModel with manager and parser dependencies
 
 ### UI - Theme
