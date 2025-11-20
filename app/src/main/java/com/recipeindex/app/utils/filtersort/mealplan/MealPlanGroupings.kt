@@ -6,34 +6,48 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 /**
+ * Month key for grouping meal plans by month
+ */
+data class MealPlanMonthKey(val year: Int, val month: Int) : Comparable<MealPlanMonthKey> {
+    override fun compareTo(other: MealPlanMonthKey): Int {
+        return if (year != other.year) {
+            year.compareTo(other.year)
+        } else {
+            month.compareTo(other.month)
+        }
+    }
+}
+
+/**
+ * Recipe count categories for grouping meal plans
+ */
+enum class MealPlanRecipeCountCategory {
+    EMPTY,      // 0 recipes
+    SINGLE,     // 1 recipe
+    SMALL,      // 2-3 recipes
+    MEDIUM,     // 4-6 recipes
+    LARGE       // 7+ recipes
+}
+
+/**
  * Group meal plans by month (based on start date)
  */
-class MonthGrouping : GroupBy<MealPlan, MonthKey> {
+class MonthGrouping : GroupBy<MealPlan, MealPlanMonthKey> {
     override val id: String = "month"
     override val label: String = "Month"
 
-    data class MonthKey(val year: Int, val month: Int) : Comparable<MonthKey> {
-        override fun compareTo(other: MonthKey): Int {
-            return if (year != other.year) {
-                year.compareTo(other.year)
-            } else {
-                month.compareTo(other.month)
-            }
-        }
-    }
-
-    override fun extractKey(item: MealPlan): MonthKey {
+    override fun extractKey(item: MealPlan): MealPlanMonthKey {
         val date = item.startDate ?: item.createdAt
         val calendar = Calendar.getInstance().apply {
             timeInMillis = date
         }
-        return MonthKey(
+        return MealPlanMonthKey(
             year = calendar.get(Calendar.YEAR),
             month = calendar.get(Calendar.MONTH)
         )
     }
 
-    override fun formatKeyLabel(key: MonthKey): String {
+    override fun formatKeyLabel(key: MealPlanMonthKey): String {
         val calendar = Calendar.getInstance().apply {
             set(Calendar.YEAR, key.year)
             set(Calendar.MONTH, key.month)
@@ -42,7 +56,7 @@ class MonthGrouping : GroupBy<MealPlan, MonthKey> {
         return dateFormat.format(calendar.time)
     }
 
-    override fun compareKeys(key1: MonthKey, key2: MonthKey): Int {
+    override fun compareKeys(key1: MealPlanMonthKey, key2: MealPlanMonthKey): Int {
         return key2.compareTo(key1)  // Reverse order (most recent first)
     }
 }
@@ -67,45 +81,37 @@ class TagGrouping : GroupBy<MealPlan, String> {
 /**
  * Group meal plans by recipe count category
  */
-class RecipeCountGrouping : GroupBy<MealPlan, RecipeCountCategory> {
+class RecipeCountGrouping : GroupBy<MealPlan, MealPlanRecipeCountCategory> {
     override val id: String = "recipe_count"
     override val label: String = "Recipe Count"
 
-    enum class RecipeCountCategory {
-        EMPTY,      // 0 recipes
-        SINGLE,     // 1 recipe
-        SMALL,      // 2-3 recipes
-        MEDIUM,     // 4-6 recipes
-        LARGE       // 7+ recipes
-    }
-
-    override fun extractKey(item: MealPlan): RecipeCountCategory {
+    override fun extractKey(item: MealPlan): MealPlanRecipeCountCategory {
         return when (item.recipeIds.size) {
-            0 -> RecipeCountCategory.EMPTY
-            1 -> RecipeCountCategory.SINGLE
-            in 2..3 -> RecipeCountCategory.SMALL
-            in 4..6 -> RecipeCountCategory.MEDIUM
-            else -> RecipeCountCategory.LARGE
+            0 -> MealPlanRecipeCountCategory.EMPTY
+            1 -> MealPlanRecipeCountCategory.SINGLE
+            in 2..3 -> MealPlanRecipeCountCategory.SMALL
+            in 4..6 -> MealPlanRecipeCountCategory.MEDIUM
+            else -> MealPlanRecipeCountCategory.LARGE
         }
     }
 
-    override fun formatKeyLabel(key: RecipeCountCategory): String {
+    override fun formatKeyLabel(key: MealPlanRecipeCountCategory): String {
         return when (key) {
-            RecipeCountCategory.EMPTY -> "No Recipes"
-            RecipeCountCategory.SINGLE -> "1 Recipe"
-            RecipeCountCategory.SMALL -> "2-3 Recipes"
-            RecipeCountCategory.MEDIUM -> "4-6 Recipes"
-            RecipeCountCategory.LARGE -> "7+ Recipes"
+            MealPlanRecipeCountCategory.EMPTY -> "No Recipes"
+            MealPlanRecipeCountCategory.SINGLE -> "1 Recipe"
+            MealPlanRecipeCountCategory.SMALL -> "2-3 Recipes"
+            MealPlanRecipeCountCategory.MEDIUM -> "4-6 Recipes"
+            MealPlanRecipeCountCategory.LARGE -> "7+ Recipes"
         }
     }
 
-    override fun compareKeys(key1: RecipeCountCategory, key2: RecipeCountCategory): Int {
+    override fun compareKeys(key1: MealPlanRecipeCountCategory, key2: MealPlanRecipeCountCategory): Int {
         val order = listOf(
-            RecipeCountCategory.LARGE,
-            RecipeCountCategory.MEDIUM,
-            RecipeCountCategory.SMALL,
-            RecipeCountCategory.SINGLE,
-            RecipeCountCategory.EMPTY
+            MealPlanRecipeCountCategory.LARGE,
+            MealPlanRecipeCountCategory.MEDIUM,
+            MealPlanRecipeCountCategory.SMALL,
+            MealPlanRecipeCountCategory.SINGLE,
+            MealPlanRecipeCountCategory.EMPTY
         )
         return order.indexOf(key1).compareTo(order.indexOf(key2))
     }
