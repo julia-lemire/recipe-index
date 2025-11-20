@@ -297,29 +297,45 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - [x] Ratings/favorites (cooking logs with 5-star rating system, notes, timestamps)
 - [ ] Advanced filtering/search
 - [ ] Automated tagging
-- [ ] Preview-first import verification (WYSIWYG recipe preview before save with inline tag editing)
+- [x] Preview-first import verification (WYSIWYG recipe preview before save with inline tag editing)
 
 ---
 
 ## Recent Updates (Latest Session)
 
+### Import & Preview Enhancements
+- ✅ **Preview-First Import UI**: Replaced text-field-heavy edit screen with `RecipePreviewContent` - clean, card-based layout showing recipe as it will appear
+  - Inline tag editing with auto-suggestions directly in preview
+  - Edit dialogs for title, metadata, ingredients, and instructions
+  - Shows first 5 ingredients, first 3 instruction steps
+  - Prominent "Save Recipe" button with clear validation messages
+  - WYSIWYG experience - users see final result while making quick edits
+
+### Meal Planning Workflow Improvements
+- ✅ **Tabbed Recipe Picker**: Simplified meal plan creation with two-tab interface in `RecipePickerBottomSheet`
+  - **Import tab** (default): Shows URL/PDF/Photo import options for importing recipes directly while creating meal plan
+  - **Existing tab**: Shows existing recipes to select from
+  - Reduces clicks significantly - no more navigating between screens to import then select
+  - After import, automatically switches to Existing tab to select newly imported recipe
+
 ### Tag Management Improvements
-- ✅ **Tag Modification Dialog**: Import screens now show a detailed dialog when tags are standardized, displaying original→standardized transformations (e.g., "vegan bowls"→"vegan") with explanations
-- ✅ **Inline Tag Editing**: Users can edit each tag individually in the modification dialog before accepting changes
-- ✅ **Tag Auto-Suggestion**: Import screens suggest existing tags as you type (appears after 2 characters, click to add), with smart filtering to avoid duplicates/subsets (e.g., won't suggest "creamy soup" if "soup" already exists)
-- ✅ **Tag Tracking**: Added `TagStandardizer.standardizeWithTracking()` method that returns `TagModification` objects showing what changed
-- ✅ **Tag Standardization Logging**: Comprehensive logging of all tag transformations during import (original tags → normalized → mapped → final, filtered tags, duplicates removed, final saved tags) for improving standardizer mappings and noise words
+- ✅ **Tag Modification Dialog**: Import screens show detailed dialog when tags are standardized, displaying original→standardized transformations
+- ✅ **Tag Auto-Suggestion**: Import screens suggest existing tags as you type (appears after 2 characters), with smart filtering to avoid duplicates/subsets
+- ✅ **Tag Tracking**: Added `TagStandardizer.standardizeWithTracking()` method returning `TagModification` objects
+- ✅ **Tag Standardization Logging**: Comprehensive logging of all tag transformations (original → normalized → mapped → final, filtered tags, duplicates removed)
+  - Filter Logcat by tag `RecipeIndex` + search `TAG_STANDARDIZATION` to review imports
+  - Helps identify patterns for improving standardizer mappings and noise words
 
 ### UI/UX Enhancements
 - ✅ **Reusable Date Picker**: Created `AppDatePickerDialog` component (Material3 DatePicker) in `ui/components/`
 - ✅ **Fixed Meal Planner Date Picker**: Replaced placeholder "Set Today" dialog with full-featured Material3 date picker
-- ✅ **Icon-Over-Text Buttons**: Grocery list detail screen now uses consistent icon-over-text pattern for all actions
+- ✅ **Icon-Over-Text Buttons**: Grocery list detail screen uses consistent icon-over-text pattern for all actions
 - ✅ **Smart Toggle Button**: Consolidated "Select All" and "Deselect All" into single toggle that changes based on state
 - ✅ **Compact Meal Plan Cards**: Action buttons (Edit, Generate List) now appear inline with date range
 
 ### Bug Fixes
-- ✅ **Grocery List Generation**: Fixed `addMealPlanToList()` not returning result, which prevented ingredients from being added
-- ✅ **Build Errors**: Fixed `Icons.Default.Star` references (doesn't exist) to use `Icons.Default.Favorite`
+- ✅ **Grocery List Generation**: Fixed `addMealPlanToList()` not returning result
+- ✅ **Build Errors**: Fixed `Icons.Default.Star` references to use `Icons.Default.Favorite`
 - ✅ **Flow Handling**: Fixed `getAllExistingTags()` to properly collect from Flow using `.first()`
 
 ---

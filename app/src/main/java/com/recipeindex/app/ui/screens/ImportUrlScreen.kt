@@ -59,7 +59,8 @@ fun ImportUrlScreen(
     LaunchedEffect(uiState) {
         if (uiState is ImportViewModel.UiState.Editing) {
             val editingState = uiState as ImportViewModel.UiState.Editing
-            if (editingState.tagModifications?.isNotEmpty() == true && !showTagModificationDialog) {
+            // Only show dialog if there are tags that were actually modified (not just lowercased)
+            if (editingState.tagModifications?.any { it.wasModified } == true && !showTagModificationDialog) {
                 showTagModificationDialog = true
             }
         }
