@@ -243,7 +243,7 @@ com.recipeindex.app/
 
 ### Data - Parsers
 - **RecipeParser.kt** - Recipe parser interface: parse(source: String): Result<Recipe> for URL/PDF/Photo parsers
-- **SchemaOrgRecipeParser.kt** - Schema.org JSON-LD parser: Jsoup HTML parsing, Schema.org Recipe extraction (HowToStep/HowToSection instructions), ISO 8601 duration conversion, Open Graph fallback, debug logging
+- **SchemaOrgRecipeParser.kt** - Schema.org JSON-LD parser: Jsoup HTML parsing, Schema.org Recipe extraction from recipeCategory/recipeCuisine (keywords field excluded), parses HTML category links (rel="category"/"tag"), HowToStep/HowToSection instructions, ISO 8601 duration conversion, Open Graph fallback, debug logging
 - **TextRecipeParser.kt** - Smart pattern matching parser: detects ingredients/instructions sections via regex, filters website noise (CTAs/footers), validates ingredient/instruction content, parses time strings ("1h 30min"), extracts servings, cleans bullets/numbering from unstructured text
 - **PdfRecipeParser.kt** - PDF text extraction parser: Uses PdfBox-Android PDFTextStripper to extract all text from PDF files, delegates to TextRecipeParser for recipe parsing
 - **PhotoRecipeParser.kt** - OCR-based parser: Uses ML Kit Text Recognition to extract text from photos/camera, supports multiple photos via parseMultiple(List<Uri>), combines OCR results, delegates to TextRecipeParser
@@ -261,10 +261,10 @@ com.recipeindex.app/
 
 ### UI - Screens
 - **HomeScreen.kt** - Landing page: This week's meal plans, recipe suggestions
-- **RecipeListScreen.kt** - Recipe browsing: LazyColumn with RecipeCards (photo, title, servings/times, tags), expandable FAB menu (create/import), favorite toggle, empty state, Coil AsyncImage for photos (180dp)
+- **RecipeListScreen.kt** - Recipe browsing: LazyColumn with RecipeCards (photo, title, servings/times, tags), single FAB goes to tabbed add recipe screen, favorite toggle, delete from card menu, empty state, Coil AsyncImage for photos (180dp)
 - **AddEditRecipeScreen.kt** - Recipe add/edit form: Single screen with title, servings, times, ingredients, instructions, tags, notes, validation, auto-save on back
 - **RecipeDetailScreen.kt** - Recipe detail view: Photo (240dp), servings dropdown with auto-scaling, cook mode (checkable ingredients/instructions, timer, keep awake), long-press ingredient for substitution lookup, tabbed instruction sections, tags, notes, favorite/edit/delete actions, Coil AsyncImage
-- **ImportSourceSelectionScreen.kt** - Import source selection: Choose URL/PDF/Photo import source with cards (all three enabled)
+- **ImportSourceSelectionScreen.kt** - Import/create source selection: Tabbed interface with Import tab (URL/PDF/Photo cards) and Create tab (manual entry button), unified entry point for all recipe creation methods
 - **ImportUrlScreen.kt** - URL import flow: URL input → loading → RecipePreviewContent (WYSIWYG preview) → save, auto-save on back navigation, inline tag editing with auto-suggestions, per-field edit dialogs (title/metadata/ingredients/instructions), shows first 5 ingredients and first 3 instruction steps in preview, TagModificationDialog for reviewing standardization changes, Coil AsyncImage
 - **ImportPdfScreen.kt** - PDF import flow: File picker (ActivityResultContracts.GetContent) → loading → recipe preview/edit → save, auto-save on back navigation
 - **ImportPhotoScreen.kt** - Photo import flow: Camera/gallery pickers (GetMultipleContents for multiple photos) → photo preview grid → loading → recipe preview/edit → save, auto-save on back navigation
@@ -282,7 +282,7 @@ com.recipeindex.app/
 - **GroceryListPickerDialog.kt** - Reusable grocery list picker dialog: Select existing list or create new, used by RecipeListScreen/RecipeDetailScreen/MealPlanningScreen for "Add to Grocery List" actions
 - **MealPlanPickerDialog.kt** - Reusable meal plan picker dialog: Select existing plan or create new, used by RecipeListScreen/RecipeDetailScreen for "Add to Meal Plan" actions from calendar icon
 - **SubstitutionDialog.kt** - Ingredient substitution lookup dialog: Shows substitutes for ingredient from recipe (triggered by long-press), displays converted amounts based on quantity/unit from parsed ingredient string, substitutes ordered by suitability, shows dietary tags
-- **TagModificationDialog.kt** - Tag standardization review dialog: Shows original→standardized tag transformations during recipe import, allows users to edit each tag before accepting, prevents silent modifications (e.g., "vegan bowls"→"vegan"), used by ImportUrlScreen/ImportPdfScreen/ImportPhotoScreen
+- **TagModificationDialog.kt** - Tag standardization review dialog: Shows original→standardized tag transformations during recipe import, allows users to edit/remove each tag before accepting with minus icon button, visual feedback for deleted tags (red background, strikethrough), restore button to undo deletions, prevents silent modifications (e.g., "vegan bowls"→"vegan"), used by ImportUrlScreen/ImportPdfScreen/ImportPhotoScreen
 
 ### UI - ViewModels
 - **RecipeViewModel.kt** - Recipe UI state: StateFlow for recipes/currentRecipe/isLoading/error, delegates all business logic to RecipeManager, event functions (loadRecipes, createRecipe, updateRecipe, deleteRecipe, toggleFavorite, searchRecipes)
@@ -311,7 +311,7 @@ com.recipeindex.app/
 - **ErrorHandler.kt** - Error handling utility: User-friendly error messages (network, validation, state errors), handleResult() for Result<T> processing, executeSafely() and executeWithRetry() for suspending operations
 - **IngredientScaler.kt** - Ingredient quantity parsing and scaling: scaleIngredient() parses fractions (1/2), mixed numbers (1 1/2), decimals, ranges (2-3), scales by factor, formats output preferring common fractions (1/4, 1/2, 3/4), preserves units
 - **IngredientUnitConverter.kt** - Ingredient unit formatting based on user preferences: formatIngredient() detects liquid vs weight units, applies liquidVolumePreference and weightPreference conversions, supports BOTH mode showing "1 cup (237 ml)" inline, uses UnitConverter for conversions
-- **TagStandardizer.kt** - Tag normalization utility: Converts tag variations to standard forms (e.g., "italian food" → "italian"), removes noise words ("recipe", "food"), maps common patterns, deduplicates, standardize() returns cleaned tags, standardizeWithTracking() returns TagModification objects showing original→standardized transformations with wasModified flag, used by TextRecipeParser and ImportViewModel during import
+- **TagStandardizer.kt** - Tag normalization utility: Converts tag variations to standard forms (e.g., "italian food" → "italian"), removes noise words ("recipe", "food"), filters junk tags/phrases ("how to make...", "Weight Watchers"), consolidates holidays to "special occasion", consolidates ingredient types (chicken thigh → chicken), filters >4 word tags, maps common patterns, deduplicates, standardize() returns cleaned tags, standardizeWithTracking() returns TagModification objects showing original→standardized transformations with wasModified flag, used by TextRecipeParser and ImportViewModel during import
 - **TextFormatUtils.kt** - Text formatting utilities: highlightNumbersInText() uses AnnotatedString to bold numbers (temps/times) in instruction text with regex pattern matching, supports ranges (350-375°F) and decimals (1.5 hours)
 - **UnitConverter.kt** - Cooking unit conversions: Imperial↔Metric (volume: cups/tbsp/tsp↔ml/L, weight: oz/lb↔g/kg, temperature: F↔C), smart helpers (volumeToMetric chooses ml/L), formatNumber
 
