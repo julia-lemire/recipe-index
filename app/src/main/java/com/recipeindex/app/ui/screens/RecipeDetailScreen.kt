@@ -1088,7 +1088,7 @@ private fun RecipeLogSection(
                                     Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                                         repeat(rating) {
                                             Icon(
-                                                Icons.Default.Star,
+                                                Icons.Default.Favorite,
                                                 contentDescription = null,
                                                 tint = MaterialTheme.colorScheme.primary,
                                                 modifier = Modifier.size(16.dp)
@@ -1141,7 +1141,7 @@ private fun RecipeLogSection(
                                 onClick = { rating = if (rating == star) 0 else star }
                             ) {
                                 Icon(
-                                    Icons.Default.Star,
+                                    if (star <= rating) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                     contentDescription = "$star stars",
                                     tint = if (star <= rating)
                                         MaterialTheme.colorScheme.primary
