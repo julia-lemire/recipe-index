@@ -404,6 +404,9 @@ fun RecipeIndexNavigation(
                             navController.navigate(Screen.ImportPhoto.route)
                         }
                     }
+                },
+                onCreateManually = {
+                    navController.navigate(Screen.AddRecipe.route)
                 }
             )
         }
