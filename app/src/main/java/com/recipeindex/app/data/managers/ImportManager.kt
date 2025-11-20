@@ -30,7 +30,8 @@ class ImportManager(
     private val recipeManager: RecipeManager,
     private val mealPlanManager: MealPlanManager,
     private val groceryListManager: GroceryListManager,
-    private val recipeDao: RecipeDao
+    private val recipeDao: RecipeDao,
+    private val groceryItemDao: com.recipeindex.app.data.dao.GroceryItemDao
 ) {
 
     /**
@@ -39,7 +40,7 @@ class ImportManager(
      */
     suspend fun importFromJson(json: String): ImportResult {
         return try {
-            val result = ShareHelper.importFromJson(json, recipeDao.getAll().first())
+            val result = ShareHelper.importFromJson(json, recipeDao.getAllRecipes().first())
 
             when (result) {
                 is ImportResult.DuplicateDetected -> result
@@ -77,7 +78,7 @@ class ImportManager(
                 }
                 DuplicateAction.KEEP_BOTH -> {
                     // Import with incremented title
-                    val existingTitles = recipeDao.getAll().first().map { it.title }
+                    val existingTitles = recipeDao.getAllRecipes().first().map { it.title }
                     val newTitle = ShareHelper.generateIncrementedTitle(shareRecipe.title, existingTitles)
                     val modifiedRecipe = shareRecipe.copy(title = newTitle)
                     importSingleRecipe(modifiedRecipe, photoBase64)
@@ -115,7 +116,7 @@ class ImportManager(
 
                 // Check if user provided an action for this recipe
                 val action = recipeActions[shareRecipe.title] ?: DuplicateAction.SKIP
-                val existingRecipes = recipeDao.getAll().first()
+                val existingRecipes = recipeDao.getAllRecipes().first()
                 val duplicate = existingRecipes.find {
                     it.title.equals(shareRecipe.title, ignoreCase = true)
                 }
@@ -171,15 +172,20 @@ class ImportManager(
             // Create grocery list
             val createResult = groceryListManager.createList(shareList.name)
             createResult.onSuccess { listId ->
-                // Add all items
+                // Add all items directly to database
                 shareList.items.forEach { shareItem ->
-                    groceryListManager.addManualItem(
+                    val item = com.recipeindex.app.data.entities.GroceryItem(
                         listId = listId,
                         name = shareItem.name,
                         quantity = shareItem.quantity,
                         unit = shareItem.unit,
-                        notes = shareItem.notes
+                        isChecked = false,
+                        sourceRecipeIds = emptyList(),
+                        notes = shareItem.notes,
+                        createdAt = System.currentTimeMillis(),
+                        updatedAt = System.currentTimeMillis()
                     )
+                    groceryItemDao.insert(item)
                 }
 
                 DebugConfig.debugLog(
