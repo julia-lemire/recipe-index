@@ -209,6 +209,28 @@
 
 **Example**: ImportUrlScreen monitors `ImportViewModel.UiState` with LaunchedEffect, shows errors via SnackbarHost at bottom of screen, BackHandler validates before navigating back
 
+### Success Feedback with Snackbar Pattern
+**Use when**: Async operations need confirmation feedback (e.g., adding to grocery list, saving data)
+**Structure**:
+- Create `val snackbarHostState = remember { SnackbarHostState() }` and `val scope = rememberCoroutineScope()` at composable top level
+- Add `snackbarHost = { SnackbarHost(snackbarHostState) }` parameter to Scaffold
+- Pass success callback to ViewModel operation: `viewModel.operation() { /* success */ }`
+- Inside success callback, launch coroutine: `scope.launch { snackbarHostState.showSnackbar("Success message", duration = SnackbarDuration.Short) }`
+- Keep messages concise and specific about what succeeded
+
+**Example**: MealPlanningScreen shows "Added [meal plan name] ingredients to [list name]" after addMealPlanToList() completes
+
+### Date Range Picker Pattern
+**Use when**: User needs to select single date or date range (meal plans, events, filtering)
+**Structure**:
+- Create DateRangePickerDialog composable with `rememberDateRangePickerState()`
+- Use Material 3 `DateRangePicker` component with title and headline customization
+- Include Clear button when dates already selected: `if (initialStartDate != null || initialEndDate != null)`
+- Return both start and end dates via callback: `onDatesSelected: (startDate: Long?, endDate: Long?) -> Unit`
+- Show selected dates as supporting text or secondary display near input field
+
+**Example**: AddEditMealPlanScreen shows calendar icon button inline with name field, opens DateRangePickerDialog, displays selected dates as supporting text under name field
+
 ### Tag Standardization with Tracking Pattern
 **Use when**: Importing or processing user-generated tag data that needs normalization
 **Structure**:

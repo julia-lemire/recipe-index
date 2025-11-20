@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.TagStandardizer
 
 /**
@@ -27,6 +28,18 @@ fun TagModificationDialog(
     onAccept: (List<String>) -> Unit,
     onDismiss: () -> Unit
 ) {
+    // Log dialog composition
+    LaunchedEffect(modifications) {
+        DebugConfig.debugLog(
+            DebugConfig.Category.UI,
+            "[TAG_DIALOG] Dialog composed/recomposed with ${modifications.size} modifications"
+        )
+        DebugConfig.debugLog(
+            DebugConfig.Category.UI,
+            "[TAG_DIALOG] Modifications: ${modifications.map { it.original to it.standardized }}"
+        )
+    }
+
     // Track which tags the user has chosen to keep/modify
     var editedTags by remember {
         mutableStateOf(modifications.map { it.standardized }.toMutableList())
@@ -35,7 +48,13 @@ fun TagModificationDialog(
     var editText by remember { mutableStateOf("") }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            DebugConfig.debugLog(
+                DebugConfig.Category.UI,
+                "[TAG_DIALOG] onDismissRequest called (back button or outside tap)"
+            )
+            onDismiss()
+        },
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight(0.8f)
@@ -246,12 +265,25 @@ fun TagModificationDialog(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(onClick = {
+                        DebugConfig.debugLog(
+                            DebugConfig.Category.UI,
+                            "[TAG_DIALOG] Cancel button clicked"
+                        )
+                        onDismiss()
+                    }) {
                         Text("Cancel")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
-                        onClick = { onAccept(editedTags.filter { it.isNotBlank() }) }
+                        onClick = {
+                            val finalTags = editedTags.filter { it.isNotBlank() }
+                            DebugConfig.debugLog(
+                                DebugConfig.Category.UI,
+                                "[TAG_DIALOG] Accept clicked with ${finalTags.size} tags: $finalTags"
+                            )
+                            onAccept(finalTags)
+                        }
                     ) {
                         Text("Accept Changes")
                     }
