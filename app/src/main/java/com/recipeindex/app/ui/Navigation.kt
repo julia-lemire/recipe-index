@@ -80,6 +80,17 @@ fun RecipeIndexNavigation(
             )
         }
 
+        // Search
+        composable(Screen.Search.route) {
+            SearchScreen(
+                viewModel = recipeViewModel,
+                onRecipeClick = { recipeId ->
+                    navController.navigate(Screen.RecipeDetail.createRoute(recipeId))
+                },
+                onMenuClick = onMenuClick
+            )
+        }
+
         // Add Recipe
         composable(Screen.AddRecipe.route) {
             AddEditRecipeScreen(
