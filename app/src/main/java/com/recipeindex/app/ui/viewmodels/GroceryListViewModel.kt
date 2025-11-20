@@ -303,21 +303,6 @@ class GroceryListViewModel(
     }
 
     /**
-     * Create list and return ID synchronously (blocking)
-     * Used when creating a list and immediately adding items
-     */
-    fun createListAndReturn(name: String): Long {
-        var resultId: Long = 0
-        viewModelScope.launch {
-            val result = groceryListManager.createList(name)
-            result.onSuccess { listId ->
-                resultId = listId
-            }
-        }
-        return resultId
-    }
-
-    /**
      * Add meal plan to grocery list
      */
     fun addMealPlanToList(listId: Long, planId: Long, onSuccess: (Int) -> Unit = {}) {
