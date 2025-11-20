@@ -28,6 +28,11 @@ class FilterSortGroupManager<T>(
     // Exposed read-only state
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
     val activeFilters: StateFlow<Map<String, Filter<T>>> = _activeFilters.asStateFlow()
+    val activeFilterIds: StateFlow<Set<String>> = _activeFilters.map { it.keys }.stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptySet()
+    )
     val currentSort: StateFlow<Sort<T>?> = _currentSort.asStateFlow()
     val currentGroupBy: StateFlow<GroupBy<T, *>?> = _currentGroupBy.asStateFlow()
 
