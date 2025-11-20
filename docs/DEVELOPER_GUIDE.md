@@ -107,6 +107,11 @@
 - **Pattern**: See [Error Handling with Snackbar Pattern](#error-handling-with-snackbar-pattern)
 - **Components**: SnackbarHostState, SnackbarHost (Material 3), LaunchedEffect for monitoring
 
+### Debug and Analyze
+- **Debug Logging**: `utils/DebugConfig.kt` - Centralized logging with category-based filtering
+- **Tag Standardization Analysis**: Filter Logcat by tag `RecipeIndex` and search `TAG_STANDARDIZATION` to see all tag transformations during import (original → normalized → mapped → final, filtered tags, duplicates, saved tags)
+- **Categories**: NAVIGATION, DATABASE, IMPORT, UI, MANAGER, SETTINGS, GENERAL, TAG_STANDARDIZATION
+- **Pattern**: See [Tag Standardization with Tracking Pattern](#tag-standardization-with-tracking-pattern)
 
 ---
 
@@ -212,8 +217,16 @@
 - Show TagModificationDialog for tracked changes, allowing per-tag editing before accepting
 - Store `tagModifications` in ViewModel UiState to trigger dialog display
 - Apply accepted tags via ViewModel update function
+- All standardization is automatically logged via `DebugConfig.Category.TAG_STANDARDIZATION` for analysis
 
 **Example**: ImportViewModel calls `TagStandardizer.standardizeWithTracking()`, stores modifications in `UiState.Editing`, ImportUrlScreen shows TagModificationDialog with original→standardized arrows, user can edit each tag before accepting
+
+**Debugging Tag Standardization**:
+To analyze tag transformations and improve standardizer mappings, filter Android Studio Logcat by:
+- **Tag**: `RecipeIndex`
+- **Search**: `TAG_STANDARDIZATION`
+
+Logs show: recipe name, original tags, step-by-step transformations (normalized → mapped → final), filtered tags with reasons, duplicates removed, and final saved tags
 
 ### Reusable Component Pattern
 **Use when**: Multiple screens need the same UI component (dialogs, pickers, specialized inputs)
