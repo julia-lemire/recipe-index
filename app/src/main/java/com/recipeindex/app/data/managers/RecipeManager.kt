@@ -6,6 +6,7 @@ import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.data.entities.RecipeLog
 import com.recipeindex.app.utils.DebugConfig
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 /**
  * RecipeManager - Business logic for recipe operations
@@ -17,7 +18,8 @@ import kotlinx.coroutines.flow.Flow
  */
 class RecipeManager(
     private val recipeDao: RecipeDao,
-    private val recipeLogDao: RecipeLogDao
+    private val recipeLogDao: RecipeLogDao,
+    private val mealPlanDao: com.recipeindex.app.data.dao.MealPlanDao
 ) {
 
     /**
@@ -94,12 +96,38 @@ class RecipeManager(
     }
 
     /**
-     * Delete recipe
+     * Delete recipe and cascade to meal plans
+     *
+     * Removes the recipe from all meal plans that reference it to maintain
+     * referential integrity
      */
     suspend fun deleteRecipe(recipeId: Long): Result<Unit> {
         return try {
+            // First, remove this recipe from all meal plans that reference it
+            val allMealPlans = mealPlanDao.getAll().first()
+            val affectedPlans = allMealPlans.filter { recipeId in it.recipeIds }
+
+            DebugConfig.debugLog(
+                DebugConfig.Category.MANAGER,
+                "deleteRecipe: $recipeId found in ${affectedPlans.size} meal plans"
+            )
+
+            // Update each affected meal plan to remove the recipe ID
+            affectedPlans.forEach { plan ->
+                val updatedPlan = plan.copy(
+                    recipeIds = plan.recipeIds.filter { it != recipeId },
+                    updatedAt = System.currentTimeMillis()
+                )
+                mealPlanDao.update(updatedPlan)
+                DebugConfig.debugLog(
+                    DebugConfig.Category.MANAGER,
+                    "Removed recipe $recipeId from meal plan '${plan.name}' (${plan.id})"
+                )
+            }
+
+            // Now delete the recipe
             recipeDao.deleteRecipeById(recipeId)
-            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "deleteRecipe: $recipeId")
+            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "deleteRecipe: $recipeId completed")
             Result.success(Unit)
         } catch (e: Exception) {
             DebugConfig.error(DebugConfig.Category.MANAGER, "deleteRecipe failed", e)
