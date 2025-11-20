@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Menu
@@ -55,7 +56,6 @@ fun RecipeListScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val groceryLists by groceryListViewModel.groceryLists.collectAsState()
     val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
-    var fabExpanded by remember { mutableStateOf(false) }
     var showListPicker by remember { mutableStateOf(false) }
     var recipeForGroceryList by remember { mutableStateOf<Recipe?>(null) }
     var showMealPlanPicker by remember { mutableStateOf(false) }
@@ -73,74 +73,18 @@ fun RecipeListScreen(
             )
         },
         floatingActionButton = {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            FloatingActionButton(
+                onClick = {
+                    DebugConfig.debugLog(DebugConfig.Category.UI, "Add Recipe FAB clicked")
+                    onImportRecipe()
+                },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                // Import FAB (shown when expanded)
-                if (fabExpanded) {
-                    SmallFloatingActionButton(
-                        onClick = {
-                            DebugConfig.debugLog(DebugConfig.Category.UI, "Import Recipe FAB clicked")
-                            fabExpanded = false
-                            onImportRecipe()
-                        },
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Import")
-                            Icon(
-                                imageVector = Icons.Default.CloudDownload,
-                                contentDescription = "Import Recipe"
-                            )
-                        }
-                    }
-                }
-
-                // Create FAB (shown when expanded)
-                if (fabExpanded) {
-                    SmallFloatingActionButton(
-                        onClick = {
-                            DebugConfig.debugLog(DebugConfig.Category.UI, "Create Recipe FAB clicked")
-                            fabExpanded = false
-                            onAddRecipe()
-                        },
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Create")
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Create Recipe"
-                            )
-                        }
-                    }
-                }
-
-                // Main FAB (always shown)
-                FloatingActionButton(
-                    onClick = {
-                        fabExpanded = !fabExpanded
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = if (fabExpanded) "Close menu" else "Add Recipe",
-                        modifier = Modifier.rotate(if (fabExpanded) 45f else 0f)
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Recipe"
+                )
             }
         }
     ) { paddingValues ->
@@ -183,6 +127,9 @@ fun RecipeListScreen(
                                 onAddToMealPlan = {
                                     recipeForMealPlan = recipe
                                     showMealPlanPicker = true
+                                },
+                                onDelete = {
+                                    viewModel.deleteRecipe(recipe.id) {}
                                 }
                             )
                         }
@@ -207,6 +154,9 @@ fun RecipeListScreen(
                                 onAddToMealPlan = {
                                     recipeForMealPlan = recipe
                                     showMealPlanPicker = true
+                                },
+                                onDelete = {
+                                    viewModel.deleteRecipe(recipe.id) {}
                                 }
                             )
                         }
@@ -288,7 +238,8 @@ private fun RecipeCard(
     onClick: () -> Unit,
     onToggleFavorite: () -> Unit,
     onAddToGroceryList: () -> Unit,
-    onAddToMealPlan: () -> Unit
+    onAddToMealPlan: () -> Unit,
+    onDelete: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -385,6 +336,19 @@ private fun RecipeCard(
                                         }
                                     )
                                 }
+                                DropdownMenuItem(
+                                    text = { Text("Delete") },
+                                    onClick = {
+                                        showMenu = false
+                                        onDelete()
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                                    },
+                                    colors = MenuDefaults.itemColors(
+                                        textColor = MaterialTheme.colorScheme.error
+                                    )
+                                )
                             }
                         }
                     }
