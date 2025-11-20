@@ -46,6 +46,16 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 20, 2025: Cascading Recipe Deletion to Maintain Referential Integrity
+- **Decision**: RecipeManager.deleteRecipe() now removes recipe IDs from all meal plans before deleting the recipe, ensuring no orphaned references remain
+- **Rationale**: Deleting recipes without cleaning up meal plan references created data integrity issues where meal plans referenced non-existent recipes, causing 0 ingredients when generating grocery lists and confusing users with inaccurate counts
+- **Implementation**: Added MealPlanDao dependency to RecipeManager, deleteRecipe() fetches all meal plans via Flow.first(), filters for affected plans containing the recipe ID, updates each plan with filtered recipeIds list, then deletes the recipe; added test coverage for cascading behavior
+
+#### Nov 20, 2025: Accurate Ingredient Count Feedback for Grocery Lists
+- **Decision**: Changed addRecipesToList() and addMealPlanToList() to return Result<Int> containing count of ingredients actually added, updated UI to show accurate count or warning when 0 ingredients found
+- **Rationale**: Previously showed generic success messages even when 0 ingredients were added (e.g., when recipes were missing), misleading users about whether ingredients were actually added to their grocery list
+- **Implementation**: GroceryListManager methods return consolidated.size instead of Unit, GroceryListViewModel passes count to success callbacks, UI screens show "Added N ingredient(s)" when successful or "No ingredients found - recipes may be missing" when count is 0
+
 #### Nov 20, 2025: Simplified Meal Plan Date Entry with Inline Calendar Button
 - **Decision**: Replaced two separate "Start Date" and "End Date" buttons with single calendar icon button positioned inline with meal plan name field, using Material 3 DateRangePicker
 - **Rationale**: Two buttons took significant vertical space and required two interactions for date ranges; single inline button reduces visual clutter and simplifies workflow

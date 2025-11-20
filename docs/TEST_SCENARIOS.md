@@ -101,6 +101,7 @@
 - [x] Update recipe validates same as create (RecipeManagerTest.kt:updateRecipe validates same as create)
 - [x] Delete recipe removes from database (RecipeManagerTest.kt:deleteRecipe removes recipe from database)
 - [x] Delete recipe handles DAO errors (RecipeManagerTest.kt:deleteRecipe handles DAO errors)
+- [x] Delete recipe removes recipe from meal plans (RecipeManagerTest.kt:deleteRecipe removes recipe from meal plans)
 - [x] Toggle favorite sets to true (RecipeManagerTest.kt:toggleFavorite sets favorite to true)
 - [x] Toggle favorite sets to false (RecipeManagerTest.kt:toggleFavorite sets favorite to false)
 - [x] Toggle favorite handles errors (RecipeManagerTest.kt:toggleFavorite handles DAO errors)
