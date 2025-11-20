@@ -1,7 +1,7 @@
 # Recipe Index Decision Log
 
 > **Purpose**: Architectural decision records (WHAT/WHY/WHEN decisions were made)
-> **Last Updated**: 2025-11-19
+> **Last Updated**: 2025-11-20
 
 **See Also:**
 - [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) - Quick lookup ("I need to...") and architecture patterns (HOW to implement)
@@ -45,6 +45,16 @@
 
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
+
+#### Nov 20, 2025: Cook Mode with Checkable Steps and Timer
+- **Decision**: Add comprehensive cook mode toggle to RecipeDetailScreen with checkable ingredients/instructions, integrated timer (5-60 min dropdown), bold numbers in text, keep screen awake, and session-persistent state
+- **Rationale**: Users need hands-free tracking while cooking, manual step tracking is error-prone, timer prevents context switching to separate app, screen staying awake prevents interruption mid-recipe
+- **Implementation**: Cook mode state uses remember{} for session persistence (survives toggle, resets on navigation), TextFormatUtils.highlightNumbersInText() bolds temps/times with regex, DisposableEffect manages screen wake lock, LaunchedEffect handles timer countdown, checked items show as 50% alpha italic, "Deselect All" button in cook mode card
+
+#### Nov 20, 2025: Granular Unit Preferences for Liquid and Weight
+- **Decision**: Replace single unit system setting with separate liquidVolumePreference and weightPreference in AppSettings, each supporting IMPERIAL/METRIC/BOTH independently
+- **Rationale**: Users often want mixed preferences (e.g., metric for liquids, imperial for weight), previous all-or-nothing approach forced compromise, granular control provides flexibility for regional cooking habits
+- **Implementation**: AppSettings adds liquidVolumePreference and weightPreference fields, SettingsScreen replaces "Unit System" with two sections ("Liquid Volume Units", "Weight Units"), IngredientUnitConverter.formatIngredient() accepts separate preferences and detects liquid vs weight units, removed toggle button from RecipeDetailScreen in favor of global settings
 
 #### Nov 19, 2025: Full-Screen Recipe Selection Grid
 - **Decision**: Replace ModalBottomSheet with full Scaffold-based screen using LazyVerticalGrid (2 columns) for meal plan recipe selection
