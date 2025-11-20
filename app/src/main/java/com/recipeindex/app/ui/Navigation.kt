@@ -185,8 +185,9 @@ fun RecipeIndexNavigation(
                             showListPicker = false
                         },
                         onCreateNew = { listName ->
-                            val newListId = groceryListViewModel.createListAndReturn(listName)
-                            groceryListViewModel.addRecipesToList(newListId, listOf(recipeId))
+                            groceryListViewModel.createList(listName) { listId ->
+                                groceryListViewModel.addRecipesToList(listId, listOf(recipeId))
+                            }
                             showListPicker = false
                         }
                     )
