@@ -220,6 +220,26 @@
 
 **Example**: MealPlanningScreen shows "Added [meal plan name] ingredients to [list name]" after addMealPlanToList() completes
 
+**Important**: When using variables in async callbacks, capture them in local variables before clearing state:
+```kotlin
+// BAD - will crash when callback runs
+val planName = plan!!.name
+showDialog = false
+plan = null
+viewModel.operation() {
+    showSnackbar("Added $planName") // planName references plan which is now null!
+}
+
+// GOOD - capture before clearing
+val planId = plan!!.id
+val planName = plan!!.name
+showDialog = false
+plan = null
+viewModel.operation() {
+    showSnackbar("Added $planName") // uses captured local variable
+}
+```
+
 ### Date Range Picker Pattern
 **Use when**: User needs to select single date or date range (meal plans, events, filtering)
 **Structure**:
@@ -253,9 +273,14 @@
 **Debugging Tag Standardization**:
 To analyze tag transformations and improve standardizer mappings, filter Android Studio Logcat by:
 - **Tag**: `RecipeIndex`
-- **Search**: `TAG_STANDARDIZATION`
+- **Search**: `TAG_STANDARDIZATION` for tag processing details
+- **Search**: `TAG_DIALOG` for dialog lifecycle and user interactions (composition, accept, dismiss)
+- **Search**: `TAG_DIALOG_TRIGGER` for LaunchedEffect triggers and state changes
+- **Search**: `TAG_DIALOG_SHOW` for when dialog displays and callbacks invoke
 
-Logs show: recipe name, original tags, step-by-step transformations (normalized → mapped → final), filtered tags with reasons, duplicates removed, and final saved tags
+Tag processing logs show: recipe name, original tags, step-by-step transformations (normalized → mapped → final), filtered tags with reasons, duplicates removed, and final saved tags
+
+Dialog logs help diagnose issues with multiple dialogs appearing or edits not being saved
 
 ### Tabbed Screen Pattern
 **Use when**: Single screen needs to present multiple related but distinct content views or workflows
