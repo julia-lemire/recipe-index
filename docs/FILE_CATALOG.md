@@ -238,7 +238,8 @@ com.recipeindex.app/
 - **SubstitutionDao.kt** - Substitution CRUD operations: getAllSubstitutions, searchSubstitutions, getSubstitutionByIngredient, getSubstitutionsByCategory, getAllCategories, insert/update/delete, getSubstitutionCount (all return Flow)
 
 ### Data - Managers
-- **RecipeManager.kt** - Recipe business logic: validation, CRUD operations, favorite toggle, recipe scaling stub (delegates to RecipeDao)
+- **RecipeManager.kt** - Recipe business logic: validation, CRUD operations with cascading deletion (removes recipe from meal plans before deleting to maintain referential integrity), favorite toggle, recipe scaling stub, recipe log operations (delegates to RecipeDao and MealPlanDao)
+- **GroceryListManager.kt** - Grocery list business logic: list/item CRUD operations, intelligent ingredient consolidation (removes modifiers, sums quantities), canned item parsing, recipe-to-list conversion with ingredient count tracking, meal plan-to-list conversion (delegates to GroceryListDao, GroceryItemDao, RecipeDao, MealPlanDao)
 - **SubstitutionManager.kt** - Substitution business logic: CRUD operations, database initialization with defaults, quantity conversion calculations (calculateConvertedAmount), amount formatting (formatConvertedAmount prefers fractions), ingredient validation
 
 ### Data - Parsers
