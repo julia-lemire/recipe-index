@@ -294,8 +294,31 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 
 ### Phase 6: Polish
 - [ ] Samsung Quick Share
-- [ ] Ratings/favorites
+- [x] Ratings/favorites (cooking logs with 5-star rating system, notes, timestamps)
 - [ ] Advanced filtering/search
 - [ ] Automated tagging
+- [ ] Preview-first import verification (WYSIWYG recipe preview before save with inline tag editing)
+
+---
+
+## Recent Updates (Latest Session)
+
+### Tag Management Improvements
+- ✅ **Tag Modification Dialog**: Import screens now show a detailed dialog when tags are standardized, displaying original→standardized transformations (e.g., "vegan bowls"→"vegan") with explanations
+- ✅ **Inline Tag Editing**: Users can edit each tag individually in the modification dialog before accepting changes
+- ✅ **Tag Auto-Suggestion**: Import screens suggest existing tags as you type (appears after 2 characters, click to add)
+- ✅ **Tag Tracking**: Added `TagStandardizer.standardizeWithTracking()` method that returns `TagModification` objects showing what changed
+
+### UI/UX Enhancements
+- ✅ **Reusable Date Picker**: Created `AppDatePickerDialog` component (Material3 DatePicker) in `ui/components/`
+- ✅ **Fixed Meal Planner Date Picker**: Replaced placeholder "Set Today" dialog with full-featured Material3 date picker
+- ✅ **Icon-Over-Text Buttons**: Grocery list detail screen now uses consistent icon-over-text pattern for all actions
+- ✅ **Smart Toggle Button**: Consolidated "Select All" and "Deselect All" into single toggle that changes based on state
+- ✅ **Compact Meal Plan Cards**: Action buttons (Edit, Generate List) now appear inline with date range
+
+### Bug Fixes
+- ✅ **Grocery List Generation**: Fixed `addMealPlanToList()` not returning result, which prevented ingredients from being added
+- ✅ **Build Errors**: Fixed `Icons.Default.Star` references (doesn't exist) to use `Icons.Default.Favorite`
+- ✅ **Flow Handling**: Fixed `getAllExistingTags()` to properly collect from Flow using `.first()`
 
 ---

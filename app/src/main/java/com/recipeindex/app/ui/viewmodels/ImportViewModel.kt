@@ -10,6 +10,7 @@ import com.recipeindex.app.utils.TagStandardizer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -152,12 +153,16 @@ class ImportViewModel(
      * Get all existing tags from the recipe database for auto-suggestion
      */
     suspend fun getAllExistingTags(): List<String> {
-        val result = recipeManager.getAllRecipes()
-        return result.getOrNull()
-            ?.flatMap { it.tags }
-            ?.distinct()
-            ?.sorted()
-            ?: emptyList()
+        return try {
+            recipeManager.getAllRecipes()
+                .first()
+                .flatMap { it.tags }
+                .distinct()
+                .sorted()
+        } catch (e: Exception) {
+            DebugConfig.error(DebugConfig.Category.IMPORT, "Failed to get existing tags", e)
+            emptyList()
+        }
     }
 
     /**
