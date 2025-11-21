@@ -95,7 +95,9 @@
 ### Import Recipes
 - **Parser Interface**: `data/parsers/RecipeParser.kt`
 - **URL Import Controller**: `data/parsers/UrlRecipeParser.kt`
-  - Orchestrates three-tier parsing strategy: Schema.org JSON-LD → HTML scraping → Open Graph
+  - Orchestrates cascading supplementation strategy: Schema.org JSON-LD → HTML scraping → Open Graph
+  - Each parser supplements missing data without overwriting data from previous parsers
+  - Enables saving partial recipes (e.g., ingredients without instructions) with metadata from multiple sources
   - Delegates to specialized parsers: SchemaOrgRecipeParser, HtmlScraper, OpenGraphParser
   - Handles HTTP fetching with Ktor client
 - **Schema.org Parser**: `data/parsers/SchemaOrgRecipeParser.kt`
@@ -106,13 +108,15 @@
   - Extracts cuisine from titles when recipeCuisine is missing/incorrect (100+ cuisines)
 - **HTML Scraper**: `data/parsers/HtmlScraper.kt`
   - Searches for ingredients/instructions using CSS selectors when structured data unavailable
-  - Only returns data if BOTH ingredients AND instructions found
+  - Returns data if ingredients OR instructions found (saves whatever content is available)
+  - Uses copy() merging in UrlRecipeParser to supplement with Open Graph metadata
 - **Open Graph Parser**: `data/parsers/OpenGraphParser.kt`
-  - Last resort fallback extracting title/description/image from og: meta tags
+  - Supplements missing metadata (title/description/image) from og: meta tags
+  - Used to fill gaps when Schema.org or HTML scraping miss certain fields
 - **Import Screens**: `ui/screens/ImportSourceSelectionScreen.kt`, `ui/screens/ImportUrlScreen.kt`
 - **ViewModel**: `ui/viewmodels/ImportViewModel.kt` (auto-normalizes URLs: http:// → https://, adds https:// when missing)
 - **Tag Processing**: `utils/TagStandardizer.kt` (removes subset tags, standardizes variations, filters junk)
-- **Debugging**: Enable [IMPORT] logs in DebugConfig to see strategy attempts, JSON-LD parsing progress, HTML scraping attempts, field types, extraction results, URL normalization, and tag value logging
+- **Debugging**: Enable [IMPORT] logs in DebugConfig to see cascading supplementation attempts, JSON-LD parsing progress, HTML scraping results, Open Graph supplementation, field types, extraction results, URL normalization, and tag value logging
 
 ### Share/Import Content
 - **Share Helper**: `utils/ShareHelper.kt` (shareRecipe/shareMealPlan/shareGroceryList, photo encoding/decoding, duplicate detection)
