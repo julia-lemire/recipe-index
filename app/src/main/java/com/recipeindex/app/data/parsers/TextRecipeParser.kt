@@ -85,10 +85,11 @@ object TextRecipeParser {
             val prepTime = extractPrepTime(sections, lines)
             val cookTime = extractCookTime(sections, lines)
             val tags = extractTags(sections, lines)
+            val sourceTips = extractTips(sections, lines)
 
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
-                "Parsed: title='$title', ${ingredients.size} ingredients, ${instructions.size} instructions"
+                "Parsed: title='$title', ${ingredients.size} ingredients, ${instructions.size} instructions, tips=${sourceTips != null}"
             )
 
             val now = System.currentTimeMillis()
@@ -102,6 +103,7 @@ object TextRecipeParser {
                 cookTimeMinutes = cookTime,
                 tags = TagStandardizer.standardize(tags),
                 notes = null,
+                sourceTips = sourceTips,
                 source = source,
                 sourceUrl = sourceIdentifier,
                 photoPath = null,
@@ -177,6 +179,16 @@ object TextRecipeParser {
                  normalized.contains(Regex("\\bcuisine\\b"))) && !sections.containsKey("tags") -> {
                     sections["tags"] = index
                 }
+                // Notes/Tips section
+                (normalized.contains(Regex("^notes?\\s*:?\\s*$")) ||
+                 normalized.contains(Regex("^tips?\\s*:?\\s*$")) ||
+                 normalized.contains(Regex("^recipe\\s*(notes?|tips?)\\s*:?\\s*$")) ||
+                 normalized.contains(Regex("^cooking\\s*tips?\\s*:?\\s*$")) ||
+                 normalized.contains(Regex("^variations?\\s*:?\\s*$")) ||
+                 normalized.contains(Regex("^substitutions?\\s*:?\\s*$"))) && !sections.containsKey("notes") -> {
+                    DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Found notes/tips at line $index: $line")
+                    sections["notes"] = index
+                }
             }
         }
 
@@ -185,16 +197,32 @@ object TextRecipeParser {
 
     /**
      * Extract title - usually first line or line before ingredients
+     * Skips lines that look like dates, timestamps, URLs, or metadata
      */
     private fun extractTitle(sections: Map<String, Int>, lines: List<String>): String {
         val ingredientsIndex = sections["ingredients"]
 
+        // Filter out lines that shouldn't be titles
+        fun isValidTitle(line: String): Boolean {
+            if (line.length < 4) return false
+            val lower = line.lowercase()
+            // Skip date/time patterns like "11/18/25, 12:34 PM"
+            if (Regex("^\\d{1,2}/\\d{1,2}/\\d{2,4}").containsMatchIn(line)) return false
+            // Skip URL-like lines
+            if (Regex("^https?://|www\\.|\\.(com|org|net|io)").containsMatchIn(lower)) return false
+            // Skip lines that are mostly numbers/punctuation
+            if (line.count { it.isLetter() } < line.length / 2) return false
+            return true
+        }
+
         return if (ingredientsIndex != null && ingredientsIndex > 0) {
-            // Title is likely the line before ingredients section
-            lines.take(ingredientsIndex).firstOrNull { it.length > 3 } ?: lines.firstOrNull() ?: "Imported Recipe"
+            // Title is likely before ingredients section - find first valid title
+            lines.take(ingredientsIndex).firstOrNull { isValidTitle(it) }
+                ?: lines.firstOrNull { isValidTitle(it) }
+                ?: "Imported Recipe"
         } else {
-            // Use first non-empty line
-            lines.firstOrNull() ?: "Imported Recipe"
+            // Use first valid line
+            lines.firstOrNull { isValidTitle(it) } ?: "Imported Recipe"
         }
     }
 
@@ -319,6 +347,42 @@ object TextRecipeParser {
     }
 
     /**
+     * Extract tips/notes from the source (website/PDF)
+     * This captures helpful tips, variations, substitutions from the original source
+     */
+    private fun extractTips(sections: Map<String, Int>, lines: List<String>): String? {
+        val notesIndex = sections["notes"] ?: return null
+        val endIndex = findNextSection(notesIndex, sections)
+
+        val tips = lines.subList(notesIndex + 1, endIndex.coerceAtMost(lines.size))
+            .filter { it.isNotBlank() }
+            .filter { !isMarketingNoise(it) } // Filter marketing but keep useful tips
+            .joinToString("\n")
+
+        return tips.ifBlank { null }
+    }
+
+    /**
+     * Check if a line is marketing/CTA noise (NOT useful tips)
+     * This is a stricter filter than isWebsiteNoise - only removes clearly promotional content
+     */
+    private fun isMarketingNoise(line: String): Boolean {
+        val lower = line.lowercase()
+        val marketingPatterns = listOf(
+            // CTAs
+            Regex("\\b(save|shop|get|view|see|click|subscribe|sign\\s*up|log\\s*in|download)\\b.*\\b(recipes?|ingredients?|meals?|plans?|lists?)"),
+            // Rating prompts
+            Regex("\\b(rating|comment|review|feedback)\\b.*\\b(let|know|help|business|thrive)"),
+            Regex("\\bleave\\s+a\\s+(rating|comment|review)"),
+            // Marketing
+            Regex("\\b(free|newsletter|social|follow|share|pin|tweet)\\b"),
+            // Footer/legal
+            Regex("\\b(privacy|policy|terms|conditions|copyright)\\b")
+        )
+        return marketingPatterns.any { it.containsMatchIn(lower) }
+    }
+
+    /**
      * Parse time string like "30 minutes", "1 hour 15 min", "45m" to minutes
      */
     private fun parseTimeString(timeStr: String): Int? {
@@ -344,7 +408,7 @@ object TextRecipeParser {
     }
 
     /**
-     * Check if a line is website noise (navigation, CTA, footer text)
+     * Check if a line is website noise (navigation, CTA, footer text, notes/tips)
      */
     private fun isWebsiteNoise(line: String): Boolean {
         val lower = line.lowercase()
@@ -357,6 +421,7 @@ object TextRecipeParser {
             Regex("\\b(rating|comment|review|feedback)\\b.*\\b(let|know|help|business|thrive)"),
             Regex("\\blast\\s*step\\b.*\\b(rating|comment|review)"),
             Regex("\\b(leave|please)\\b.*\\b(rating|comment|review)"),
+            Regex("\\bleave\\s+a\\s+(rating|comment|review)"),
             // Marketing phrases
             Regex("\\b(free|high[\\s-]quality|continue|providing)\\b"),
             Regex("\\b(business|thrive|continue\\s+providing)\\b"),
@@ -369,7 +434,18 @@ object TextRecipeParser {
             Regex("\\b(newsletter|social|follow|share|pin|tweet)\\b"),
             // Footer/legal
             Regex("\\b(privacy|policy|terms|conditions|copyright)\\b"),
-            Regex("^(home|about|contact|blog|search)$", RegexOption.IGNORE_CASE)
+            Regex("^(home|about|contact|blog|search)$", RegexOption.IGNORE_CASE),
+            // Notes, tips, and suggestions (not part of actual recipe steps)
+            Regex("^(notes?|tips?|pro\\s*tips?|suggestions?|recipe\\s*notes?|recipe\\s*tips?|cooking\\s*tips?)\\s*:?\\s*$", RegexOption.IGNORE_CASE),
+            Regex("^(notes?|tips?|pro\\s*tips?|suggestions?|recipe\\s*notes?):", RegexOption.IGNORE_CASE),
+            // Helpful hints / editorial content
+            Regex("^(helpful\\s*hints?|did\\s*you\\s*know|fun\\s*fact):", RegexOption.IGNORE_CASE),
+            // Variation suggestions
+            Regex("^(variations?|substitutions?|alternatives?)\\s*:?\\s*$", RegexOption.IGNORE_CASE),
+            // "You can also..." type suggestions
+            Regex("^you\\s+(can|could|may|might)\\s+(also|substitute|swap|replace|use)", RegexOption.IGNORE_CASE),
+            // Author/source attribution
+            Regex("^(recipe\\s+by|adapted\\s+from|source|originally\\s+from|via)\\s*:", RegexOption.IGNORE_CASE)
         )
 
         return noisyPatterns.any { it.containsMatchIn(lower) }
@@ -420,12 +496,13 @@ object TextRecipeParser {
     }
 
     /**
-     * Clean ingredient line - remove leading bullets, numbers, etc.
+     * Clean ingredient line - remove leading bullets and step numbering
+     * Note: Only removes "1. " style numbering, NOT bare quantities like "4 chicken"
      */
     private fun cleanIngredient(line: String): String {
         return line
             .replace(Regex("^[•\\-*]\\s*"), "") // Remove bullets
-            .replace(Regex("^\\d+\\.?\\s*"), "") // Remove numbering
+            .replace(Regex("^\\d+\\.\\s+"), "") // Remove step numbering (requires period + space)
             .trim()
     }
 

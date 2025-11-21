@@ -44,6 +44,9 @@ data class Recipe(
 
     val notes: String? = null,
 
+    /** Tips, substitutions, and notes from the original source (website/PDF) */
+    val sourceTips: String? = null,
+
     val isFavorite: Boolean = false,
 
     val isTemplate: Boolean = false,

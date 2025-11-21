@@ -44,6 +44,7 @@ fun AddEditRecipeScreen(
     var tagInput by remember { mutableStateOf("") }
     var cuisine by remember { mutableStateOf(recipe?.cuisine ?: "") }
     var notes by remember { mutableStateOf(recipe?.notes ?: "") }
+    var sourceTips by remember { mutableStateOf(recipe?.sourceTips ?: "") }
 
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
@@ -90,6 +91,7 @@ fun AddEditRecipeScreen(
                     tags = tags.filter { it.isNotBlank() },
                     cuisine = cuisine.trim().ifBlank { null },
                     notes = notes.ifBlank { null },
+                    sourceTips = sourceTips.ifBlank { null },
                     source = recipe?.source ?: RecipeSource.MANUAL,
                     sourceUrl = recipe?.sourceUrl,
                     photoPath = recipe?.photoPath,
@@ -280,11 +282,22 @@ fun AddEditRecipeScreen(
                 )
             }
 
-            // Notes
+            // Tips & Substitutions (from source)
+            OutlinedTextField(
+                value = sourceTips,
+                onValueChange = { sourceTips = it },
+                label = { Text("Tips & Substitutions") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp),
+                maxLines = 4
+            )
+
+            // Notes (user-added)
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("Notes") },
+                label = { Text("My Notes") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp),

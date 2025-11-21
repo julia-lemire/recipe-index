@@ -687,11 +687,26 @@ fun RecipeDetailScreen(
                 }
             }
 
-            // Notes
+            // Source Tips (from website/PDF)
+            recipe.sourceTips?.let { tips ->
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Tips & Substitutions",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = tips,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Notes (user-added)
             recipe.notes?.let { notes ->
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Notes",
+                        text = "My Notes",
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
