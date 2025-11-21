@@ -355,6 +355,8 @@ fun RecipeIndexNavigation(
                 onCancel = {
                     navController.popBackStack()
                 }
+                // Note: onAddToGroceryList not provided for new meal plans
+                // Menu will not appear until plan is saved and edited
             )
         }
 

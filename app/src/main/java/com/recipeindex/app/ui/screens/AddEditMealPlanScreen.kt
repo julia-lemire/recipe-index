@@ -115,8 +115,8 @@ fun AddEditMealPlanScreen(
                     }
                 },
                 actions = {
-                    // Only show menu for existing meal plans with recipes
-                    if (mealPlan != null && selectedRecipeIds.isNotEmpty() && onAddToGroceryList != null) {
+                    // Show menu if callback is provided (both new and existing plans)
+                    if (onAddToGroceryList != null) {
                         IconButton(onClick = { showMenu = true }) {
                             Icon(Icons.Default.MoreVert, contentDescription = "More options")
                         }
@@ -133,7 +133,8 @@ fun AddEditMealPlanScreen(
                                 },
                                 leadingIcon = {
                                     Icon(Icons.Default.ShoppingCart, contentDescription = null)
-                                }
+                                },
+                                enabled = selectedRecipeIds.isNotEmpty()
                             )
                         }
                     }
