@@ -520,16 +520,31 @@ private fun EditRecipeContent(
             isError = recipe.instructions.isEmpty()
         )
 
-        // Servings
-        OutlinedTextField(
-            value = recipe.servings.toString(),
-            onValueChange = {
-                val servings = it.toIntOrNull() ?: recipe.servings
-                onRecipeChange(recipe.copy(servings = servings))
-            },
-            label = { Text("Servings") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        // Servings and Serving Size
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = recipe.servings.toString(),
+                onValueChange = {
+                    val servings = it.toIntOrNull() ?: recipe.servings
+                    onRecipeChange(recipe.copy(servings = servings))
+                },
+                label = { Text("Servings") },
+                modifier = Modifier.weight(1f)
+            )
+
+            OutlinedTextField(
+                value = recipe.servingSize ?: "",
+                onValueChange = {
+                    onRecipeChange(recipe.copy(servingSize = it.ifBlank { null }))
+                },
+                label = { Text("Serving Size") },
+                placeholder = { Text("e.g., 1 cup, 200g") },
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         // Times
         Row(
