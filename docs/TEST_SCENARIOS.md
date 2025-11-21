@@ -117,6 +117,7 @@
 #### URL Import (SchemaOrgRecipeParser)
 - [x] Parse Schema.org JSON-LD recipe (SchemaOrgRecipeParserTest.kt:parse extracts recipe from Schema org JSON-LD)
 - [x] Parse @graph array with Recipe (SchemaOrgRecipeParserTest.kt:parse handles @graph array with Recipe)
+- [ ] Parse Article/BlogPosting with embedded recipe data (planned - detect @type: "Article" with recipeIngredient/recipeInstructions)
 - [x] Fallback to Open Graph when no Schema.org (SchemaOrgRecipeParserTest.kt:parse falls back to Open Graph)
 - [x] Fail when no recipe data found (SchemaOrgRecipeParserTest.kt:parse fails when no recipe data found)
 - [x] Default to 4 servings when not specified (SchemaOrgRecipeParserTest.kt:parse defaults to 4 servings)
