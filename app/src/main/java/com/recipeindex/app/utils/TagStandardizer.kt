@@ -13,30 +13,8 @@ package com.recipeindex.app.utils
 object TagStandardizer {
 
     // Map of variations to standard forms
+    // NOTE: Cuisines are now handled separately in Recipe.cuisine field, not as tags
     private val standardMappings = mapOf(
-        // Cuisines
-        "italian food" to "italian",
-        "italian cuisine" to "italian",
-        "italian meals" to "italian",
-        "mexican food" to "mexican",
-        "mexican cuisine" to "mexican",
-        "mexican meals" to "mexican",
-        "chinese food" to "chinese",
-        "chinese cuisine" to "chinese",
-        "chinese meals" to "chinese",
-        "japanese food" to "japanese",
-        "japanese cuisine" to "japanese",
-        "japanese meals" to "japanese",
-        "thai food" to "thai",
-        "thai cuisine" to "thai",
-        "thai meals" to "thai",
-        "indian food" to "indian",
-        "indian cuisine" to "indian",
-        "indian meals" to "indian",
-        "mediterranean food" to "mediterranean",
-        "mediterranean cuisine" to "mediterranean",
-        "mediterranean meals" to "mediterranean",
-
         // Meal types
         "breakfast recipe" to "breakfast",
         "breakfast meal" to "breakfast",
@@ -191,10 +169,17 @@ object TagStandardizer {
     )
 
     // Tags to completely filter out (even if alone)
+    // NOTE: Includes cuisine names since they belong in Recipe.cuisine field, not tags
     private val junkTags = setOf(
+        // Generic recipe terms
         "recipes", "recipe", "meals", "meal", "food", "dishes", "dish",
         "ideas", "cooking", "cook", "dinner ideas",
-        "weight watchers", "ww", "weight watchers ww"
+        "weight watchers", "ww", "weight watchers ww",
+
+        // Common cuisines (belong in cuisine field, not tags)
+        "american", "italian", "mexican", "chinese", "japanese", "thai", "indian",
+        "french", "greek", "spanish", "mediterranean", "asian", "european",
+        "middle eastern", "latin", "caribbean", "african"
     )
 
     // Phrases that indicate junk tags
