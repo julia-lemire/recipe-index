@@ -229,6 +229,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Meal plan context menu: Added "Add to Grocery List" option in meal plan detail page with GroceryListPickerDialog
 - ✅ Import logging: Enhanced Schema.org parser with comprehensive [IMPORT]-prefixed logs for debugging (JSON-LD script counts, field inspection, ingredient/instruction parsing details)
 - ✅ Import parsing: Fixed nested JSON handling in SchemaOrgRecipeParser for sites with complex Schema.org structures (recursively extracts text from objects/arrays in recipeIngredient/recipeCategory/keywords fields, handles deeply nested objects by checking text/name/@value fields)
+- ✅ Import URL normalization: Auto-upgrades http:// to https:// and adds https:// prefix when missing to prevent Android network security policy errors
 
 ### Advanced Features (Phase 5)
 - ✅ Portion scaling: Servings dropdown in RecipeDetailScreen (half, original, 2x, 3x, 4x) with automatic ingredient quantity scaling
