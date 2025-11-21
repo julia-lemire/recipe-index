@@ -285,18 +285,25 @@ object TextRecipeParser {
             "  First content lines: '${lines.getOrNull(startIndex + 1)}', '${lines.getOrNull(startIndex + 2)}'"
         )
 
-        val extracted = lines.subList(startIndex + 1, endIndex.coerceAtMost(lines.size))
+        // First filter noise, then join continuation lines, then clean
+        val filteredLines = lines.subList(startIndex + 1, endIndex.coerceAtMost(lines.size))
             .filter { it.isNotBlank() }
             .filter { !isWebsiteNoise(it) }
-            .let { filtered ->
-                if (skipInstructionFilter) filtered
-                else filtered.filter { looksLikeInstruction(it) }
+            .filter { !isPdfPageNoise(it) }
+
+        // Join continuation lines (lines not starting with a digit continue previous)
+        val joinedLines = joinInstructionLines(filteredLines)
+
+        val extracted = joinedLines
+            .let { joined ->
+                if (skipInstructionFilter) joined
+                else joined.filter { looksLikeInstruction(it) }
             }
             .map { cleanInstruction(it) }
 
         DebugConfig.debugLog(
             DebugConfig.Category.IMPORT,
-            "Extracted ${extracted.size} instructions: ${extracted.take(2).joinToString(", ")}..."
+            "Extracted ${extracted.size} instructions (from ${filteredLines.size} lines, joined to ${joinedLines.size}): ${extracted.take(2).joinToString(", ")}..."
         )
 
         return extracted
@@ -354,10 +361,14 @@ object TextRecipeParser {
         val notesIndex = sections["notes"] ?: return null
         val endIndex = findNextSection(notesIndex, sections)
 
-        val tips = lines.subList(notesIndex + 1, endIndex.coerceAtMost(lines.size))
+        // Filter noise and join continuation lines for coherent paragraphs
+        val filteredLines = lines.subList(notesIndex + 1, endIndex.coerceAtMost(lines.size))
             .filter { it.isNotBlank() }
-            .filter { !isMarketingNoise(it) } // Filter marketing but keep useful tips
-            .joinToString("\n")
+            .filter { !isMarketingNoise(it) }
+            .filter { !isPdfPageNoise(it) }
+
+        // Join lines into coherent paragraphs
+        val tips = joinParagraphLines(filteredLines)
 
         return tips.ifBlank { null }
     }
@@ -449,6 +460,77 @@ object TextRecipeParser {
         )
 
         return noisyPatterns.any { it.containsMatchIn(lower) }
+    }
+
+    /**
+     * Check if a line is PDF extraction noise (URLs, page headers, page numbers)
+     */
+    private fun isPdfPageNoise(line: String): Boolean {
+        val lower = line.lowercase()
+        return listOf(
+            // URLs
+            Regex("^https?://"),
+            Regex("^www\\."),
+            // Page numbers like "10/25" at end of URL lines
+            Regex("\\d+/\\d+$"),
+            // Date/time page headers like "11/18/25, 12:34 PM"
+            Regex("^\\d{1,2}/\\d{1,2}/\\d{2,4},?\\s+\\d{1,2}:\\d{2}"),
+            // Repeated page titles (contain " - " and end with "...")
+            Regex("\\s+-\\s+.*\\.\\.\\.$")
+        ).any { it.containsMatchIn(lower) }
+    }
+
+    /**
+     * Join continuation lines for numbered instructions.
+     * Lines starting with a digit are new steps; other lines continue the previous step.
+     */
+    private fun joinInstructionLines(lines: List<String>): List<String> {
+        if (lines.isEmpty()) return emptyList()
+
+        val result = mutableListOf<StringBuilder>()
+
+        for (line in lines) {
+            // Check if this line starts a new instruction (begins with digit)
+            val startsNewInstruction = Regex("^\\d+\\s").containsMatchIn(line)
+
+            if (startsNewInstruction || result.isEmpty()) {
+                // Start new instruction
+                result.add(StringBuilder(line))
+            } else {
+                // Continue previous instruction - append with space
+                result.lastOrNull()?.append(" ")?.append(line)
+            }
+        }
+
+        return result.map { it.toString() }
+    }
+
+    /**
+     * Join continuation lines for prose content (tips, notes).
+     * Lines that don't end with sentence-ending punctuation are continued.
+     */
+    private fun joinParagraphLines(lines: List<String>): String {
+        if (lines.isEmpty()) return ""
+
+        val result = StringBuilder()
+
+        for (line in lines) {
+            if (result.isEmpty()) {
+                result.append(line)
+            } else {
+                // Check if previous content ends with sentence-ending punctuation
+                val lastChar = result.lastOrNull()
+                if (lastChar in listOf('.', '!', '?', ':')) {
+                    // Start new sentence - add space
+                    result.append(" ").append(line)
+                } else {
+                    // Continue previous sentence - just add space
+                    result.append(" ").append(line)
+                }
+            }
+        }
+
+        return result.toString()
     }
 
     /**
