@@ -61,6 +61,15 @@ class UrlRecipeParser(
             // Try Open Graph last resort
             val openGraphData = openGraphParser.parse(document)
             if (openGraphData != null) {
+                // Validate that we have at least some recipe content
+                if (openGraphData.ingredients.isEmpty() && openGraphData.instructions.isEmpty()) {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.IMPORT,
+                        "[IMPORT] Open Graph data found but no ingredients or instructions - rejecting"
+                    )
+                    return Result.failure(Exception("No recipe content found at URL (only metadata available)"))
+                }
+
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
                     "[IMPORT] Using Open Graph data (minimal)"
