@@ -88,9 +88,23 @@ class SchemaOrgRecipeParser(
                         recipeList
                     }
                     else -> {
+                        // Log what @type we actually found for debugging
+                        val typeInfo = when {
+                            json is JsonObject -> {
+                                val type = json["@type"]
+                                when (type) {
+                                    is JsonPrimitive -> "found @type: \"${type.content}\""
+                                    is JsonArray -> "found @type array: [${type.joinToString { (it as? JsonPrimitive)?.content ?: "?" }}]"
+                                    null -> "no @type field found"
+                                    else -> "unknown @type structure"
+                                }
+                            }
+                            json is JsonArray -> "array with ${json.size} objects, none are Recipe type"
+                            else -> "unknown JSON structure: ${json.javaClass.simpleName}"
+                        }
                         DebugConfig.debugLog(
                             DebugConfig.Category.IMPORT,
-                            "[IMPORT] No Recipe objects found in this script tag"
+                            "[IMPORT] No Recipe objects found in this script tag ($typeInfo)"
                         )
                         emptyList()
                     }
