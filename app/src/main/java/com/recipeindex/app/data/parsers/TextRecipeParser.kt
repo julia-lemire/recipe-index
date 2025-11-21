@@ -203,7 +203,7 @@ object TextRecipeParser {
 
     /**
      * Extract title - usually first line or line before ingredients
-     * Skips lines that look like dates, timestamps, URLs, or metadata
+     * Skips lines that look like dates, timestamps, URLs, breadcrumbs, or metadata
      */
     private fun extractTitle(sections: Map<String, Int>, lines: List<String>): String {
         val ingredientsIndex = sections["ingredients"]
@@ -216,6 +216,8 @@ object TextRecipeParser {
             if (Regex("^\\d{1,2}/\\d{1,2}/\\d{2,4}").containsMatchIn(line)) return false
             // Skip URL-like lines
             if (Regex("^https?://|www\\.|\\.(com|org|net|io)").containsMatchIn(lower)) return false
+            // Skip breadcrumb navigation patterns like "Site > Category > Recipe Name"
+            if (line.contains(" > ")) return false
             // Skip lines that are mostly numbers/punctuation
             if (line.count { it.isLetter() } < line.length / 2) return false
             return true
@@ -367,16 +369,15 @@ object TextRecipeParser {
      * Extract serving size value from a single line
      */
     private fun extractServingSizeFromLine(line: String): String? {
-        val lowerLine = line.lowercase()
-
         // Pattern: "Serving Size: X" or "Portion: X" or "Per Serving: X"
+        // Include / for OCR fractions like "1/2" or "1 /2"
         val patterns = listOf(
-            // "Serving Size: 1 ½ cups" - capture until we hit multipliers (1x 2x) or end
-            Regex("serving\\s*size[:\\s]+([\\d½¼¾⅓⅔⅛⅜⅝⅞\\s]+(?:cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|pieces?|slices?|servings?))", RegexOption.IGNORE_CASE),
+            // "Serving Size: 1 ½ cups" or "Serving Size: 1/2 cup"
+            Regex("serving\\s*size[:\\s]+([\\d½¼¾⅓⅔⅛⅜⅝⅞/\\s]+(?:cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|pieces?|slices?|servings?))", RegexOption.IGNORE_CASE),
             // "Portion: 200g"
-            Regex("portion[:\\s]+([\\d½¼¾⅓⅔⅛⅜⅝⅞\\s]+(?:cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|pieces?|slices?)?)", RegexOption.IGNORE_CASE),
+            Regex("portion[:\\s]+([\\d½¼¾⅓⅔⅛⅜⅝⅞/\\s]+(?:cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|pieces?|slices?)?)", RegexOption.IGNORE_CASE),
             // "Per Serving: 1 cup"
-            Regex("per\\s+serving[:\\s]+([\\d½¼¾⅓⅔⅛⅜⅝⅞\\s]+(?:cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|pieces?|slices?)?)", RegexOption.IGNORE_CASE)
+            Regex("per\\s+serving[:\\s]+([\\d½¼¾⅓⅔⅛⅜⅝⅞/\\s]+(?:cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|pieces?|slices?)?)", RegexOption.IGNORE_CASE)
         )
 
         for (pattern in patterns) {
@@ -384,7 +385,15 @@ object TextRecipeParser {
             if (match != null) {
                 val value = match.groupValues[1].trim()
                 // Clean up: remove trailing multipliers like "1x 2x 3x" and extra whitespace
-                val cleaned = value.replace(Regex("\\s*\\d+x.*$", RegexOption.IGNORE_CASE), "").trim()
+                var cleaned = value.replace(Regex("\\s*\\d+x.*$", RegexOption.IGNORE_CASE), "").trim()
+                // Normalize OCR fractions: "1 /2" -> "1/2", then convert to Unicode
+                cleaned = cleaned
+                    .replace(Regex("\\s*/\\s*"), "/") // Remove spaces around /
+                    .replace("1/2", "½")
+                    .replace("1/4", "¼")
+                    .replace("3/4", "¾")
+                    .replace("1/3", "⅓")
+                    .replace("2/3", "⅔")
                 if (cleaned.isNotBlank()) {
                     return cleaned
                 }
@@ -619,10 +628,14 @@ object TextRecipeParser {
      * Check if a line looks like an ingredient
      */
     private fun looksLikeIngredient(line: String): Boolean {
-        val lower = line.lowercase()
+        // Pre-clean OCR noise for pattern matching (U checkbox, 0z -> oz)
+        val cleaned = line
+            .replace(Regex("^[UO☐□]\\s+"), "")
+            .replace(Regex("\\b0z\\b", RegexOption.IGNORE_CASE), "oz")
+        val lower = cleaned.lowercase()
 
         // Too short to be an ingredient
-        if (line.length < 3) return false
+        if (cleaned.length < 3) return false
 
         // Contains common ingredient indicators - with Unicode fractions
         val hasQuantity = Regex("(\\d+|[½¼¾⅓⅔⅛⅜⅝⅞])\\s*(cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|inch|inches|cloves?|slices?|pieces?|cans?|jars?|bunche?s?|stalks?|heads?|sprigs?)").containsMatchIn(lower)
@@ -660,13 +673,16 @@ object TextRecipeParser {
     }
 
     /**
-     * Clean ingredient line - remove leading bullets and step numbering
+     * Clean ingredient line - remove leading bullets, step numbering, and OCR noise
      * Note: Only removes "1. " style numbering, NOT bare quantities like "4 chicken"
      */
     private fun cleanIngredient(line: String): String {
         return line
             .replace(Regex("^[•\\-*]\\s*"), "") // Remove bullets
             .replace(Regex("^\\d+\\.\\s+"), "") // Remove step numbering (requires period + space)
+            .replace(Regex("^[UO☐□]\\s+"), "") // Remove OCR checkbox noise (U, O, ☐, □ followed by space)
+            .replace(Regex("\\b0z\\b"), "oz") // Fix common OCR error: 0z -> oz
+            .replace(Regex("\\b0unces?\\b", RegexOption.IGNORE_CASE), "ounces") // Fix 0unces -> ounces
             .trim()
     }
 

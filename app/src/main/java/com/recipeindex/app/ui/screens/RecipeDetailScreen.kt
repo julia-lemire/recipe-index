@@ -1,6 +1,16 @@
 package com.recipeindex.app.ui.screens
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -8,11 +18,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import android.view.WindowManager
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.FileOutputStream
+import java.util.UUID
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -22,6 +33,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Refresh
@@ -43,6 +56,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.recipeindex.app.data.entities.MediaItem
+import com.recipeindex.app.data.entities.MediaType
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.ui.components.SubstitutionDialog
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
@@ -101,6 +116,81 @@ fun RecipeDetailScreen(
 
     // Unit conversion toggle (overrides settings temporarily)
     var showUnitConversions by remember { mutableStateOf(false) }
+
+    // Photo management state
+    var showPhotoOptionsDialog by remember { mutableStateOf(false) }
+    var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Helper function to save a photo to app storage
+    fun savePhotoToStorage(uri: Uri): MediaItem? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val originalBitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream.close()
+            if (originalBitmap == null) return null
+
+            // Scale if needed (max 1920x1920)
+            val maxSize = 1920
+            val scaleFactor = if (originalBitmap.width > maxSize || originalBitmap.height > maxSize) {
+                minOf(maxSize.toFloat() / originalBitmap.width, maxSize.toFloat() / originalBitmap.height)
+            } else 1f
+
+            val scaledBitmap = if (scaleFactor < 1f) {
+                Bitmap.createScaledBitmap(
+                    originalBitmap,
+                    (originalBitmap.width * scaleFactor).toInt(),
+                    (originalBitmap.height * scaleFactor).toInt(),
+                    true
+                ).also { originalBitmap.recycle() }
+            } else originalBitmap
+
+            // Save to app storage
+            val imagesDir = File(context.filesDir, "media/images")
+            if (!imagesDir.exists()) imagesDir.mkdirs()
+            val filename = "${UUID.randomUUID()}.jpg"
+            val file = File(imagesDir, filename)
+
+            FileOutputStream(file).use { out ->
+                scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
+            }
+            scaledBitmap.recycle()
+
+            MediaItem(type = MediaType.IMAGE, path = file.absolutePath)
+        } catch (e: Exception) {
+            DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Failed to save photo: ${e.message}")
+            null
+        }
+    }
+
+    // Camera launcher
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempPhotoUri != null) {
+            val mediaItem = savePhotoToStorage(tempPhotoUri!!)
+            if (mediaItem != null) {
+                val updatedRecipe = recipe.copy(
+                    mediaPaths = recipe.mediaPaths + mediaItem
+                )
+                recipeViewModel.updateRecipe(updatedRecipe) {}
+            }
+        }
+    }
+
+    // Gallery launcher
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val mediaItem = savePhotoToStorage(it)
+            if (mediaItem != null) {
+                val updatedRecipe = recipe.copy(
+                    mediaPaths = recipe.mediaPaths + mediaItem
+                )
+                recipeViewModel.updateRecipe(updatedRecipe) {}
+            }
+        }
+    }
 
     // Get user's unit preferences from settings
     val settings by settingsViewModel.settings.collectAsState()
@@ -222,8 +312,7 @@ fun RecipeDetailScreen(
             ) {
                 // Servings with dropdown
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🍽️", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(Modifier.width(4.dp))
+                    Text("Servings", style = MaterialTheme.typography.bodyMedium)
                     Box {
                         TextButton(
                             onClick = { showServingsMenu = true },
@@ -266,21 +355,21 @@ fun RecipeDetailScreen(
 
                 recipe.prepTimeMinutes?.let {
                     Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("⏱️ ${it}m prep", style = MaterialTheme.typography.bodyMedium)
+                    Text("Prep: ${it}m", style = MaterialTheme.typography.bodyMedium)
                 }
                 recipe.cookTimeMinutes?.let {
                     Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("🔥 ${it}m cook", style = MaterialTheme.typography.bodyMedium)
+                    Text("Cook: ${it}m", style = MaterialTheme.typography.bodyMedium)
                 }
                 recipe.prepTimeMinutes?.let { prep ->
                     recipe.cookTimeMinutes?.let { cook ->
                         Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("⏰ ${prep + cook}m total", style = MaterialTheme.typography.bodyMedium)
+                        Text("Total: ${prep + cook}m", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
                 recipe.servingSize?.let { size ->
                     Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("📏 $size/serving", style = MaterialTheme.typography.bodyMedium)
+                    Text("Portion: $size", style = MaterialTheme.typography.bodyMedium)
                 }
             }
 
@@ -340,8 +429,8 @@ fun RecipeDetailScreen(
                 }
             }
 
-            // Recipe Photos Carousel
-            val images = recipe.mediaPaths.filter { it.type == com.recipeindex.app.data.entities.MediaType.IMAGE }
+            // Recipe Photos Carousel with Add Photo button
+            val images = recipe.mediaPaths.filter { it.type == MediaType.IMAGE }
             val imageUrls = if (images.isNotEmpty()) {
                 images.map { it.path }
             } else {
@@ -371,6 +460,24 @@ fun RecipeDetailScreen(
                         )
                     }
 
+                    // Add photo button (top right)
+                    IconButton(
+                        onClick = { showPhotoOptionsDialog = true },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                                CircleShape
+                            )
+                    ) {
+                        Icon(
+                            Icons.Default.AddAPhoto,
+                            contentDescription = "Add photo",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
                     // Page indicator (only show if more than 1 image)
                     if (imageUrls.size > 1) {
                         Row(
@@ -395,6 +502,86 @@ fun RecipeDetailScreen(
                         }
                     }
                 }
+            } else {
+                // No photos - show add photo placeholder
+                OutlinedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .clickable { showPhotoOptionsDialog = true }
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.AddAPhoto,
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                "Add Photo",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Photo options dialog
+            if (showPhotoOptionsDialog) {
+                AlertDialog(
+                    onDismissRequest = { showPhotoOptionsDialog = false },
+                    title = { Text("Add Photo") },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = {
+                                    showPhotoOptionsDialog = false
+                                    // Create temp file for camera
+                                    val tempDir = File(context.cacheDir, "camera")
+                                    if (!tempDir.exists()) tempDir.mkdirs()
+                                    val tempFile = File.createTempFile("recipe_photo_", ".jpg", tempDir)
+                                    val photoUri = FileProvider.getUriForFile(
+                                        context,
+                                        "${context.packageName}.fileprovider",
+                                        tempFile
+                                    )
+                                    tempPhotoUri = photoUri
+                                    cameraLauncher.launch(photoUri)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.PhotoCamera, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Take Photo")
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    showPhotoOptionsDialog = false
+                                    galleryLauncher.launch("image/*")
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.PhotoLibrary, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Choose from Gallery")
+                            }
+                        }
+                    },
+                    confirmButton = {},
+                    dismissButton = {
+                        TextButton(onClick = { showPhotoOptionsDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
             }
 
             // Cook Mode: Timer and Controls
