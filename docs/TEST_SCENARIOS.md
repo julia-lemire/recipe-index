@@ -148,6 +148,10 @@
 #### Text Import (TextRecipeParser)
 - [x] Detect ingredients section (TextRecipeParserTest.kt:detectSections finds ingredients section)
 - [x] Detect instructions with variations (TextRecipeParserTest.kt:detectSections finds instructions with variations)
+- [ ] Extract serving size from "Serving Size: 1 ½ cups" pattern (planned)
+- [ ] Extract serving size from "Portion: 200g" pattern (planned)
+- [ ] Extract serving size from "Per Serving: 1 cup" pattern (planned)
+- [ ] Serving size cleaning removes trailing multipliers like "1x 2x 3x" (planned)
 - [x] Skip footer with ingredients keyword (TextRecipeParserTest.kt:detectSections skips footer with ingredients keyword)
 - [x] Detect servings variations (TextRecipeParserTest.kt:detectSections finds servings variations)
 - [x] Filter save recipe CTAs (TextRecipeParserTest.kt:isWebsiteNoise detects save recipe CTAs)
@@ -172,6 +176,12 @@
 
 #### PDF/Photo Import
 - [ ] PDF import parses structured recipe document (planned - PdfRecipeParser delegates to TextRecipeParser)
+- [ ] PDF multi-column layout recovers misplaced ingredients (sortByPosition=true, recoverMisplacedIngredients)
+- [ ] PDF continuation lines are joined (joinInstructionLines - lines not starting with digit continue previous step)
+- [ ] PDF page noise is filtered (isPdfPageNoise - URLs, page headers "11/18/25, 12:34 PM", page numbers)
+- [ ] PDF tips/notes section is extracted to sourceTips field (separate from user notes)
+- [ ] PDF ingredient quantities are preserved (cleanIngredient only strips "1." not "4 chicken")
+- [ ] PDF title extraction skips date/URL lines (isValidTitle in extractTitle)
 - [ ] Photo OCR import extracts text from image (planned - PhotoRecipeParser delegates to TextRecipeParser)
 
 #### Tag Management

@@ -46,6 +46,16 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: Serving Size / Portion Size Field
+- **Decision**: Added servingSize field to Recipe entity for storing portion/serving size information (e.g., "1 ½ cups", "200g") separate from the servings count
+- **Rationale**: Users need to know portion size per serving for dietary tracking and meal planning; extracting from PDF patterns like "Serving Size: 1 ½ cups" preserves valuable nutritional context
+- **Implementation**: Added servingSize: String? to Recipe entity and ParsedRecipeData, TextRecipeParser extracts via extractServingSize() with patterns for "Serving Size:", "Portion:", "Per Serving:", displayed in RecipeDetailScreen info row with serving indicator, editable in ImportPdfScreen/ImportUrlScreen/AddEditRecipeScreen, database version bumped to 9
+
+#### Nov 21, 2025: PDF Line Continuation Joining for Instructions and Tips
+- **Decision**: Added line joining logic to reassemble content that PDF extraction splits across multiple lines, plus filtering for PDF page noise (URLs, page headers)
+- **Rationale**: PDF text extraction splits long sentences into separate lines; instructions like "Transfer to pan, cook 35 minutes, turning" + "everything halfway" were being treated as separate steps instead of one complete instruction
+- **Implementation**: Added isPdfPageNoise() to filter URLs/page headers/page numbers, joinInstructionLines() joins lines where non-digit-starting lines continue previous step, joinParagraphLines() joins prose content for tips/notes, both extractInstructions() and extractTips() now filter PDF noise and join continuation lines before processing
+
 #### Nov 21, 2025: Source Tips Field for Website Notes and Substitutions
 - **Decision**: Added sourceTips field to Recipe entity for storing tips, variations, and substitutions from source websites/PDFs, separate from user-added notes
 - **Rationale**: Website recipes often include valuable tips and substitution suggestions that should be preserved during import but kept distinct from user's personal notes

@@ -619,6 +619,15 @@ private fun RecipePreviewContent(
                             )
                         }
 
+                        // Serving size
+                        recipe.servingSize?.let { size ->
+                            Text(
+                                text = "($size/serving)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
                         // Times
                         val totalTime = (recipe.prepTimeMinutes ?: 0) + (recipe.cookTimeMinutes ?: 0)
                         if (totalTime > 0) {
@@ -1018,15 +1027,26 @@ private fun EditFieldDialog(
                         )
                     }
                     EditField.METADATA -> {
-                        OutlinedTextField(
-                            value = editedRecipe.servings.toString(),
-                            onValueChange = {
-                                val servings = it.toIntOrNull() ?: editedRecipe.servings
-                                editedRecipe = editedRecipe.copy(servings = servings)
-                            },
-                            label = { Text("Servings") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = editedRecipe.servings.toString(),
+                                onValueChange = {
+                                    val servings = it.toIntOrNull() ?: editedRecipe.servings
+                                    editedRecipe = editedRecipe.copy(servings = servings)
+                                },
+                                label = { Text("Servings") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            OutlinedTextField(
+                                value = editedRecipe.servingSize ?: "",
+                                onValueChange = {
+                                    editedRecipe = editedRecipe.copy(servingSize = it.ifBlank { null })
+                                },
+                                label = { Text("Serving Size") },
+                                placeholder = { Text("e.g., 1 cup") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedTextField(
                                 value = editedRecipe.prepTimeMinutes?.toString() ?: "",

@@ -132,7 +132,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ All drawer screens with TopAppBar and menu button for navigation (Home, Meal Planning, Grocery Lists, Settings, Recipe Index)
 
 ### Recipe Management (Phase 1)
-- ✅ Recipe entity with Room (title, ingredients, instructions, servings, times, tags, source, photos, notes, behavioral flags)
+- ✅ Recipe entity with Room (title, ingredients, instructions, servings, servingSize, times, tags, source, photos, notes, sourceTips, behavioral flags)
 - ✅ RecipeDao with Flow-based queries (CRUD, search, favorites)
 - ✅ RecipeManager for business logic (validation, CRUD, favorite toggle)
 - ✅ RecipeViewModel with StateFlow (delegates to Manager)
@@ -250,6 +250,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Multiple media support: MediaItem data class with MediaType enum (IMAGE/VIDEO), Recipe.mediaPaths field for multiple images/videos (deprecates photoPath), MediaDownloader utility for downloading and compressing images (max 1920x1920, 85% quality) and videos with thumbnail generation (320x240), saves to app internal storage (media/images, media/videos, media/thumbnails), filters placeholders/icons/tracking pixels, support for both URL downloads and local file copies
 - ✅ Import media extraction: All parsers extract multiple images (SchemaOrgRecipeParser handles image arrays, HtmlScraper finds recipe-specific/step images, OpenGraphParser extracts all og:image tags), ParsedRecipeData.imageUrls field with cascading supplementation, UrlRecipeParser.parseWithMedia() returns RecipeParseResult with both recipe and image URLs, backward compatible parse() method maintained
 - ✅ Import media selection UI: ImportUrlScreen shows selectable image grid with visual feedback (checkmark overlay for selected, dim for unselected), default first image selected, selection count in save button, selected images downloaded before saving, ImportViewModel integrates MediaDownloader with Context/HttpClient via ViewModelFactory
+- ✅ PDF parsing improvements: TextRecipeParser now joins continuation lines (joinInstructionLines for numbered steps, joinParagraphLines for prose), filters PDF page noise (URLs, page headers, page numbers) via isPdfPageNoise(), sourceTips field for preserving website notes/tips/substitutions separate from user notes, cleanIngredient() preserves quantities (only strips "1." numbering not "4 chicken"), servingSize extraction (portion size like "1 ½ cups", "200g") via extractServingSize() with patterns for "Serving Size:", "Portion:", "Per Serving:"
 
 ---
 

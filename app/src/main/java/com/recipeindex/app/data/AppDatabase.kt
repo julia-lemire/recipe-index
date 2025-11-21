@@ -26,7 +26,7 @@ import com.recipeindex.app.data.entities.RecipeLog
  */
 @Database(
     entities = [Recipe::class, MealPlan::class, GroceryList::class, GroceryItem::class, IngredientSubstitution::class, RecipeLog::class],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

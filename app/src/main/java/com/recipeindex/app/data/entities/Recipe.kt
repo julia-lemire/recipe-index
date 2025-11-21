@@ -26,6 +26,9 @@ data class Recipe(
 
     val servings: Int,
 
+    /** Serving/portion size (e.g., "1 ½ cups", "200g") */
+    val servingSize: String? = null,
+
     val prepTimeMinutes: Int? = null,
 
     val cookTimeMinutes: Int? = null,

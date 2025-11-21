@@ -36,6 +36,7 @@ fun AddEditRecipeScreen(
 
     var title by remember { mutableStateOf(recipe?.title ?: "") }
     var servings by remember { mutableStateOf(recipe?.servings?.toString() ?: "4") }
+    var servingSize by remember { mutableStateOf(recipe?.servingSize ?: "") }
     var prepTime by remember { mutableStateOf(recipe?.prepTimeMinutes?.toString() ?: "") }
     var cookTime by remember { mutableStateOf(recipe?.cookTimeMinutes?.toString() ?: "") }
     var ingredients by remember { mutableStateOf(recipe?.ingredients?.joinToString("\n") ?: "") }
@@ -84,6 +85,7 @@ fun AddEditRecipeScreen(
                     id = recipe?.id ?: 0,
                     title = title.trim(),
                     servings = servings.toInt(),
+                    servingSize = servingSize.trim().ifBlank { null },
                     prepTimeMinutes = prepTime.toIntOrNull(),
                     cookTimeMinutes = cookTime.toIntOrNull(),
                     ingredients = ingredients.split("\n").map { it.trim() }.filter { it.isNotBlank() },
@@ -152,15 +154,28 @@ fun AddEditRecipeScreen(
                 singleLine = true
             )
 
-            // Servings
-            OutlinedTextField(
-                value = servings,
-                onValueChange = { servings = it },
-                label = { Text("Servings *") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            // Servings and Serving Size
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = servings,
+                    onValueChange = { servings = it },
+                    label = { Text("Servings *") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = servingSize,
+                    onValueChange = { servingSize = it },
+                    label = { Text("Serving Size") },
+                    placeholder = { Text("e.g., 1 cup, 200g") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+            }
 
             // Time fields
             Row(

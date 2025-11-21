@@ -1,7 +1,7 @@
 # Recipe Index Developer Guide
 
 > **Purpose**: Quick lookup ("I need to...") and architecture patterns (HOW to implement)
-> **Last Updated**: 2025-11-20
+> **Last Updated**: 2025-11-21
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -67,9 +67,9 @@
 
 ### Work with Recipes
 - **Manager**: `data/ContentManagers/RecipeManager.kt`
-- **Entity**: `data/entities/Recipe.kt` (includes cuisine field for filtering and display)
+- **Entity**: `data/entities/Recipe.kt` (includes servingSize for portion size e.g. "1 ½ cups", "200g", cuisine field for filtering and display)
 - **DAO**: `data/dao/RecipeDao.kt` (searchRecipes() includes cuisine in LIKE query)
-- **Screens**: `ui/screens/RecipeListScreen.kt` (displays cuisine as first tag in cards, shows cuisine in list view info row), `ui/screens/RecipeDetailScreen.kt`, `ui/screens/AddEditRecipeScreen.kt` (cuisine TextField after time fields), `ui/screens/ImportUrlScreen.kt` (cuisine in metadata dialog with Place icon)
+- **Screens**: `ui/screens/RecipeListScreen.kt` (displays cuisine as first tag in cards, shows cuisine in list view info row), `ui/screens/RecipeDetailScreen.kt` (servingSize in info row), `ui/screens/AddEditRecipeScreen.kt` (servingSize and cuisine TextFields after servings), `ui/screens/ImportUrlScreen.kt` (servingSize in metadata dialog), `ui/screens/ImportPdfScreen.kt` (servingSize field)
 
 ### Work with Meal Plans
 - **Manager**: `data/ContentManagers/MealPlanManager.kt`
@@ -359,5 +359,18 @@ Dialog logs help diagnose issues with multiple dialogs appearing or edits not be
 - Wrap in Card with elevation for visual separation from content
 
 **Example**: GroceryListDetailScreen bottom actions use icon-over-text for Select All toggle, Clear, Recipes, and Meal Plans buttons, providing large touch targets with clear labels
+
+### Text/PDF Parsing Pattern
+**Use when**: Extracting structured recipe data from unstructured text (PDFs, OCR results)
+**Structure** (TextRecipeParser):
+- Detect section boundaries via regex (Ingredients/Instructions/Notes headers)
+- Filter noise: `isWebsiteNoise()` (CTAs, ratings, marketing), `isPdfPageNoise()` (URLs, page headers)
+- Join continuation lines: `joinInstructionLines()` for numbered steps, `joinParagraphLines()` for prose
+- Validate content: `looksLikeIngredient()`, `looksLikeInstruction()` with pattern matching
+- Clean content: Remove bullets/numbering but preserve quantities
+
+**Key insight**: PDF text extraction splits long lines across multiple rows. Lines not starting with a digit continue the previous instruction. URLs and page headers (`11/18/25, 12:34 PM...`) must be filtered.
+
+**Example**: "3 Transfer to pan..." + "everything halfway." → joined as one instruction step. Tips section joins lines into coherent paragraphs.
 
 ---
