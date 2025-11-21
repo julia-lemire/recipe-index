@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Note
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.material3.*
@@ -92,6 +93,10 @@ fun RecipeDetailScreen(
     // Substitution dialog state
     var showSubstitutionDialog by remember { mutableStateOf(false) }
     var selectedIngredientForSub by remember { mutableStateOf<Triple<String, Double?, String>?>(null) } // ingredient, quantity, unit
+
+    // Quick note dialog state (for cook mode)
+    var showQuickNoteDialog by remember { mutableStateOf(false) }
+    var quickNoteText by remember { mutableStateOf(recipe.notes ?: "") }
 
     // Get user's unit preferences from settings
     val settings by settingsViewModel.settings.collectAsState()
@@ -491,6 +496,20 @@ fun RecipeDetailScreen(
                                 }
                             }
                         }
+
+                        // Quick note button
+                        FilledTonalButton(
+                            onClick = { showQuickNoteDialog = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                Icons.Default.Note,
+                                contentDescription = "Add Quick Note",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Quick Note")
+                        }
                     }
                 }
             }
@@ -708,6 +727,44 @@ fun RecipeDetailScreen(
             unit = selectedIngredientForSub!!.third,
             viewModel = substitutionViewModel,
             onDismiss = { showSubstitutionDialog = false }
+        )
+    }
+
+    // Quick note dialog (cook mode)
+    if (showQuickNoteDialog) {
+        AlertDialog(
+            onDismissRequest = { showQuickNoteDialog = false },
+            title = { Text("Quick Note") },
+            text = {
+                OutlinedTextField(
+                    value = quickNoteText,
+                    onValueChange = { quickNoteText = it },
+                    label = { Text("Notes") },
+                    placeholder = { Text("Add notes about this recipe...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    maxLines = 10
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // Update recipe notes
+                        recipeViewModel.updateRecipe(
+                            recipe.copy(notes = quickNoteText.ifBlank { null })
+                        )
+                        showQuickNoteDialog = false
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showQuickNoteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
         )
     }
 }
