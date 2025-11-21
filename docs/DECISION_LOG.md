@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: Nested JSON Structure Handling in URL Import
+- **Decision**: Enhanced SchemaOrgRecipeParser to recursively handle nested JSON objects and arrays in Schema.org fields (recipeIngredient, recipeCategory, recipeCuisine, keywords) by extracting text from common Schema.org properties (text, name, @value)
+- **Rationale**: Many modern recipe websites use complex nested JSON-LD structures where array elements are objects rather than simple strings, causing the parser to crash with "is not a JsonPrimitive" errors and fall back to Open Graph metadata (title + image only), missing all ingredients and instructions
+- **Implementation**: Modified parseJsonArrayToStrings() to recursively handle JsonObject items by checking text/name/@value fields, JsonArray items by recursively parsing and joining results, added comprehensive logging showing field types and parsing progress for debugging, added fieldName parameter to track which field is being parsed for better diagnostics
+
 #### Nov 20, 2025: FilterSortGroup Integration Across All Screens
 - **Decision**: Integrated FilterSortGroup library across RecipeListScreen, MealPlanningScreen, and GroceryListScreen with domain-specific filter/sort/grouping implementations (meal plan implementations include ContainsRecipeFilter for finding plans with specific recipes per user requirement), ViewModels expose filterSortManager with convenience methods, UI components (FilterChipRow, SortMenu) replace ad-hoc search/filter implementations
 - **Rationale**: Users need consistent filtering and sorting across all entity types (recipes, meal plans, grocery lists); meal plan search specifically needs ability to find plans containing specific recipes ("I want to find a meal plan with chicken") which is now possible via ContainsRecipeFilter; consistent UX patterns (filter chips always below TopAppBar, sort menu always in actions) improve discoverability
