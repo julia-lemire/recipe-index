@@ -397,26 +397,11 @@ fun RecipeDetailScreen(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Cook Mode",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color.Black
-                            )
-                            // Deselect all button
-                            TextButton(
-                                onClick = {
-                                    checkedIngredients = setOf()
-                                    checkedInstructions = setOf()
-                                }
-                            ) {
-                                Text("Deselect All")
-                            }
-                        }
+                        Text(
+                            text = "Cook Mode",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.Black
+                        )
 
                         // Timer section
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -522,12 +507,34 @@ fun RecipeDetailScreen(
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    if (selectedServings != recipe.servings) {
-                        Text(
-                            text = "Scaled for $selectedServings servings",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (selectedServings != recipe.servings) {
+                            Text(
+                                text = "Scaled for $selectedServings servings",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // Select All / Deselect All button (only in cook mode)
+                        if (cookModeEnabled) {
+                            val allIngredientsChecked = checkedIngredients.size == recipe.ingredients.size
+                            TextButton(
+                                onClick = {
+                                    checkedIngredients = if (allIngredientsChecked) {
+                                        setOf()
+                                    } else {
+                                        recipe.ingredients.indices.toSet()
+                                    }
+                                }
+                            ) {
+                                Text(if (allIngredientsChecked) "Deselect All" else "Select All")
+                            }
+                        }
                     }
                 }
                 recipe.ingredients.forEachIndexed { index, ingredient ->
@@ -609,6 +616,13 @@ fun RecipeDetailScreen(
                         checkedInstructions - stepIndex
                     } else {
                         checkedInstructions + stepIndex
+                    }
+                },
+                onSelectAllToggle = {
+                    checkedInstructions = if (checkedInstructions.size == instructionSteps.size) {
+                        setOf()
+                    } else {
+                        instructionSteps.indices.toSet()
                     }
                 }
             )
@@ -764,18 +778,33 @@ private fun InstructionsSection(
     cookModeEnabled: Boolean = false,
     instructionSteps: List<String> = emptyList(),
     checkedInstructions: Set<Int> = emptySet(),
-    onInstructionToggle: (Int) -> Unit = {}
+    onInstructionToggle: (Int) -> Unit = {},
+    onSelectAllToggle: (() -> Unit)? = null
 ) {
     val sections = remember(instructions) { parseInstructionSections(instructions) }
 
     if (sections.isEmpty()) return
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = "Instructions",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Instructions",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            // Select All / Deselect All button (only in cook mode)
+            if (cookModeEnabled && onSelectAllToggle != null) {
+                val allInstructionsChecked = checkedInstructions.size == instructionSteps.size
+                TextButton(onClick = onSelectAllToggle) {
+                    Text(if (allInstructionsChecked) "Deselect All" else "Select All")
+                }
+            }
+        }
 
         // Cook mode: simple checkable list with bold numbers
         if (cookModeEnabled) {
