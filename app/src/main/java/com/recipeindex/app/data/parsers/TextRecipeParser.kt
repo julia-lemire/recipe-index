@@ -28,6 +28,18 @@ object TextRecipeParser {
 
             val lines = text.split("\n").map { it.trim() }.filter { it.isNotBlank() }
 
+            // Debug: Log all lines for analysis
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "=== RAW LINES (${lines.size} total) ==="
+            )
+            lines.forEachIndexed { idx, line ->
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "  [$idx] ${line.take(80)}${if (line.length > 80) "..." else ""}"
+                )
+            }
+
             if (lines.isEmpty()) {
                 return Result.failure(Exception("No text found to parse"))
             }
@@ -447,31 +459,53 @@ object TextRecipeParser {
             Regex("\\b(oven|pan|skillet|pot|bowl|baking sheet|sheet pan|grill|microwave)\\b", RegexOption.IGNORE_CASE)
         )
 
-        for (line in instructions) {
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "=== RECOVERY: Analyzing ${instructions.size} lines ==="
+        )
+
+        for ((index, line) in instructions.withIndex()) {
             val isLikelyIngredient = ingredientPatterns.any { it.containsMatchIn(line) }
             val isLikelyInstruction = instructionPatterns.any { it.containsMatchIn(line) }
 
+            val classification: String
             when {
                 // Clearly an instruction
-                isLikelyInstruction && !isLikelyIngredient -> filteredInstructions.add(line)
+                isLikelyInstruction && !isLikelyIngredient -> {
+                    filteredInstructions.add(line)
+                    classification = "INSTR (pattern)"
+                }
                 // Clearly an ingredient
-                isLikelyIngredient && !isLikelyInstruction -> recoveredIngredients.add(line)
+                isLikelyIngredient && !isLikelyInstruction -> {
+                    recoveredIngredients.add(line)
+                    classification = "INGR (pattern)"
+                }
                 // Both match - prefer instruction (likely a step that mentions an ingredient)
-                isLikelyIngredient && isLikelyInstruction -> filteredInstructions.add(line)
+                isLikelyIngredient && isLikelyInstruction -> {
+                    filteredInstructions.add(line)
+                    classification = "INSTR (both)"
+                }
                 // Neither match strongly - use original looksLikeIngredient check
                 else -> {
                     if (looksLikeIngredient(line) && !looksLikeInstruction(line)) {
                         recoveredIngredients.add(line)
+                        classification = "INGR (fallback)"
                     } else {
                         filteredInstructions.add(line)
+                        classification = "INSTR (fallback)"
                     }
                 }
             }
+
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "  [$index] $classification: ${line.take(60)}${if (line.length > 60) "..." else ""}"
+            )
         }
 
         DebugConfig.debugLog(
             DebugConfig.Category.IMPORT,
-            "Recovery analysis: ${recoveredIngredients.size} ingredients, ${filteredInstructions.size} instructions from ${instructions.size} lines"
+            "Recovery result: ${recoveredIngredients.size} ingredients, ${filteredInstructions.size} instructions"
         )
 
         return Pair(recoveredIngredients, filteredInstructions)
