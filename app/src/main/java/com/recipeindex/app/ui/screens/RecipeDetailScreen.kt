@@ -324,9 +324,13 @@ fun RecipeDetailScreen(
             }
 
             // Recipe Photo
-            recipe.photoPath?.let { photoUrl ->
+            // Use first image from mediaPaths, fallback to photoPath for legacy recipes
+            val photoUrl = recipe.mediaPaths.firstOrNull { it.type == com.recipeindex.app.data.entities.MediaType.IMAGE }?.path
+                ?: recipe.photoPath
+
+            photoUrl?.let { url ->
                 AsyncImage(
-                    model = photoUrl,
+                    model = url,
                     contentDescription = "Recipe photo for ${recipe.title}",
                     modifier = Modifier
                         .fillMaxWidth()

@@ -235,7 +235,11 @@ fun MealPlanningScreen(
                         ) {
                             items(mealPlans, key = { it.id }) { mealPlan ->
                                 val planRecipes = recipes.filter { it.id in mealPlan.recipeIds }
-                                val recipePhotos = planRecipes.associate { it.id to (it.photoPath ?: "") }
+                                val recipePhotos = planRecipes.associate {
+                                    it.id to (it.mediaPaths.firstOrNull { media ->
+                                        media.type == com.recipeindex.app.data.entities.MediaType.IMAGE
+                                    }?.path ?: it.photoPath ?: "")
+                                }
 
                                 MealPlanCard(
                                     mealPlan = mealPlan,
@@ -269,7 +273,11 @@ fun MealPlanningScreen(
                         ) {
                             items(mealPlans, key = { it.id }) { mealPlan ->
                                 val planRecipes = recipes.filter { it.id in mealPlan.recipeIds }
-                                val recipePhotos = planRecipes.associate { it.id to (it.photoPath ?: "") }
+                                val recipePhotos = planRecipes.associate {
+                                    it.id to (it.mediaPaths.firstOrNull { media ->
+                                        media.type == com.recipeindex.app.data.entities.MediaType.IMAGE
+                                    }?.path ?: it.photoPath ?: "")
+                                }
 
                                 MealPlanCard(
                                     mealPlan = mealPlan,
