@@ -235,6 +235,7 @@ object TagStandardizer {
             .filter { !isJunkTag(it) } // Check again after noise removal
             .distinct()
             .toList()
+            .let { removeSubsets(it) } // Remove tags that are subsets of others
     }
 
     /**
@@ -302,8 +303,14 @@ object TagStandardizer {
 
         // Track duplicates removed
         val beforeDedup = modifications.size
-        val result = modifications.distinctBy { it.standardized }
-        val duplicatesRemoved = beforeDedup - result.size
+        val deduplicated = modifications.distinctBy { it.standardized }
+        val duplicatesRemoved = beforeDedup - deduplicated.size
+
+        // Remove subsets (e.g., keep "eggplant" and remove "japanese eggplant")
+        val beforeSubsetRemoval = deduplicated.size
+        val subsetsToRemove = findSubsets(deduplicated.map { it.standardized })
+        val result = deduplicated.filter { it.standardized !in subsetsToRemove }
+        val subsetsRemoved = beforeSubsetRemoval - result.size
 
         // Log summary
         DebugConfig.debugLog(
@@ -322,6 +329,13 @@ object TagStandardizer {
             DebugConfig.debugLog(
                 DebugConfig.Category.TAG_STANDARDIZATION,
                 "Duplicates removed: $duplicatesRemoved"
+            )
+        }
+
+        if (subsetsRemoved > 0) {
+            DebugConfig.debugLog(
+                DebugConfig.Category.TAG_STANDARDIZATION,
+                "Subsets removed: $subsetsRemoved (more specific tags when general version exists)"
             )
         }
 
@@ -408,5 +422,46 @@ object TagStandardizer {
         if (isJunkTag(normalized)) return false
 
         return true
+    }
+
+    /**
+     * Remove tags that are subsets of other tags
+     * e.g., if both "eggplant" and "japanese eggplant" exist, remove "japanese eggplant"
+     * Keeps the more general tag to avoid over-specificity
+     */
+    private fun removeSubsets(tags: List<String>): List<String> {
+        val subsetsToRemove = findSubsets(tags)
+        return tags.filter { it !in subsetsToRemove }
+    }
+
+    /**
+     * Find tags that should be removed because they're subsets of other tags
+     * For each tag, check if any of its individual words appear as a standalone tag
+     * If so, the longer tag is more specific and should be removed
+     */
+    private fun findSubsets(tags: List<String>): Set<String> {
+        val subsetsToRemove = mutableSetOf<String>()
+
+        for (tag in tags) {
+            // Split into words
+            val words = tag.split(" ")
+
+            // If this tag is multi-word, check if any single word exists as its own tag
+            if (words.size > 1) {
+                for (word in words) {
+                    // If this word exists as a standalone tag, this multi-word tag is more specific
+                    if (word in tags && word.length >= 3) { // Only for meaningful words (3+ chars)
+                        subsetsToRemove.add(tag)
+                        DebugConfig.debugLog(
+                            DebugConfig.Category.TAG_STANDARDIZATION,
+                            "  Removing subset: \"$tag\" (general form \"$word\" exists)"
+                        )
+                        break
+                    }
+                }
+            }
+        }
+
+        return subsetsToRemove
     }
 }
