@@ -94,18 +94,25 @@
 
 ### Import Recipes
 - **Parser Interface**: `data/parsers/RecipeParser.kt`
-- **URL Import**: `data/parsers/SchemaOrgRecipeParser.kt`
-  - Three-tier parsing strategy: Schema.org JSON-LD → HTML scraping → Open Graph
+- **URL Import Controller**: `data/parsers/UrlRecipeParser.kt`
+  - Orchestrates three-tier parsing strategy: Schema.org JSON-LD → HTML scraping → Open Graph
+  - Delegates to specialized parsers: SchemaOrgRecipeParser, HtmlScraper, OpenGraphParser
+  - Handles HTTP fetching with Ktor client
+- **Schema.org Parser**: `data/parsers/SchemaOrgRecipeParser.kt`
   - Handles nested JSON structures via recursive parseJsonArrayToStrings
   - Extracts from text/name/@value fields in Schema.org objects
   - Handles @type as string or array (["Recipe", "Article"])
   - Detects Article/BlogPosting types with embedded recipe data (recipeIngredient/recipeInstructions fields)
-  - HTML scraping fallback searches for ingredients/instructions using CSS selectors when structured data unavailable
   - Extracts cuisine from titles when recipeCuisine is missing/incorrect (100+ cuisines)
+- **HTML Scraper**: `data/parsers/HtmlScraper.kt`
+  - Searches for ingredients/instructions using CSS selectors when structured data unavailable
+  - Only returns data if BOTH ingredients AND instructions found
+- **Open Graph Parser**: `data/parsers/OpenGraphParser.kt`
+  - Last resort fallback extracting title/description/image from og: meta tags
 - **Import Screens**: `ui/screens/ImportSourceSelectionScreen.kt`, `ui/screens/ImportUrlScreen.kt`
 - **ViewModel**: `ui/viewmodels/ImportViewModel.kt` (auto-normalizes URLs: http:// → https://, adds https:// when missing)
 - **Tag Processing**: `utils/TagStandardizer.kt` (removes subset tags, standardizes variations, filters junk)
-- **Debugging**: Enable [IMPORT] logs in DebugConfig to see JSON-LD parsing progress, HTML scraping attempts, field types, extraction results, URL normalization, and tag value logging
+- **Debugging**: Enable [IMPORT] logs in DebugConfig to see strategy attempts, JSON-LD parsing progress, HTML scraping attempts, field types, extraction results, URL normalization, and tag value logging
 
 ### Share/Import Content
 - **Share Helper**: `utils/ShareHelper.kt` (shareRecipe/shareMealPlan/shareGroceryList, photo encoding/decoding, duplicate detection)
