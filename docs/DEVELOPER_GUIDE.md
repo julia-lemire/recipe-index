@@ -98,6 +98,7 @@
   - Handles nested JSON structures via recursive parseJsonArrayToStrings
   - Extracts from text/name/@value fields in Schema.org objects
   - Handles @type as string or array (["Recipe", "Article"])
+  - Detects Article/BlogPosting types with embedded recipe data (recipeIngredient/recipeInstructions fields)
   - Extracts cuisine from titles when recipeCuisine is missing/incorrect (100+ cuisines)
 - **Import Screens**: `ui/screens/ImportSourceSelectionScreen.kt`, `ui/screens/ImportUrlScreen.kt`
 - **ViewModel**: `ui/viewmodels/ImportViewModel.kt` (auto-normalizes URLs: http:// → https://, adds https:// when missing)

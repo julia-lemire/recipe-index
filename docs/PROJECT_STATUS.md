@@ -232,6 +232,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Import URL normalization: Auto-upgrades http:// to https:// and adds https:// prefix when missing to prevent Android network security policy errors
 - ✅ Import cuisine extraction: Extracts cuisine from recipe titles (e.g., "Georgian Beef Stew") when Schema.org recipeCuisine field is missing or incorrect, supports 100+ cuisines
 - ✅ Import tag de-duplication: Removes subset tags when general term exists (e.g., keeps "eggplant", removes "japanese eggplant")
+- ✅ Import Article type support: Detects Article/BlogPosting types with embedded recipe data (recipeIngredient/recipeInstructions fields) and treats them as valid recipes for sites that don't use explicit Recipe type
 
 ### Advanced Features (Phase 5)
 - ✅ Portion scaling: Servings dropdown in RecipeDetailScreen (half, original, 2x, 3x, 4x) with automatic ingredient quantity scaling

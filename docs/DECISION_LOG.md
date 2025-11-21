@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: Article/BlogPosting Type Detection with Embedded Recipe Data
+- **Decision**: Enhanced isRecipeType() to detect Article/BlogPosting Schema.org types that contain embedded recipe data (recipeIngredient or recipeInstructions fields) and treat them as valid recipes
+- **Rationale**: Some recipe websites use @type: "Article" or "BlogPosting" instead of explicit "Recipe" type while still embedding complete recipe data in Schema.org fields, causing parser to skip valid recipes and extract only Open Graph metadata
+- **Implementation**: Modified isRecipeType() to check if Article/BlogPosting types contain recipeIngredient or recipeInstructions keys, added logging when Article type with recipe fields is detected, allows extraction of full recipe data from sites like Occupy Kitchen that use article-based markup
+
 #### Nov 21, 2025: Cuisine Extraction from Recipe Titles
 - **Decision**: Extract cuisine names from recipe titles as fallback when recipeCuisine Schema.org field is missing or incorrect, using comprehensive list of 100+ known cuisines
 - **Rationale**: Recipe websites often set recipeCuisine to their publication location (e.g., "American" for Food & Wine) rather than the actual cuisine origin, causing Georgian/Thai/Italian recipes to be misclassified
