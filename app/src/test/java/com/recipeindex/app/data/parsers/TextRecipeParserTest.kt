@@ -187,6 +187,47 @@ class TextRecipeParserTest {
         }
     }
 
+    @Test
+    fun `isWebsiteNoise detects plural forms in CTAs`() {
+        val method = TextRecipeParser.javaClass.getDeclaredMethod(
+            "isWebsiteNoise",
+            String::class.java
+        )
+        method.isAccessible = true
+
+        val noisyLines = listOf(
+            "Save recipes, create shopping lists",
+            "meal plans and more",
+            "shopping lists",
+            "Get recipes delivered to your inbox"
+        )
+
+        noisyLines.forEach { line ->
+            val isNoise = method.invoke(TextRecipeParser, line) as Boolean
+            assertTrue("Should detect noise with plurals: $line", isNoise)
+        }
+    }
+
+    @Test
+    fun `isWebsiteNoise detects rating prompts`() {
+        val method = TextRecipeParser.javaClass.getDeclaredMethod(
+            "isWebsiteNoise",
+            String::class.java
+        )
+        method.isAccessible = true
+
+        val noisyLines = listOf(
+            "Last Step: Please leave a rating and comment",
+            "Please leave a rating and comment letting us know",
+            "Rating and comment help our business thrive"
+        )
+
+        noisyLines.forEach { line ->
+            val isNoise = method.invoke(TextRecipeParser, line) as Boolean
+            assertTrue("Should detect rating prompt: $line", isNoise)
+        }
+    }
+
     // ========== Ingredient Validation Tests ==========
 
     @Test
@@ -266,6 +307,50 @@ class TextRecipeParserTest {
         nonIngredients.forEach { line ->
             val isIngredient = method.invoke(TextRecipeParser, line) as Boolean
             assertFalse("Should reject navigation: $line", isIngredient)
+        }
+    }
+
+    @Test
+    fun `looksLikeIngredient accepts Unicode fractions`() {
+        val method = TextRecipeParser.javaClass.getDeclaredMethod(
+            "looksLikeIngredient",
+            String::class.java
+        )
+        method.isAccessible = true
+
+        val ingredients = listOf(
+            "½ cup butter",
+            "¼ inch thick slices",
+            "¾ cup sugar",
+            "⅓ cup olive oil",
+            "1½ cups flour"
+        )
+
+        ingredients.forEach { line ->
+            val isIngredient = method.invoke(TextRecipeParser, line) as Boolean
+            assertTrue("Should accept Unicode fraction ingredient: $line", isIngredient)
+        }
+    }
+
+    @Test
+    fun `looksLikeIngredient accepts lines starting with measurement`() {
+        val method = TextRecipeParser.javaClass.getDeclaredMethod(
+            "looksLikeIngredient",
+            String::class.java
+        )
+        method.isAccessible = true
+
+        // These simulate PDF extraction where quantity is on a different line
+        val ingredients = listOf(
+            "cup red onion, sliced",
+            "tablespoon olive oil",
+            "cups cherry tomatoes",
+            "oz cream cheese"
+        )
+
+        ingredients.forEach { line ->
+            val isIngredient = method.invoke(TextRecipeParser, line) as Boolean
+            assertTrue("Should accept line starting with measurement: $line", isIngredient)
         }
     }
 
@@ -639,5 +724,85 @@ class TextRecipeParserTest {
         val result = TextRecipeParser.parseText(text, RecipeSource.PDF)
 
         assertEquals("Should use first line as title", "My Amazing Recipe", result.getOrNull()?.title)
+    }
+
+    @Test
+    fun `parseText recovers misplaced ingredients from instructions section`() {
+        // This simulates PDF multi-column extraction where ingredients appear after Instructions header
+        val text = """
+            Sheet Pan Chicken
+
+            Ingredients
+            Save recipes, create shopping lists,
+            meal plans and more.
+
+            Instructions
+            Last Step: Please leave a rating and comment
+            cup red onion, sliced ¼ inch thick (from 1 small onion)
+            cup jarred cherry peppers, sliced into rings
+            2 tablespoons olive oil
+            Preheat oven to 425°F.
+            Place chicken on sheet pan.
+            Bake for 30 minutes until golden.
+        """.trimIndent()
+
+        val result = TextRecipeParser.parseText(text, RecipeSource.PDF)
+
+        assertTrue("Should succeed parsing", result.isSuccess)
+        val recipe = result.getOrNull()!!
+
+        // Should recover ingredients that were misplaced in instructions
+        assertTrue("Should have recovered ingredients", recipe.ingredients.isNotEmpty())
+        assertTrue("Should have some instructions", recipe.instructions.isNotEmpty())
+
+        // Ingredients should contain the measurement-based lines
+        assertTrue(
+            "Ingredients should contain onion",
+            recipe.ingredients.any { it.contains("onion") }
+        )
+
+        // Instructions should contain actual cooking steps
+        assertTrue(
+            "Instructions should contain preheat step",
+            recipe.instructions.any { it.contains("Preheat") || it.contains("preheat") }
+        )
+
+        // Website noise should be filtered
+        assertFalse(
+            "Should not include 'Save recipes' in ingredients",
+            recipe.ingredients.any { it.contains("Save recipes") }
+        )
+        assertFalse(
+            "Should not include 'rating' CTA in instructions",
+            recipe.instructions.any { it.contains("rating") }
+        )
+    }
+
+    @Test
+    fun `parseText handles PDF with Unicode fractions correctly`() {
+        val text = """
+            Simple Recipe
+
+            Ingredients:
+            ½ cup butter, softened
+            ¼ teaspoon salt
+            2½ cups flour
+            ⅓ cup sugar
+
+            Instructions:
+            Mix all ingredients together.
+            Bake at 350°F for 25 minutes.
+        """.trimIndent()
+
+        val result = TextRecipeParser.parseText(text, RecipeSource.PDF)
+
+        assertTrue("Should succeed parsing", result.isSuccess)
+        val recipe = result.getOrNull()!!
+
+        assertEquals("Should extract 4 ingredients with Unicode fractions", 4, recipe.ingredients.size)
+        assertTrue(
+            "Should have butter ingredient",
+            recipe.ingredients.any { it.contains("butter") }
+        )
     }
 }

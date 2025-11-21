@@ -42,8 +42,23 @@ object TextRecipeParser {
 
             // Extract recipe data
             val title = extractTitle(sections, lines)
-            val ingredients = extractIngredients(sections, lines)
-            val instructions = extractInstructions(sections, lines)
+            var ingredients = extractIngredients(sections, lines)
+            var instructions = extractInstructions(sections, lines)
+
+            // Recovery: If we got 0 ingredients but have instructions with ingredient-like content,
+            // the PDF text extraction likely had column ordering issues
+            if (ingredients.isEmpty() && instructions.isNotEmpty()) {
+                val (recoveredIngredients, filteredInstructions) = recoverMisplacedIngredients(instructions)
+                if (recoveredIngredients.isNotEmpty()) {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.IMPORT,
+                        "Recovered ${recoveredIngredients.size} misplaced ingredients from instructions"
+                    )
+                    ingredients = recoveredIngredients
+                    instructions = filteredInstructions
+                }
+            }
+
             val servings = extractServings(sections, lines)
             val prepTime = extractPrepTime(sections, lines)
             val cookTime = extractCookTime(sections, lines)
@@ -306,11 +321,23 @@ object TextRecipeParser {
 
         // Common website CTAs and navigation
         val noisyPatterns = listOf(
-            Regex("\\b(save|shop|get|view|see|click|subscribe|sign\\s*up|log\\s*in|create|download)\\b.*\\b(recipe|ingredient|meal|plan|list)"),
+            // CTA patterns - use plurals (recipes?, ingredients?, etc.)
+            Regex("\\b(save|shop|get|view|see|click|subscribe|sign\\s*up|log\\s*in|create|download)\\b.*\\b(recipes?|ingredients?|meals?|plans?|lists?|shopping)"),
+            // Rating/comment prompts
             Regex("\\b(rating|comment|review|feedback)\\b.*\\b(let|know|help|business|thrive)"),
+            Regex("\\blast\\s*step\\b.*\\b(rating|comment|review)"),
+            Regex("\\b(leave|please)\\b.*\\b(rating|comment|review)"),
+            // Marketing phrases
             Regex("\\b(free|high[\\s-]quality|continue|providing)\\b"),
-            Regex("^\\s*[a-z]\\s+[a-z]\\s+[a-z]"), // Spaced out letters like "S H O P"
+            Regex("\\b(business|thrive|continue\\s+providing)\\b"),
+            // App promo text
+            Regex("\\b(meal\\s*plans?)\\b.*\\b(and\\s+more|create)"),
+            Regex("\\bshopping\\s+lists?\\b"),
+            // Spaced out letters like "S H O P"
+            Regex("^\\s*[a-z]\\s+[a-z]\\s+[a-z]"),
+            // Social/newsletter
             Regex("\\b(newsletter|social|follow|share|pin|tweet)\\b"),
+            // Footer/legal
             Regex("\\b(privacy|policy|terms|conditions|copyright)\\b"),
             Regex("^(home|about|contact|blog|search)$", RegexOption.IGNORE_CASE)
         )
@@ -327,13 +354,18 @@ object TextRecipeParser {
         // Too short to be an ingredient
         if (line.length < 3) return false
 
-        // Contains common ingredient indicators
-        val hasQuantity = Regex("\\d+\\s*(cup|tablespoon|teaspoon|tbsp|tsp|oz|pound|lb|gram|ml|liter|inch)").containsMatchIn(lower)
-        val hasCommonWords = Regex("\\b(cup|teaspoon|tablespoon|ounce|pound|slice|dice|chop|mince|fresh|dried)").containsMatchIn(lower)
-        val hasIngredientName = Regex("\\b(chicken|beef|pork|fish|egg|milk|cheese|butter|oil|flour|sugar|salt|pepper|onion|garlic|tomato|potato|rice|pasta)").containsMatchIn(lower)
+        // Contains common ingredient indicators - with Unicode fractions
+        val hasQuantity = Regex("(\\d+|[½¼¾⅓⅔⅛⅜⅝⅞])\\s*(cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|inch|inches|cloves?|slices?|pieces?|cans?|jars?|bunche?s?|stalks?|heads?|sprigs?)").containsMatchIn(lower)
+        val hasCommonWords = Regex("\\b(cups?|teaspoons?|tablespoons?|ounces?|pounds?|sliced?|diced?|chopped?|minced?|fresh|dried|whole|large|medium|small|thin|thick|boneless|skinless|shredded)").containsMatchIn(lower)
+        // Expanded ingredient name list
+        val hasIngredientName = Regex("\\b(chicken|beef|pork|fish|salmon|shrimp|egg|eggs|milk|cream|cheese|butter|oil|olive|flour|sugar|salt|pepper|onion|garlic|tomato|potato|rice|pasta|noodle|bread|lemon|lime|cilantro|parsley|basil|oregano|thyme|rosemary|cumin|paprika|cayenne|chili|jalapeño|bell|carrot|celery|broccoli|spinach|lettuce|cabbage|mushroom|zucchini|squash|corn|bean|pea|chickpea|lentil|avocado|cucumber|apple|banana|berry|orange|ginger|soy|vinegar|wine|broth|stock|honey|maple|vanilla|cinnamon|nutmeg|cherry|jarred|canned|drained|rinsed)s?").containsMatchIn(lower)
+        // Starts with Unicode fraction (common in PDFs)
+        val startsWithFraction = Regex("^[½¼¾⅓⅔⅛⅜⅝⅞]").containsMatchIn(line)
+        // Starts with measurement (e.g., "cup red onion" where number was on previous line)
+        val startsWithMeasurement = Regex("^(cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|cloves?|slices?|pieces?|cans?|jars?)\\s").containsMatchIn(lower)
 
         // Looks like ingredient if it has measurements OR common food words
-        return hasQuantity || hasCommonWords || hasIngredientName
+        return hasQuantity || hasCommonWords || hasIngredientName || startsWithFraction || startsWithMeasurement
     }
 
     /**
@@ -375,5 +407,73 @@ object TextRecipeParser {
             .replace(Regex("^Step\\s*\\d+:?\\s*", RegexOption.IGNORE_CASE), "")
             .replace(Regex("^\\d+\\.?\\s*"), "") // Remove numbering
             .trim()
+    }
+
+    /**
+     * Recover misplaced ingredients from instructions.
+     * PDF text extraction can mix columns, placing ingredients after "Instructions" header.
+     * This function separates ingredient-like lines from real instructions.
+     *
+     * @param instructions List of parsed instruction lines
+     * @return Pair of (recovered ingredients, filtered instructions)
+     */
+    private fun recoverMisplacedIngredients(instructions: List<String>): Pair<List<String>, List<String>> {
+        val recoveredIngredients = mutableListOf<String>()
+        val filteredInstructions = mutableListOf<String>()
+
+        // Patterns that strongly indicate an ingredient (not an instruction)
+        val ingredientPatterns = listOf(
+            // Starts with number/fraction and measurement
+            Regex("^(\\d+[\\s/]*\\d*|[½¼¾⅓⅔⅛⅜⅝⅞])\\s*(cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|cloves?|slices?|pieces?|cans?|jars?)\\b", RegexOption.IGNORE_CASE),
+            // Starts with measurement unit (number on previous line in PDF)
+            Regex("^(cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?)\\s+\\w", RegexOption.IGNORE_CASE),
+            // Contains parenthetical description like "(from 1 small onion)"
+            Regex("\\(from\\s+\\d+\\s+\\w+", RegexOption.IGNORE_CASE),
+            // Common ingredient list patterns
+            Regex(",\\s*(sliced|diced|chopped|minced|quartered|halved)\\b", RegexOption.IGNORE_CASE),
+            // Ingredient with thickness: "sliced ¼ inch thick"
+            Regex("(sliced|cut)\\s+[¼½¾⅓⅔⅛⅜⅝⅞\\d]+\\s*inch", RegexOption.IGNORE_CASE)
+        )
+
+        // Patterns that strongly indicate an instruction (not an ingredient)
+        val instructionPatterns = listOf(
+            // Starts with cooking verb
+            Regex("^(preheat|heat|cook|bake|boil|simmer|fry|saute|stir|mix|combine|add|remove|place|transfer|turn|flip|season|serve|let|allow|cover|uncover|drain|rinse|set|arrange|spread|brush|drizzle|sprinkle|garnish|refrigerate|marinate|rest|cool|warm)\\b", RegexOption.IGNORE_CASE),
+            // Contains "until" (indicates cooking process)
+            Regex("\\buntil\\b", RegexOption.IGNORE_CASE),
+            // Contains cooking time/temperature
+            Regex("\\b(\\d+\\s*°?[fc]|\\d+\\s*(minutes?|mins?|hours?|hrs?|seconds?))\\b", RegexOption.IGNORE_CASE),
+            // Mentions cooking equipment
+            Regex("\\b(oven|pan|skillet|pot|bowl|baking sheet|sheet pan|grill|microwave)\\b", RegexOption.IGNORE_CASE)
+        )
+
+        for (line in instructions) {
+            val isLikelyIngredient = ingredientPatterns.any { it.containsMatchIn(line) }
+            val isLikelyInstruction = instructionPatterns.any { it.containsMatchIn(line) }
+
+            when {
+                // Clearly an instruction
+                isLikelyInstruction && !isLikelyIngredient -> filteredInstructions.add(line)
+                // Clearly an ingredient
+                isLikelyIngredient && !isLikelyInstruction -> recoveredIngredients.add(line)
+                // Both match - prefer instruction (likely a step that mentions an ingredient)
+                isLikelyIngredient && isLikelyInstruction -> filteredInstructions.add(line)
+                // Neither match strongly - use original looksLikeIngredient check
+                else -> {
+                    if (looksLikeIngredient(line) && !looksLikeInstruction(line)) {
+                        recoveredIngredients.add(line)
+                    } else {
+                        filteredInstructions.add(line)
+                    }
+                }
+            }
+        }
+
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "Recovery analysis: ${recoveredIngredients.size} ingredients, ${filteredInstructions.size} instructions from ${instructions.size} lines"
+        )
+
+        return Pair(recoveredIngredients, filteredInstructions)
     }
 }
