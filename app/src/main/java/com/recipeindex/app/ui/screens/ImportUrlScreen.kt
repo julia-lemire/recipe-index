@@ -886,7 +886,7 @@ private fun RecipePreviewContent(
         Button(
             onClick = {
                 onSave(selectedImageUrls.toList())
-                onSaveComplete()
+                // onSaveComplete() will be called by UiState.Saved observer after save completes
             },
             modifier = Modifier
                 .fillMaxWidth()
