@@ -506,19 +506,46 @@ class SchemaOrgRecipeParser(
     }
 
     /**
-     * Check if a JSON object has @type of "Recipe"
+     * Check if a JSON object has @type of "Recipe" or is an Article with recipe fields
      * Handles both string and array @type values
      */
     private fun isRecipeType(obj: JsonObject): Boolean {
         val typeElement = obj["@type"] ?: return false
 
-        return when (typeElement) {
+        // Check if explicitly typed as Recipe
+        val hasRecipeType = when (typeElement) {
             is JsonPrimitive -> typeElement.content == "Recipe"
             is JsonArray -> typeElement.any {
                 it is JsonPrimitive && it.content == "Recipe"
             }
             else -> false
         }
+
+        if (hasRecipeType) return true
+
+        // Some sites use Article type but embed recipe data
+        // Check if this Article has recipe-specific fields
+        val hasArticleType = when (typeElement) {
+            is JsonPrimitive -> typeElement.content == "Article" || typeElement.content == "BlogPosting"
+            is JsonArray -> typeElement.any {
+                it is JsonPrimitive && (it.content == "Article" || it.content == "BlogPosting")
+            }
+            else -> false
+        }
+
+        if (hasArticleType) {
+            // Consider it a recipe if it has recipeIngredient or recipeInstructions
+            val hasRecipeFields = obj.containsKey("recipeIngredient") || obj.containsKey("recipeInstructions")
+            if (hasRecipeFields) {
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "[IMPORT] Article/BlogPosting with recipe fields detected, treating as Recipe"
+                )
+                return true
+            }
+        }
+
+        return false
     }
 
     /**
