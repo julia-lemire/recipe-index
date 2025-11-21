@@ -1,7 +1,7 @@
 # Recipe Index Decision Log
 
 > **Purpose**: Architectural decision records (WHAT/WHY/WHEN decisions were made)
-> **Last Updated**: 2025-11-20
+> **Last Updated**: 2025-11-21
 
 **See Also:**
 - [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) - Quick lookup ("I need to...") and architecture patterns (HOW to implement)
@@ -45,6 +45,11 @@
 
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
+
+#### Nov 21, 2025: Multiple Media Support with Selection UI
+- **Decision**: Implemented comprehensive multi-media support (images/videos) with user-selectable download UI during URL import
+- **Rationale**: Preserves recipe media beyond URL availability, supports instructional photos/videos, gives users control over storage usage by selecting relevant images
+- **Implementation**: MediaItem data class with MediaType enum, MediaDownloader utility for downloading/compression, parser updates to extract all images via cascading supplementation, ImportUrlScreen selection grid with visual feedback, automatic download of selected media before saving
 
 #### Nov 21, 2025: Cuisine Field UI Support
 - **Decision**: Added UI support for cuisine field across recipe import, edit, display, filtering, and search functionality
