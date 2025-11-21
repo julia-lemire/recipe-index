@@ -13,12 +13,16 @@ import org.jsoup.nodes.Document
 /**
  * SchemaOrgRecipeParser - Parses recipes from URLs using Schema.org Recipe JSON-LD
  *
- * Supports recipe websites that use Schema.org Recipe markup (most modern sites)
- * Falls back to Open Graph meta tags if Schema.org not found
+ * Parsing strategy (in order):
+ * 1. Schema.org Recipe JSON-LD (best: structured data with all fields)
+ * 2. HTML scraping (fallback: extracts ingredients/instructions from HTML)
+ * 3. Open Graph meta tags (last resort: only title/description/image)
  */
 class SchemaOrgRecipeParser(
     private val httpClient: HttpClient
 ) : RecipeParser {
+
+    private val htmlScraper = HtmlScraper()
 
     override suspend fun parse(source: String): Result<Recipe> {
         return try {
@@ -26,8 +30,9 @@ class SchemaOrgRecipeParser(
             val html = httpClient.get(source).bodyAsText()
             val document = Jsoup.parse(html)
 
-            // Try Schema.org JSON-LD first
+            // Try Schema.org JSON-LD first, then HTML scraping, then Open Graph
             val parsedData = parseSchemaOrg(document)
+                ?: htmlScraper.scrape(document)
                 ?: parseOpenGraph(document)
                 ?: return Result.failure(Exception("No recipe data found at URL"))
 
@@ -119,7 +124,7 @@ class SchemaOrgRecipeParser(
                     val parsedData = parseRecipeFromJsonLd(recipeJson)
 
                     // Also parse HTML categories and add them to tags
-                    val htmlCategories = parseHtmlCategories(document)
+                    val htmlCategories = htmlScraper.parseCategories(document)
                     return parsedData.copy(tags = parsedData.tags + htmlCategories)
                 }
             } catch (e: Exception) {
@@ -552,16 +557,6 @@ class SchemaOrgRecipeParser(
         }
 
         return false
-    }
-
-    /**
-     * Parse HTML category and tag links from document
-     * Looks for links with rel="category" or rel="tag" (common in WordPress and other CMS)
-     */
-    private fun parseHtmlCategories(document: Document): List<String> {
-        return document.select("a[rel*=category], a[rel*=tag]")
-            .map { it.text().trim() }
-            .filter { it.isNotBlank() }
     }
 
     /**

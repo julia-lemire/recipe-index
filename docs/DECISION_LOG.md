@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: HTML Scraping Fallback for Recipe Import
+- **Decision**: Added HTML scraping fallback layer between Schema.org JSON-LD parsing and Open Graph fallback, using common CSS selector patterns to extract ingredients and instructions from HTML when structured data is unavailable
+- **Rationale**: Many recipe sites lack proper Schema.org markup or use Article types without embedded recipe fields, causing imports to fall back to Open Graph (title + image only) and lose all ingredient/instruction data
+- **Implementation**: Created parseHtmlScraping() method in SchemaOrgRecipeParser that searches for ingredient/instruction lists using CSS selectors ([class*=ingredient] li, [id*=instruction] li, etc.), only returns data if BOTH ingredients AND instructions found (minimum viable recipe), integrated into three-tier parsing flow: Schema.org → HTML scraping → Open Graph, comprehensive logging for debugging selector matches
+
 #### Nov 21, 2025: Article/BlogPosting Type Detection with Embedded Recipe Data
 - **Decision**: Enhanced isRecipeType() to detect Article/BlogPosting Schema.org types that contain embedded recipe data (recipeIngredient or recipeInstructions fields) and treat them as valid recipes
 - **Rationale**: Some recipe websites use @type: "Article" or "BlogPosting" instead of explicit "Recipe" type while still embedding complete recipe data in Schema.org fields, causing parser to skip valid recipes and extract only Open Graph metadata
