@@ -219,7 +219,8 @@ class TextRecipeParserTest {
         val noisyLines = listOf(
             "Last Step: Please leave a rating and comment",
             "Please leave a rating and comment letting us know",
-            "Rating and comment help our business thrive"
+            "Rating and comment help our business thrive",
+            "leave a rating and comment"
         )
 
         noisyLines.forEach { line ->

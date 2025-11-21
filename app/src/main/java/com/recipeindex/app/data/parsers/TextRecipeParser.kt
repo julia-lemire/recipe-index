@@ -373,6 +373,7 @@ object TextRecipeParser {
             Regex("\\b(rating|comment|review|feedback)\\b.*\\b(let|know|help|business|thrive)"),
             Regex("\\blast\\s*step\\b.*\\b(rating|comment|review)"),
             Regex("\\b(leave|please)\\b.*\\b(rating|comment|review)"),
+            Regex("\\bleave\\s+a\\s+(rating|comment|review)"),
             // Marketing phrases
             Regex("\\b(free|high[\\s-]quality|continue|providing)\\b"),
             Regex("\\b(business|thrive|continue\\s+providing)\\b"),
