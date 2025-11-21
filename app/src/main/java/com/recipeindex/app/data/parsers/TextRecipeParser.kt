@@ -141,11 +141,15 @@ object TextRecipeParser {
             val isFooterOrCTA = normalized.contains(Regex("\\b(save|shop|get|view|see|more|click)\\b")) &&
                                normalized.contains(Regex("\\bingredients?\\b"))
 
+            // Skip breadcrumb navigation lines for section detection
+            val isBreadcrumb = line.contains(" > ")
+
             when {
-                // Ingredients - be flexible about surrounding text, but skip footers
-                normalized.contains(Regex("\\bingredients?\\b")) &&
+                // Ingredients - must be standalone header, not in breadcrumbs or prose
+                normalized.contains(Regex("^ingredients?\\s*:?\\s*$")) &&
                 !sections.containsKey("ingredients") &&
-                !isFooterOrCTA -> {
+                !isFooterOrCTA &&
+                !isBreadcrumb -> {
                     DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Found ingredients at line $index: $line")
                     sections["ingredients"] = index
                 }
@@ -220,6 +224,12 @@ object TextRecipeParser {
             if (line.contains(" > ")) return false
             // Skip lines that are mostly numbers/punctuation
             if (line.count { it.isLetter() } < line.length / 2) return false
+            // Skip CTA/marketing lines
+            if (lower.contains("subscribe") || lower.contains("sign up") || lower.contains("newsletter")) return false
+            // Skip "More X Recipes You May Like" type lines
+            if (lower.startsWith("more ") && lower.contains("recipe")) return false
+            // Skip lines that start with common website noise
+            if (Regex("^(jump to|print|save|share|pin|rate|email)\\b").containsMatchIn(lower)) return false
             return true
         }
 
@@ -372,8 +382,10 @@ object TextRecipeParser {
         // Pattern: "Serving Size: X" or "Portion: X" or "Per Serving: X"
         // Include / for OCR fractions like "1/2" or "1 /2"
         val patterns = listOf(
-            // "Serving Size: 1 ½ cups" or "Serving Size: 1/2 cup"
+            // "Serving Size: 1 ½ cups" or "Serving Size: 1/2 cup" (with unit)
             Regex("serving\\s*size[:\\s]+([\\d½¼¾⅓⅔⅛⅜⅝⅞/\\s]+(?:cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|pieces?|slices?|servings?))", RegexOption.IGNORE_CASE),
+            // "Serving Size: 1/4" (fraction without unit - means 1/4 of recipe)
+            Regex("serving\\s*size[:\\s]+([\\d½¼¾⅓⅔⅛⅜⅝⅞]+\\s*/\\s*[\\d½¼¾⅓⅔⅛⅜⅝⅞]+|[½¼¾⅓⅔⅛⅜⅝⅞])(?:\\s|$|\\d+x)", RegexOption.IGNORE_CASE),
             // "Portion: 200g"
             Regex("portion[:\\s]+([\\d½¼¾⅓⅔⅛⅜⅝⅞/\\s]+(?:cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|pieces?|slices?)?)", RegexOption.IGNORE_CASE),
             // "Per Serving: 1 cup"
