@@ -627,8 +627,8 @@ fun RecipeDetailScreen(
                 }
             )
 
-            // Tags
-            if (recipe.tags.isNotEmpty()) {
+            // Tags (hidden in cook mode)
+            if (recipe.tags.isNotEmpty() && !cookModeEnabled) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         text = "Tags",
