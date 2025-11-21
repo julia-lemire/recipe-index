@@ -278,6 +278,10 @@ fun RecipeDetailScreen(
                         Text("⏰ ${prep + cook}m total", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
+                recipe.servingSize?.let { size ->
+                    Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("📏 $size/serving", style = MaterialTheme.typography.bodyMedium)
+                }
             }
 
             // Action buttons row

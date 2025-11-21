@@ -82,6 +82,7 @@ object TextRecipeParser {
             }
 
             val servings = extractServings(sections, lines)
+            val servingSize = extractServingSize(sections, lines)
             val prepTime = extractPrepTime(sections, lines)
             val cookTime = extractCookTime(sections, lines)
             val tags = extractTags(sections, lines)
@@ -89,7 +90,7 @@ object TextRecipeParser {
 
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
-                "Parsed: title='$title', ${ingredients.size} ingredients, ${instructions.size} instructions, tips=${sourceTips != null}"
+                "Parsed: title='$title', ${ingredients.size} ingredients, ${instructions.size} instructions, servingSize='$servingSize', tips=${sourceTips != null}"
             )
 
             val now = System.currentTimeMillis()
@@ -99,6 +100,7 @@ object TextRecipeParser {
                 ingredients = ingredients,
                 instructions = instructions,
                 servings = servings,
+                servingSize = servingSize,
                 prepTimeMinutes = prepTime,
                 cookTimeMinutes = cookTime,
                 tags = TagStandardizer.standardize(tags),
@@ -323,6 +325,73 @@ object TextRecipeParser {
         // Extract number from "Servings: 4" or "Serves 6" etc
         val number = Regex("\\d+").find(line)?.value?.toIntOrNull()
         return number ?: 4
+    }
+
+    /**
+     * Extract serving size (portion size) from lines
+     * Patterns: "Serving Size: 1 ½ cups", "Portion: 200g", "Per serving: 1 cup"
+     */
+    private fun extractServingSize(sections: Map<String, Int>, lines: List<String>): String? {
+        // First check the servings line for "Serving Size:" pattern
+        val servingsIndex = sections["servings"]
+        if (servingsIndex != null) {
+            val line = lines.getOrNull(servingsIndex)
+            if (line != null) {
+                val servingSizeMatch = extractServingSizeFromLine(line)
+                if (servingSizeMatch != null) {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.IMPORT,
+                        "Found serving size in servings line: $servingSizeMatch"
+                    )
+                    return servingSizeMatch
+                }
+            }
+        }
+
+        // Scan all lines for serving size patterns
+        for (line in lines) {
+            val match = extractServingSizeFromLine(line)
+            if (match != null) {
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "Found serving size in line: $match"
+                )
+                return match
+            }
+        }
+
+        return null
+    }
+
+    /**
+     * Extract serving size value from a single line
+     */
+    private fun extractServingSizeFromLine(line: String): String? {
+        val lowerLine = line.lowercase()
+
+        // Pattern: "Serving Size: X" or "Portion: X" or "Per Serving: X"
+        val patterns = listOf(
+            // "Serving Size: 1 ½ cups" - capture until we hit multipliers (1x 2x) or end
+            Regex("serving\\s*size[:\\s]+([\\d½¼¾⅓⅔⅛⅜⅝⅞\\s]+(?:cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|pieces?|slices?|servings?))", RegexOption.IGNORE_CASE),
+            // "Portion: 200g"
+            Regex("portion[:\\s]+([\\d½¼¾⅓⅔⅛⅜⅝⅞\\s]+(?:cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|pieces?|slices?)?)", RegexOption.IGNORE_CASE),
+            // "Per Serving: 1 cup"
+            Regex("per\\s+serving[:\\s]+([\\d½¼¾⅓⅔⅛⅜⅝⅞\\s]+(?:cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|liters?|l|pieces?|slices?)?)", RegexOption.IGNORE_CASE)
+        )
+
+        for (pattern in patterns) {
+            val match = pattern.find(line)
+            if (match != null) {
+                val value = match.groupValues[1].trim()
+                // Clean up: remove trailing multipliers like "1x 2x 3x" and extra whitespace
+                val cleaned = value.replace(Regex("\\s*\\d+x.*$", RegexOption.IGNORE_CASE), "").trim()
+                if (cleaned.isNotBlank()) {
+                    return cleaned
+                }
+            }
+        }
+
+        return null
     }
 
     /**
