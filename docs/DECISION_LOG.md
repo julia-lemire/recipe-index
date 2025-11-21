@@ -46,6 +46,21 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: Home Screen Redesign with Recipe Highlights
+- **Decision**: Redesigned home screen to be content-focused with recipe carousels (Recent, Favorites) and This Week's Meal Plan section, with Quick Actions at the top
+- **Rationale**: Original home screen was empty placeholder with just navigation links, providing no value or engagement for users returning to the app
+- **Implementation**: Created HomeViewModel to load recent recipes (last 5 by createdAt), favorite recipes (up to 5), and current week's meal plan (filtering by date range), completely rewrote HomeScreen.kt with horizontal scrolling LazyRow carousels for recipes, all navigation callbacks wired in Navigation.kt for seamless navigation to all sections
+
+#### Nov 21, 2025: Tag Dialog State Preservation Bug Fix
+- **Decision**: Fixed tag modification dialog appearing multiple times by preserving tagModifications and imageUrls fields in ImportViewModel.updateRecipe() using state.copy() instead of creating new UiState.Editing
+- **Rationale**: Creating new state object changed reference, retriggering LaunchedEffect(uiState) observer that shows dialog, causing it to reappear each time user edited recipe (added tags, etc.)
+- **Implementation**: Modified updateRecipe() to preserve existing fields via currentState.copy(recipe = recipe), added clearTagModifications() method to explicitly clear after user review, updated both onAccept and onDismiss callbacks to clear modifications preventing retrigger
+
+#### Nov 21, 2025: Image Selection Save Flow Fix
+- **Decision**: Removed premature onSaveComplete() call from Save button's onClick handler in ImportUrlScreen, allowing existing UiState.Saved observer to handle navigation after async save completes
+- **Rationale**: Button was calling onSaveComplete() immediately after onSave(), navigating away before MediaDownloader could download selected images, resulting in images not being saved with recipe
+- **Implementation**: Removed onSaveComplete() from line 888 button onClick, existing LaunchedEffect watching for UiState.Saved (lines 235-239) properly waits for ViewModel.saveRecipe() including image downloads to complete before navigation
+
 #### Nov 21, 2025: Multiple Media Support with Selection UI
 - **Decision**: Implemented comprehensive multi-media support (images/videos) with user-selectable download UI during URL import
 - **Rationale**: Preserves recipe media beyond URL availability, supports instructional photos/videos, gives users control over storage usage by selecting relevant images

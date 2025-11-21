@@ -9,9 +9,8 @@ import com.recipeindex.app.data.managers.RecipeManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.ZoneId
 
 /**
  * HomeViewModel - Manages data for the home screen
@@ -36,7 +35,7 @@ class HomeViewModel(
             try {
                 // Get this week's meal plans (plans that include today)
                 val today = System.currentTimeMillis()
-                val allMealPlans = mealPlanManager.getAllMealPlans().value
+                val allMealPlans = mealPlanManager.getAllMealPlans().first()
                 val thisWeeksPlan = allMealPlans.firstOrNull { plan ->
                     // Check if plan includes today
                     val startDate = plan.startDate ?: return@firstOrNull false
@@ -45,7 +44,7 @@ class HomeViewModel(
                 }
 
                 // Get recent recipes (last 5 by creation date)
-                val allRecipes = recipeManager.getAllRecipes().value
+                val allRecipes = recipeManager.getAllRecipes().first()
                 val recentRecipes = allRecipes
                     .sortedByDescending { it.createdAt }
                     .take(5)

@@ -302,9 +302,11 @@ private fun RecipeCarouselSection(
                     RecipeCard(
                         recipe = recipe,
                         onClick = { onRecipeClick(recipe.id) },
-                        onFavoriteClick = { /* Handled by RecipeCard */ },
-                        onAddToMealPlanClick = { /* Handled by RecipeCard */ },
-                        onAddToGroceryListClick = { /* Handled by RecipeCard */ }
+                        onToggleFavorite = { /* Handled by RecipeCard internally */ },
+                        onAddToGroceryList = { /* Handled by RecipeCard internally */ },
+                        onAddToMealPlan = { /* Handled by RecipeCard internally */ },
+                        onShare = { /* Handled by RecipeCard internally */ },
+                        onDelete = { /* Handled by RecipeCard internally */ }
                     )
                 }
             }

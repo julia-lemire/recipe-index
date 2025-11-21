@@ -323,6 +323,25 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 
 ## Recent Updates (Latest Session)
 
+### Home Screen Redesign
+- ✅ **HomeViewModel**: New ViewModel for managing home screen data (recent recipes, favorites, this week's meal plan)
+- ✅ **Redesigned Home Screen Layout**: Complete rewrite with new structure
+  - Quick Actions at top (Import, Create, View All buttons)
+  - This Week's Meal Plan section with dates and recipe count
+  - Recent Recipes carousel (last 5 by creation date, horizontal scroll)
+  - Favorites carousel (starred recipes up to 5, horizontal scroll)
+  - Empty state when no recipes exist with prompt to import first recipe
+- ✅ **Full Navigation Integration**: All callbacks wired in Navigation.kt for seamless navigation to import, create, recipes list, recipe detail, and meal plan detail
+
+### Import Bug Fixes
+- ✅ **Tag Dialog Multi-Trigger Fix**: Prevented tag modification dialog from appearing multiple times during import
+  - Preserved `tagModifications` and `imageUrls` in `updateRecipe()` using `.copy()` instead of creating new state
+  - Added `clearTagModifications()` to explicitly clear after user review
+  - Dialog now only appears once when recipe is first imported with standardized tags
+- ✅ **Image Selection Save Fix**: Fixed selected images not being saved with imported recipes
+  - Removed premature `onSaveComplete()` call from Save button that navigated away before image downloads finished
+  - Existing state observer properly waits for `UiState.Saved` before navigation
+
 ### Meal Planning UX Improvements
 - ✅ **Simplified Date Entry**: Replaced two separate date buttons with single calendar icon button inline with meal plan name field
   - Uses Material 3 DateRangePicker for selecting single date or range

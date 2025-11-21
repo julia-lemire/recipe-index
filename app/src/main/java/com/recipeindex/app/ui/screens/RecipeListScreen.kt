@@ -399,7 +399,7 @@ private fun EmptyState(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun RecipeCard(
+internal fun RecipeCard(
     recipe: Recipe,
     onClick: () -> Unit,
     onToggleFavorite: () -> Unit,
