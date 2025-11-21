@@ -62,7 +62,7 @@ class SchemaOrgRecipeParser(
 
                 // Handle both single object and array of objects
                 val recipes = when {
-                    json is JsonObject && json["@type"]?.jsonPrimitive?.content == "Recipe" -> {
+                    json is JsonObject && isRecipeType(json) -> {
                         DebugConfig.debugLog(
                             DebugConfig.Category.IMPORT,
                             "[IMPORT] Found Recipe object (single)"
@@ -71,7 +71,7 @@ class SchemaOrgRecipeParser(
                     }
                     json is JsonArray -> {
                         val recipeList = json.filterIsInstance<JsonObject>()
-                            .filter { it["@type"]?.jsonPrimitive?.content == "Recipe" }
+                            .filter { isRecipeType(it) }
                         DebugConfig.debugLog(
                             DebugConfig.Category.IMPORT,
                             "[IMPORT] Found ${recipeList.size} Recipe objects in array"
@@ -80,7 +80,7 @@ class SchemaOrgRecipeParser(
                     }
                     json is JsonObject && json["@graph"] is JsonArray -> {
                         val recipeList = (json["@graph"] as JsonArray).filterIsInstance<JsonObject>()
-                            .filter { it["@type"]?.jsonPrimitive?.content == "Recipe" }
+                            .filter { isRecipeType(it) }
                         DebugConfig.debugLog(
                             DebugConfig.Category.IMPORT,
                             "[IMPORT] Found ${recipeList.size} Recipe objects in @graph"
@@ -392,6 +392,22 @@ class SchemaOrgRecipeParser(
         )
 
         return result
+    }
+
+    /**
+     * Check if a JSON object has @type of "Recipe"
+     * Handles both string and array @type values
+     */
+    private fun isRecipeType(obj: JsonObject): Boolean {
+        val typeElement = obj["@type"] ?: return false
+
+        return when (typeElement) {
+            is JsonPrimitive -> typeElement.content == "Recipe"
+            is JsonArray -> typeElement.any {
+                it is JsonPrimitive && it.content == "Recipe"
+            }
+            else -> false
+        }
     }
 
     /**
