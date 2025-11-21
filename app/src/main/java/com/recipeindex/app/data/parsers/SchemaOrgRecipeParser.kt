@@ -163,29 +163,43 @@ class SchemaOrgRecipeParser(
 
         val title = json["name"]?.jsonPrimitive?.contentOrNull ?: ""
         val categories = parseJsonArrayToStrings(json["recipeCategory"], "recipeCategory")
-        val cuisines = parseJsonArrayToStrings(json["recipeCuisine"], "recipeCuisine")
+        val schemaOrgCuisines = parseJsonArrayToStrings(json["recipeCuisine"], "recipeCuisine")
         val keywords = parseJsonArrayToStrings(json["keywords"], "keywords")
 
-        // Extract cuisine from title if present (e.g., "Georgian Beef Stew" → "Georgian")
+        // Determine cuisine: prefer Schema.org, fallback to title extraction
         val titleCuisine = extractCuisineFromTitle(title)
-        val allCuisines = if (titleCuisine != null && titleCuisine !in cuisines) {
-            cuisines + titleCuisine
-        } else {
-            cuisines
+        val cuisine = when {
+            schemaOrgCuisines.isNotEmpty() -> {
+                // Prefer title cuisine if it exists and Schema.org looks wrong (e.g., "American")
+                if (titleCuisine != null && schemaOrgCuisines.firstOrNull()?.lowercase() == "american") {
+                    titleCuisine
+                } else {
+                    schemaOrgCuisines.first() // Take first cuisine from Schema.org
+                }
+            }
+            titleCuisine != null -> titleCuisine
+            else -> null
         }
 
-        // Log extracted tag values for debugging
+        // Log extracted values for debugging
         if (categories.isNotEmpty()) {
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
                 "[IMPORT] Recipe categories: ${categories.joinToString(", ")}"
             )
         }
-        if (allCuisines.isNotEmpty()) {
+        if (cuisine != null) {
+            val source = when {
+                titleCuisine != null && schemaOrgCuisines.firstOrNull()?.lowercase() == "american" ->
+                    " (from title, Schema.org had \"${schemaOrgCuisines.first()}\")"
+                titleCuisine != null && schemaOrgCuisines.isEmpty() ->
+                    " (from title)"
+                else ->
+                    " (from recipeCuisine)"
+            }
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
-                "[IMPORT] Recipe cuisines: ${allCuisines.joinToString(", ")}" +
-                        if (titleCuisine != null) " (includes \"$titleCuisine\" from title)" else ""
+                "[IMPORT] Recipe cuisine: $cuisine$source"
             )
         }
         if (keywords.isNotEmpty()) {
@@ -204,7 +218,8 @@ class SchemaOrgRecipeParser(
             prepTimeMinutes = parseIsoDuration(json["prepTime"]?.jsonPrimitive?.contentOrNull),
             cookTimeMinutes = parseIsoDuration(json["cookTime"]?.jsonPrimitive?.contentOrNull),
             totalTimeMinutes = parseIsoDuration(json["totalTime"]?.jsonPrimitive?.contentOrNull),
-            tags = categories + allCuisines + keywords,
+            tags = categories + keywords,  // Note: cuisines NOT included in tags anymore
+            cuisine = cuisine,
             imageUrl = parseImage(json["image"])
         )
     }
@@ -557,6 +572,7 @@ private fun ParsedRecipeData.toRecipe(sourceUrl: String): Recipe {
         prepTimeMinutes = prepTimeMinutes,
         cookTimeMinutes = cookTimeMinutes,
         tags = tags,
+        cuisine = cuisine,
         notes = null, // Notes should be user-added only, not populated during import
         source = RecipeSource.URL,
         sourceUrl = sourceUrl,

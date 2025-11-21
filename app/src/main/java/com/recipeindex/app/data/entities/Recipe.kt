@@ -31,6 +31,8 @@ data class Recipe(
 
     val tags: List<String> = emptyList(),
 
+    val cuisine: String? = null,
+
     val source: RecipeSource,
 
     val sourceUrl: String? = null,
