@@ -51,6 +51,31 @@
 - **Rationale**: PDF text extraction from multi-column layouts (common on recipe websites) often places sidebar UI text between section headers and actual content, causing ingredients to appear after "Instructions" header and be lost
 - **Implementation**: Enhanced isWebsiteNoise() with plural forms (recipes?, ingredients?, lists?) and rating prompts detection, looksLikeIngredient() with Unicode fraction support (½, ¼, etc.) and expanded food list, new recoverMisplacedIngredients() function that separates ingredient-like lines (measurements, parenthetical descriptions like "(from 1 small onion)") from real instructions (cooking verbs, temperatures, "until" phrases) when initial extraction yields 0 ingredients
 
+#### Nov 21, 2025: Unit Conversion Toggle Button Restoration
+- **Decision**: Restored SwapHoriz toggle button in RecipeDetailScreen ingredients section header that was previously removed, allowing users to toggle between showing both units inline or using their settings preference
+- **Rationale**: Users need ability to quickly switch between unit systems while viewing recipes without navigating to settings, especially when cooking with unfamiliar measurements
+- **Implementation**: Added showUnitConversions state variable (remember{false}), IconButton with SwapHoriz icon in ingredients header Row, when enabled passes UnitSystem.BOTH to IngredientUnitConverter.formatIngredient() forcing "1 cup (237 ml)" format, when disabled uses user's granular settings (liquidVolumePreference, weightPreference), button highlights with secondaryContainer color when active
+
+#### Nov 21, 2025: Quick Note Button in Cook Mode
+- **Decision**: Added "Quick Note" button to cook mode card that opens dialog with text field for adding/editing recipe notes without leaving cook mode
+- **Rationale**: Users want to capture cooking observations (adjustments, timing notes, results) immediately during cooking without disrupting workflow by navigating to edit screen
+- **Implementation**: Added showQuickNoteDialog state and quickNoteText pre-populated with recipe.notes, FilledTonalButton with Note icon in cook mode card after timer section, AlertDialog with OutlinedTextField (200dp height, 10 maxLines), Save button calls recipeViewModel.updateRecipe(recipe.copy(notes = quickNoteText.ifBlank { null }))
+
+#### Nov 21, 2025: Hide Tags in Cook Mode
+- **Decision**: Added !cookModeEnabled condition to tags section in RecipeDetailScreen to hide tags when cook mode is active
+- **Rationale**: Tags provide no value during cooking and add visual clutter, users need to focus on ingredients and instructions while cooking
+- **Implementation**: Modified tags display condition from `if (recipe.tags.isNotEmpty())` to `if (recipe.tags.isNotEmpty() && !cookModeEnabled)` in RecipeDetailScreen.kt line 631
+
+#### Nov 21, 2025: Simplified Grocery List Quantity Display
+- **Decision**: Rewrote GroceryListDetailScreen.formatQuantity() to use common fractions (1/4, 1/2, 3/4) for small quantities and max 1 decimal place for larger quantities
+- **Rationale**: Overly precise decimals like "0.20 tsp" are harder to measure and less readable than fractions, grocery shopping benefits from practical measurements over precision
+- **Implementation**: Added fraction mapping for quantities < 1.0 (>0.9→"1", >0.625→"3/4", >0.4→"1/2", >0.25→"1/3", else→"1/4"), changed decimal formatting from %.2f to %.1f, rounds very small quantities (< 0.25) to "1/4"
+
+#### Nov 21, 2025: Dry Volume Unit Preference Addition
+- **Decision**: Added separate dryVolumePreference setting in AppSettings/SettingsManager/SettingsScreen for ingredients like flour, sugar, and spices, distinct from liquidVolumePreference
+- **Rationale**: Baking benefits from weight measurements (grams) for dry ingredients while cooking often uses volume (cups) for liquids, forcing single preference causes compromise
+- **Implementation**: Added dryVolumePreference field to AppSettings (between liquidVolumePreference and weightPreference), SettingsManager.setDryVolumePreference() method with SharedPreferences persistence, "Dry Volume Units" section in SettingsScreen UI with radio buttons for IMPERIAL/METRIC/BOTH, follows same pattern as existing granular preferences
+
 #### Nov 21, 2025: Recipe Detail Image Carousel with HorizontalPager
 - **Decision**: Replaced single image display in RecipeDetailScreen with HorizontalPager carousel showing all images from mediaPaths, with page indicator dots
 - **Rationale**: Users could only see first imported image even when they selected multiple during import, wasting selected media and providing incomplete recipe context

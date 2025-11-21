@@ -351,6 +351,16 @@
 - [ ] RecipeDetailScreen Cook Mode Select All button toggles all instructions (planned)
 - [ ] RecipeDetailScreen Cook Mode buttons show in section headers, not timer card (planned)
 - [ ] RecipeDetailScreen Cook Mode button text changes based on checked state (planned)
+- [ ] RecipeDetailScreen unit conversion toggle button shows/hides both units inline (planned)
+- [ ] RecipeDetailScreen unit conversion toggle button highlights when active (planned)
+- [ ] RecipeDetailScreen unit conversion toggle forces BOTH when enabled (planned)
+- [ ] RecipeDetailScreen unit conversion toggle uses settings preference when disabled (planned)
+- [ ] RecipeDetailScreen Quick Note button appears in cook mode card (planned)
+- [ ] RecipeDetailScreen Quick Note dialog pre-populates with existing notes (planned)
+- [ ] RecipeDetailScreen Quick Note dialog saves notes to recipe (planned)
+- [ ] RecipeDetailScreen Quick Note dialog saves null when notes cleared (planned)
+- [ ] RecipeDetailScreen tags hidden when cook mode is active (planned)
+- [ ] RecipeDetailScreen tags visible when cook mode is not active (planned)
 
 #### ImportSourceSelectionScreen
 - [ ] ImportSourceSelectionScreen displays Import and Create tabs (planned)
@@ -358,6 +368,24 @@
 - [ ] ImportSourceSelectionScreen Create tab shows manual entry button (planned)
 - [ ] ImportSourceSelectionScreen navigates to correct import screen (planned)
 - [ ] ImportSourceSelectionScreen navigates to manual entry screen (planned)
+
+#### GroceryListDetailScreen
+- [ ] GroceryListDetailScreen formats quantities < 0.25 as "1/4" (planned)
+- [ ] GroceryListDetailScreen formats quantities 0.25-0.4 as "1/3" (planned)
+- [ ] GroceryListDetailScreen formats quantities 0.4-0.625 as "1/2" (planned)
+- [ ] GroceryListDetailScreen formats quantities 0.625-0.9 as "3/4" (planned)
+- [ ] GroceryListDetailScreen formats quantities >= 0.9 as whole numbers (planned)
+- [ ] GroceryListDetailScreen formats large quantities with max 1 decimal place (planned)
+- [ ] GroceryListDetailScreen formats whole numbers without decimals (planned)
+
+#### SettingsScreen
+- [ ] SettingsScreen displays Liquid Volume Units section (planned)
+- [ ] SettingsScreen displays Dry Volume Units section (planned)
+- [ ] SettingsScreen displays Weight Units section (planned)
+- [ ] SettingsScreen saves liquidVolumePreference to AppSettings (planned)
+- [ ] SettingsScreen saves dryVolumePreference to AppSettings (planned)
+- [ ] SettingsScreen saves weightPreference to AppSettings (planned)
+- [ ] SettingsScreen radio buttons reflect current settings (planned)
 
 ### FilterSortGroup Library
 - [ ] Filter.matches() returns true when item matches criteria (planned)
