@@ -172,6 +172,12 @@
 
 #### PDF/Photo Import
 - [ ] PDF import parses structured recipe document (planned - PdfRecipeParser delegates to TextRecipeParser)
+- [ ] PDF multi-column layout recovers misplaced ingredients (sortByPosition=true, recoverMisplacedIngredients)
+- [ ] PDF continuation lines are joined (joinInstructionLines - lines not starting with digit continue previous step)
+- [ ] PDF page noise is filtered (isPdfPageNoise - URLs, page headers "11/18/25, 12:34 PM", page numbers)
+- [ ] PDF tips/notes section is extracted to sourceTips field (separate from user notes)
+- [ ] PDF ingredient quantities are preserved (cleanIngredient only strips "1." not "4 chicken")
+- [ ] PDF title extraction skips date/URL lines (isValidTitle in extractTitle)
 - [ ] Photo OCR import extracts text from image (planned - PhotoRecipeParser delegates to TextRecipeParser)
 
 #### Tag Management

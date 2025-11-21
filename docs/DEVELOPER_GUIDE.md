@@ -360,4 +360,17 @@ Dialog logs help diagnose issues with multiple dialogs appearing or edits not be
 
 **Example**: GroceryListDetailScreen bottom actions use icon-over-text for Select All toggle, Clear, Recipes, and Meal Plans buttons, providing large touch targets with clear labels
 
+### Text/PDF Parsing Pattern
+**Use when**: Extracting structured recipe data from unstructured text (PDFs, OCR results)
+**Structure** (TextRecipeParser):
+- Detect section boundaries via regex (Ingredients/Instructions/Notes headers)
+- Filter noise: `isWebsiteNoise()` (CTAs, ratings, marketing), `isPdfPageNoise()` (URLs, page headers)
+- Join continuation lines: `joinInstructionLines()` for numbered steps, `joinParagraphLines()` for prose
+- Validate content: `looksLikeIngredient()`, `looksLikeInstruction()` with pattern matching
+- Clean content: Remove bullets/numbering but preserve quantities
+
+**Key insight**: PDF text extraction splits long lines across multiple rows. Lines not starting with a digit continue the previous instruction. URLs and page headers (`11/18/25, 12:34 PM...`) must be filtered.
+
+**Example**: "3 Transfer to pan..." + "everything halfway." → joined as one instruction step. Tips section joins lines into coherent paragraphs.
+
 ---

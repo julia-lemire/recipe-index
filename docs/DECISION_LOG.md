@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: PDF Line Continuation Joining for Instructions and Tips
+- **Decision**: Added line joining logic to reassemble content that PDF extraction splits across multiple lines, plus filtering for PDF page noise (URLs, page headers)
+- **Rationale**: PDF text extraction splits long sentences into separate lines; instructions like "Transfer to pan, cook 35 minutes, turning" + "everything halfway" were being treated as separate steps instead of one complete instruction
+- **Implementation**: Added isPdfPageNoise() to filter URLs/page headers/page numbers, joinInstructionLines() joins lines where non-digit-starting lines continue previous step, joinParagraphLines() joins prose content for tips/notes, both extractInstructions() and extractTips() now filter PDF noise and join continuation lines before processing
+
 #### Nov 21, 2025: Source Tips Field for Website Notes and Substitutions
 - **Decision**: Added sourceTips field to Recipe entity for storing tips, variations, and substitutions from source websites/PDFs, separate from user-added notes
 - **Rationale**: Website recipes often include valuable tips and substitution suggestions that should be preserved during import but kept distinct from user's personal notes
