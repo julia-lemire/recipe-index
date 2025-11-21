@@ -1,12 +1,15 @@
 package com.recipeindex.app.ui.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.data.managers.RecipeManager
 import com.recipeindex.app.data.parsers.RecipeParser
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.MediaDownloader
 import com.recipeindex.app.utils.TagStandardizer
+import io.ktor.client.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,8 +21,12 @@ import kotlinx.coroutines.launch
  */
 class ImportViewModel(
     private val recipeParser: RecipeParser,
-    private val recipeManager: RecipeManager
+    private val recipeManager: RecipeManager,
+    private val context: Context,
+    private val httpClient: HttpClient
 ) : ViewModel() {
+
+    private val mediaDownloader = MediaDownloader(context, httpClient)
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Input())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -39,12 +46,23 @@ class ImportViewModel(
                     "Fetching recipe from URL: $normalizedUrl" + if (url != normalizedUrl) " (normalized from: $url)" else ""
                 )
 
-                val result = recipeParser.parse(normalizedUrl)
+                // Check if parser is UrlRecipeParser and use parseWithMedia for image URLs
+                val parseResult = if (recipeParser is com.recipeindex.app.data.parsers.UrlRecipeParser) {
+                    recipeParser.parseWithMedia(normalizedUrl)
+                } else {
+                    // Fallback for other parsers
+                    recipeParser.parse(normalizedUrl).map {
+                        com.recipeindex.app.data.parsers.RecipeParseResult(recipe = it)
+                    }
+                }
 
-                result.onSuccess { recipe ->
+                parseResult.onSuccess { result ->
+                    val recipe = result.recipe
+                    val imageUrls = result.imageUrls
+
                     DebugConfig.debugLog(
                         DebugConfig.Category.IMPORT,
-                        "Successfully parsed recipe: ${recipe.title}"
+                        "Successfully parsed recipe: ${recipe.title} with ${imageUrls.size} image URLs"
                     )
 
                     // Track tag modifications if tags were standardized
@@ -67,7 +85,8 @@ class ImportViewModel(
 
                     _uiState.value = UiState.Editing(
                         recipe = standardizedRecipe,
-                        tagModifications = tagModifications
+                        tagModifications = tagModifications,
+                        imageUrls = imageUrls
                     )
                 }.onFailure { error ->
                     DebugConfig.debugLog(
@@ -99,29 +118,58 @@ class ImportViewModel(
 
     /**
      * Save the imported recipe to the database
+     * Downloads selected images before saving
      */
-    fun saveRecipe(recipe: Recipe) {
+    fun saveRecipe(recipe: Recipe, selectedImageUrls: List<String> = emptyList()) {
         viewModelScope.launch {
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
-                "Saving imported recipe: ${recipe.title}"
+                "Saving imported recipe: ${recipe.title} with ${selectedImageUrls.size} selected images"
             )
 
-            // Save recipe using RecipeManager (inserts or updates based on ID)
-            val result = if (recipe.id == 0L) {
-                recipeManager.createRecipe(recipe)
+            // Download selected images if any
+            val recipeWithMedia = if (selectedImageUrls.isNotEmpty()) {
+                try {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.IMPORT,
+                        "Downloading ${selectedImageUrls.size} images..."
+                    )
+                    val mediaItems = mediaDownloader.downloadMediaList(selectedImageUrls)
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.IMPORT,
+                        "Successfully downloaded ${mediaItems.size} images"
+                    )
+                    recipe.copy(mediaPaths = mediaItems)
+                } catch (e: Exception) {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.IMPORT,
+                        "Failed to download images: ${e.message}"
+                    )
+                    _uiState.value = UiState.Editing(
+                        recipe = recipe,
+                        errorMessage = "Failed to download images: ${e.message}"
+                    )
+                    return@launch
+                }
             } else {
-                recipeManager.updateRecipe(recipe)
+                recipe
+            }
+
+            // Save recipe using RecipeManager (inserts or updates based on ID)
+            val result = if (recipeWithMedia.id == 0L) {
+                recipeManager.createRecipe(recipeWithMedia)
+            } else {
+                recipeManager.updateRecipe(recipeWithMedia)
             }
 
             result.onSuccess {
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
-                    "Successfully saved recipe: ${recipe.title}"
+                    "Successfully saved recipe: ${recipeWithMedia.title} with ${recipeWithMedia.mediaPaths.size} media items"
                 )
                 DebugConfig.debugLog(
                     DebugConfig.Category.TAG_STANDARDIZATION,
-                    "Saved to database - Recipe: \"${recipe.title}\" with tags: ${recipe.tags.joinToString(", ") { "\"$it\"" }}"
+                    "Saved to database - Recipe: \"${recipeWithMedia.title}\" with tags: ${recipeWithMedia.tags.joinToString(", ") { "\"$it\"" }}"
                 )
                 _uiState.value = UiState.Saved
             }.onFailure { error ->
@@ -216,7 +264,8 @@ class ImportViewModel(
         data class Editing(
             val recipe: Recipe,
             val errorMessage: String? = null,
-            val tagModifications: List<TagStandardizer.TagModification>? = null
+            val tagModifications: List<TagStandardizer.TagModification>? = null,
+            val imageUrls: List<String> = emptyList() // URLs of images found during parsing
         ) : UiState()
         data object Saved : UiState()
     }

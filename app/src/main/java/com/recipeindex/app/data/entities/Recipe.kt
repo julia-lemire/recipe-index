@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.recipeindex.app.data.Converters
+import kotlinx.serialization.Serializable
 
 /**
  * Recipe entity - Unified entity for all recipe types
@@ -37,7 +38,9 @@ data class Recipe(
 
     val sourceUrl: String? = null,
 
-    val photoPath: String? = null,
+    val photoPath: String? = null, // Deprecated: use mediaPaths for new recipes
+
+    val mediaPaths: List<MediaItem> = emptyList(),
 
     val notes: String? = null,
 
@@ -58,4 +61,23 @@ enum class RecipeSource {
     URL,
     PDF,
     PHOTO
+}
+
+/**
+ * Media item for recipe photos and videos
+ */
+@Serializable
+data class MediaItem(
+    val type: MediaType,
+    val path: String, // Local file path or URL
+    val thumbnailPath: String? = null // For videos, path to generated thumbnail
+)
+
+/**
+ * Type of media item
+ */
+@Serializable
+enum class MediaType {
+    IMAGE,
+    VIDEO
 }

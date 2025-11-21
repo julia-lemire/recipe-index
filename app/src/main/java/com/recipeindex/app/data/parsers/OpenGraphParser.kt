@@ -17,14 +17,18 @@ class OpenGraphParser {
     fun parse(document: Document): ParsedRecipeData? {
         val title = document.select("meta[property=og:title]").attr("content").ifBlank { null }
         val description = document.select("meta[property=og:description]").attr("content").ifBlank { null }
-        val imageUrl = document.select("meta[property=og:image]").attr("content").ifBlank { null }
+
+        // Extract all og:image tags (can have multiple)
+        val imageUrls = document.select("meta[property=og:image]")
+            .map { it.attr("content") }
+            .filter { it.isNotBlank() }
 
         // If we have at least a title, return partial data
         return if (title != null) {
             ParsedRecipeData(
                 title = title,
                 description = description,
-                imageUrl = imageUrl
+                imageUrls = imageUrls
             )
         } else {
             null

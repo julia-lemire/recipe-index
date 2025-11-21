@@ -102,7 +102,9 @@ class MainActivity : ComponentActivity() {
             substitutionManager,
             urlRecipeParser,
             pdfRecipeParser,
-            photoRecipeParser
+            photoRecipeParser,
+            applicationContext,
+            httpClient
         )
 
         setContent {

@@ -32,11 +32,14 @@ class HtmlScraper {
         // Try to find instructions - common patterns
         val instructions = findInstructions(document)
 
+        // Try to find images - extract all relevant recipe images
+        val imageUrls = findImages(document)
+
         // Return data if we found ingredients OR instructions (save what we can find)
         return if (ingredients.isNotEmpty() || instructions.isNotEmpty()) {
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
-                "[IMPORT] HTML scraping successful: ${ingredients.size} ingredients, ${instructions.size} instructions"
+                "[IMPORT] HTML scraping successful: ${ingredients.size} ingredients, ${instructions.size} instructions, ${imageUrls.size} images"
             )
 
             // Also try to get categories from HTML
@@ -46,7 +49,8 @@ class HtmlScraper {
                 title = title ?: "Scraped Recipe",
                 ingredients = ingredients,
                 instructions = instructions,
-                tags = htmlCategories
+                tags = htmlCategories,
+                imageUrls = imageUrls
             )
         } else {
             DebugConfig.debugLog(
@@ -157,6 +161,106 @@ class HtmlScraper {
         }
 
         return instructions
+    }
+
+    /**
+     * Find images using common CSS selector patterns
+     * Extracts multiple images that are likely recipe-related (main images, step images, etc.)
+     */
+    private fun findImages(document: Document): List<String> {
+        val imageUrls = mutableSetOf<String>()  // Use set to avoid duplicates
+
+        // Priority 1: Look for recipe-specific images with class/id patterns
+        val recipeImageSelectors = listOf(
+            "[class*=recipe] img",
+            "[id*=recipe] img",
+            "[class*=hero] img",
+            "[class*=featured] img",
+            "[class*=main-image] img",
+            ".recipe-image img",
+            "#recipe-image img",
+            ".recipe-photo img",
+            "#recipe-photo img",
+            // Step-by-step instruction images
+            "[class*=instruction] img",
+            "[class*=step] img",
+            "[class*=direction] img",
+            // Look for figures within recipe content
+            "article img",
+            "figure img"
+        )
+
+        for (selector in recipeImageSelectors) {
+            val images = document.select(selector)
+            images.forEach { img ->
+                val src = img.attr("src")
+                val dataSrc = img.attr("data-src")  // Lazy-loaded images
+                val dataSrcset = img.attr("data-srcset")  // Responsive images
+
+                // Add absolute URLs only (filter out placeholders, icons, etc.)
+                listOf(src, dataSrc, dataSrcset.split(",").firstOrNull()?.trim()?.split(" ")?.firstOrNull())
+                    .forEach { url ->
+                        if (url != null && url.isNotBlank() && isValidImageUrl(url)) {
+                            imageUrls.add(url)
+                        }
+                    }
+            }
+        }
+
+        // Priority 2: If no recipe-specific images found, look for larger images in the page
+        if (imageUrls.isEmpty()) {
+            val allImages = document.select("img")
+            allImages.forEach { img ->
+                val src = img.attr("src")
+                val width = img.attr("width").toIntOrNull() ?: 0
+                val height = img.attr("height").toIntOrNull() ?: 0
+
+                // Only include larger images (likely to be content images, not icons/buttons)
+                if (isValidImageUrl(src) && (width > 200 || height > 200 || (width == 0 && height == 0))) {
+                    imageUrls.add(src)
+                }
+            }
+        }
+
+        val result = imageUrls.toList()
+        if (result.isNotEmpty()) {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "[IMPORT] Found ${result.size} images via HTML scraping"
+            )
+        }
+
+        return result
+    }
+
+    /**
+     * Check if URL is a valid image URL (not a placeholder, icon, or tracking pixel)
+     */
+    private fun isValidImageUrl(url: String): Boolean {
+        if (url.isBlank()) return false
+
+        // Filter out common placeholders and tracking pixels
+        val lowerUrl = url.lowercase()
+        val invalidPatterns = listOf(
+            "placeholder",
+            "spacer",
+            "pixel",
+            "tracking",
+            "1x1",
+            "blank.gif",
+            "transparent.gif",
+            "icon",
+            "logo",
+            "avatar",
+            "badge"
+        )
+
+        if (invalidPatterns.any { lowerUrl.contains(it) }) {
+            return false
+        }
+
+        // Must start with http:// or https:// or be a protocol-relative URL (//)
+        return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("//")
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.recipeindex.app.ui.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.recipeindex.app.data.managers.GroceryListManager
@@ -10,6 +11,7 @@ import com.recipeindex.app.data.managers.SubstitutionManager
 import com.recipeindex.app.data.parsers.PdfRecipeParser
 import com.recipeindex.app.data.parsers.PhotoRecipeParser
 import com.recipeindex.app.data.parsers.RecipeParser
+import io.ktor.client.*
 
 /**
  * ViewModelFactory - Creates ViewModels with dependencies
@@ -24,7 +26,9 @@ class ViewModelFactory(
     private val substitutionManager: SubstitutionManager,
     private val urlRecipeParser: RecipeParser,
     private val pdfRecipeParser: PdfRecipeParser,
-    private val photoRecipeParser: PhotoRecipeParser
+    private val photoRecipeParser: PhotoRecipeParser,
+    private val context: Context,
+    private val httpClient: HttpClient
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
@@ -40,7 +44,7 @@ class ViewModelFactory(
                 GroceryListViewModel(groceryListManager) as T
             }
             modelClass.isAssignableFrom(ImportViewModel::class.java) -> {
-                ImportViewModel(urlRecipeParser, recipeManager) as T
+                ImportViewModel(urlRecipeParser, recipeManager, context, httpClient) as T
             }
             modelClass.isAssignableFrom(ImportPdfViewModel::class.java) -> {
                 ImportPdfViewModel(pdfRecipeParser, recipeManager) as T
