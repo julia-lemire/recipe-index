@@ -41,7 +41,7 @@ fun HomeScreen(
     onNavigateToRecipes: () -> Unit = {},
     onNavigateToRecipeDetail: (Long) -> Unit = {},
     onNavigateToMealPlanDetail: (Long) -> Unit = {},
-    onToggleFavorite: (Long) -> Unit = {},
+    onToggleFavorite: (Long, Boolean) -> Unit = { _, _ -> },
     onDeleteRecipe: (Long) -> Unit = {},
     onAddToGroceryList: (Long) -> Unit = {},
     onAddToMealPlan: (Long) -> Unit = {},
@@ -123,7 +123,12 @@ fun HomeScreen(
                             RecipeCarouselSection(
                                 title = "Recent Recipes",
                                 recipes = state.recentRecipes,
-                                onRecipeClick = onNavigateToRecipeDetail
+                                onRecipeClick = onNavigateToRecipeDetail,
+                                onToggleFavorite = onToggleFavorite,
+                                onAddToGroceryList = onAddToGroceryList,
+                                onAddToMealPlan = onAddToMealPlan,
+                                onShareRecipe = onShareRecipe,
+                                onDeleteRecipe = onDeleteRecipe
                             )
                         }
                     }
@@ -134,7 +139,12 @@ fun HomeScreen(
                             RecipeCarouselSection(
                                 title = "Favorites",
                                 recipes = state.favoriteRecipes,
-                                onRecipeClick = onNavigateToRecipeDetail
+                                onRecipeClick = onNavigateToRecipeDetail,
+                                onToggleFavorite = onToggleFavorite,
+                                onAddToGroceryList = onAddToGroceryList,
+                                onAddToMealPlan = onAddToMealPlan,
+                                onShareRecipe = onShareRecipe,
+                                onDeleteRecipe = onDeleteRecipe
                             )
                         }
                     }
@@ -287,7 +297,12 @@ private fun ThisWeekMealPlanSection(
 private fun RecipeCarouselSection(
     title: String,
     recipes: List<Recipe>,
-    onRecipeClick: (Long) -> Unit
+    onRecipeClick: (Long) -> Unit,
+    onToggleFavorite: (Long, Boolean) -> Unit,
+    onAddToGroceryList: (Long) -> Unit,
+    onAddToMealPlan: (Long) -> Unit,
+    onShareRecipe: (Recipe) -> Unit,
+    onDeleteRecipe: (Long) -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -306,7 +321,7 @@ private fun RecipeCarouselSection(
                     RecipeCard(
                         recipe = recipe,
                         onClick = { onRecipeClick(recipe.id) },
-                        onToggleFavorite = { onToggleFavorite(recipe.id) },
+                        onToggleFavorite = { onToggleFavorite(recipe.id, !recipe.isFavorite) },
                         onAddToGroceryList = { onAddToGroceryList(recipe.id) },
                         onAddToMealPlan = { onAddToMealPlan(recipe.id) },
                         onShare = { onShareRecipe(recipe) },
