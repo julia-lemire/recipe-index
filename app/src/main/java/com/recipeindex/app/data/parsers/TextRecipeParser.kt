@@ -57,17 +57,27 @@ object TextRecipeParser {
             var ingredients = extractIngredients(sections, lines)
             var instructions = extractInstructions(sections, lines)
 
-            // Recovery: If we got 0 ingredients but have instructions with ingredient-like content,
-            // the PDF text extraction likely had column ordering issues
-            if (ingredients.isEmpty() && instructions.isNotEmpty()) {
-                val (recoveredIngredients, filteredInstructions) = recoverMisplacedIngredients(instructions)
-                if (recoveredIngredients.isNotEmpty()) {
-                    DebugConfig.debugLog(
-                        DebugConfig.Category.IMPORT,
-                        "Recovered ${recoveredIngredients.size} misplaced ingredients from instructions"
-                    )
-                    ingredients = recoveredIngredients
-                    instructions = filteredInstructions
+            // Recovery: If we got 0 ingredients, the PDF text extraction likely had column ordering issues
+            // Re-extract ALL lines after Instructions header (without instruction filter) and let recovery sort them
+            if (ingredients.isEmpty()) {
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "No ingredients found - attempting recovery with unfiltered instruction lines"
+                )
+
+                // Re-extract without the looksLikeInstruction filter to get ALL candidate lines
+                val allCandidateLines = extractInstructions(sections, lines, skipInstructionFilter = true)
+
+                if (allCandidateLines.isNotEmpty()) {
+                    val (recoveredIngredients, filteredInstructions) = recoverMisplacedIngredients(allCandidateLines)
+                    if (recoveredIngredients.isNotEmpty()) {
+                        DebugConfig.debugLog(
+                            DebugConfig.Category.IMPORT,
+                            "Recovered ${recoveredIngredients.size} misplaced ingredients from ${allCandidateLines.size} candidate lines"
+                        )
+                        ingredients = recoveredIngredients
+                        instructions = filteredInstructions
+                    }
                 }
             }
 
@@ -224,14 +234,19 @@ object TextRecipeParser {
 
     /**
      * Extract instructions - lines between "Instructions" and next section
+     * @param skipInstructionFilter If true, skip looksLikeInstruction filter (for recovery scenarios)
      */
-    private fun extractInstructions(sections: Map<String, Int>, lines: List<String>): List<String> {
+    private fun extractInstructions(
+        sections: Map<String, Int>,
+        lines: List<String>,
+        skipInstructionFilter: Boolean = false
+    ): List<String> {
         val startIndex = sections["instructions"] ?: return emptyList()
         val endIndex = findNextSection(startIndex, sections)
 
         DebugConfig.debugLog(
             DebugConfig.Category.IMPORT,
-            "Extracting instructions from line $startIndex to $endIndex (${endIndex - startIndex - 1} lines)"
+            "Extracting instructions from line $startIndex to $endIndex (${endIndex - startIndex - 1} lines), skipFilter=$skipInstructionFilter"
         )
         DebugConfig.debugLog(
             DebugConfig.Category.IMPORT,
@@ -245,7 +260,10 @@ object TextRecipeParser {
         val extracted = lines.subList(startIndex + 1, endIndex.coerceAtMost(lines.size))
             .filter { it.isNotBlank() }
             .filter { !isWebsiteNoise(it) }
-            .filter { looksLikeInstruction(it) }
+            .let { filtered ->
+                if (skipInstructionFilter) filtered
+                else filtered.filter { looksLikeInstruction(it) }
+            }
             .map { cleanInstruction(it) }
 
         DebugConfig.debugLog(
@@ -437,14 +455,22 @@ object TextRecipeParser {
         val ingredientPatterns = listOf(
             // Starts with number/fraction and measurement
             Regex("^(\\d+[\\s/]*\\d*|[½¼¾⅓⅔⅛⅜⅝⅞])\\s*(cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?|grams?|g|ml|cloves?|slices?|pieces?|cans?|jars?)\\b", RegexOption.IGNORE_CASE),
+            // Starts with number followed by food word (e.g., "4 boneless skinless chicken thighs")
+            Regex("^\\d+\\s+(boneless|skinless|chicken|beef|pork|lamb|fish|salmon|shrimp|turkey|duck|sausage|bacon|ham)", RegexOption.IGNORE_CASE),
+            // Starts with number followed by parenthetical (e.g., "4 (12 oz total) sweet Italian")
+            Regex("^\\d+\\s*\\([^)]+\\)", RegexOption.IGNORE_CASE),
+            // Starts with number followed by color/descriptor + food (e.g., "1 red bell pepper")
+            Regex("^\\d+\\s+(red|green|yellow|orange|white|black|sweet|hot|large|medium|small)\\s+\\w+\\s+(pepper|onion|tomato|potato|carrot|celery|garlic)", RegexOption.IGNORE_CASE),
             // Starts with measurement unit (number on previous line in PDF)
             Regex("^(cups?|tablespoons?|teaspoons?|tbsp|tsp|oz|ounces?|pounds?|lbs?)\\s+\\w", RegexOption.IGNORE_CASE),
             // Contains parenthetical description like "(from 1 small onion)"
             Regex("\\(from\\s+\\d+\\s+\\w+", RegexOption.IGNORE_CASE),
-            // Common ingredient list patterns
-            Regex(",\\s*(sliced|diced|chopped|minced|quartered|halved)\\b", RegexOption.IGNORE_CASE),
+            // Common ingredient list patterns - comma followed by prep word
+            Regex(",\\s*(sliced|diced|chopped|minced|quartered|halved|cut|peeled|seeded|cored)\\b", RegexOption.IGNORE_CASE),
             // Ingredient with thickness: "sliced ¼ inch thick"
-            Regex("(sliced|cut)\\s+[¼½¾⅓⅔⅛⅜⅝⅞\\d]+\\s*inch", RegexOption.IGNORE_CASE)
+            Regex("(sliced|cut)\\s+[¼½¾⅓⅔⅛⅜⅝⅞\\d]+\\s*inch", RegexOption.IGNORE_CASE),
+            // Contains "brine" which appears in ingredient lists
+            Regex("\\bbrine\\b", RegexOption.IGNORE_CASE)
         )
 
         // Patterns that strongly indicate an instruction (not an ingredient)

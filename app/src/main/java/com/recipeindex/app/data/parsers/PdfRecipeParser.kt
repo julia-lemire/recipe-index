@@ -57,11 +57,17 @@ class PdfRecipeParser(
 
     /**
      * Extract all text from PDF using PdfBox
+     *
+     * Uses sortByPosition=true to attempt better ordering of multi-column layouts,
+     * though this doesn't always work perfectly for complex PDFs.
      */
     private fun extractTextFromPdf(uri: Uri): String {
         context.contentResolver.openInputStream(uri)?.use { inputStream ->
             PDDocument.load(inputStream).use { document ->
-                val stripper = PDFTextStripper()
+                val stripper = PDFTextStripper().apply {
+                    // Sort by position to improve multi-column layout extraction
+                    sortByPosition = true
+                }
                 return stripper.getText(document)
             }
         } ?: throw Exception("Could not open PDF file")
