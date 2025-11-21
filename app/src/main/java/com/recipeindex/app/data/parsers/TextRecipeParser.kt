@@ -189,6 +189,10 @@ object TextRecipeParser {
                     DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Found notes/tips at line $index: $line")
                     sections["notes"] = index
                 }
+                // Nutrition section (marks end of notes)
+                normalized.contains(Regex("^nutrition\\s*:?\\s*$")) && !sections.containsKey("nutrition") -> {
+                    sections["nutrition"] = index
+                }
             }
         }
 
@@ -388,7 +392,16 @@ object TextRecipeParser {
             // Marketing
             Regex("\\b(free|newsletter|social|follow|share|pin|tweet)\\b"),
             // Footer/legal
-            Regex("\\b(privacy|policy|terms|conditions|copyright)\\b")
+            Regex("\\b(privacy|policy|terms|conditions|copyright)\\b"),
+            // Nutrition info (Calories, Protein, Carbs, etc.)
+            Regex("\\b(calories|kcal|protein|carbs|carbohydrates|fat|fiber|sodium|cholesterol|saturated)\\s*:"),
+            Regex("^serving:\\s*\\d"),
+            // "Did You Make This Recipe?" prompts
+            Regex("did\\s+you\\s+make\\s+this"),
+            Regex("post\\s+a\\s+pic"),
+            Regex("mention\\s+@|tag\\s+#"),
+            // Section headers that aren't useful tips
+            Regex("^(nutrition|storage|faq)\\s*:?\\s*$")
         )
         return marketingPatterns.any { it.containsMatchIn(lower) }
     }
