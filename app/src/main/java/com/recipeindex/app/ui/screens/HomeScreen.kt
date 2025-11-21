@@ -40,7 +40,12 @@ fun HomeScreen(
     onNavigateToCreate: () -> Unit = {},
     onNavigateToRecipes: () -> Unit = {},
     onNavigateToRecipeDetail: (Long) -> Unit = {},
-    onNavigateToMealPlanDetail: (Long) -> Unit = {}
+    onNavigateToMealPlanDetail: (Long) -> Unit = {},
+    onToggleFavorite: (Long) -> Unit = {},
+    onDeleteRecipe: (Long) -> Unit = {},
+    onAddToGroceryList: (Long) -> Unit = {},
+    onAddToMealPlan: (Long) -> Unit = {},
+    onShareRecipe: (Recipe) -> Unit = {}
 ) {
     DebugConfig.debugLog(DebugConfig.Category.UI, "HomeScreen composed")
 
@@ -301,11 +306,11 @@ private fun RecipeCarouselSection(
                     RecipeCard(
                         recipe = recipe,
                         onClick = { onRecipeClick(recipe.id) },
-                        onToggleFavorite = { /* Handled by RecipeCard internally */ },
-                        onAddToGroceryList = { /* Handled by RecipeCard internally */ },
-                        onAddToMealPlan = { /* Handled by RecipeCard internally */ },
-                        onShare = { /* Handled by RecipeCard internally */ },
-                        onDelete = { /* Handled by RecipeCard internally */ }
+                        onToggleFavorite = { onToggleFavorite(recipe.id) },
+                        onAddToGroceryList = { onAddToGroceryList(recipe.id) },
+                        onAddToMealPlan = { onAddToMealPlan(recipe.id) },
+                        onShare = { onShareRecipe(recipe) },
+                        onDelete = { onDeleteRecipe(recipe.id) }
                     )
                 }
             }
