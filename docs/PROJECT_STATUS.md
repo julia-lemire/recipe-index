@@ -227,9 +227,12 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Grocery list UX: Removed confusing info icon from grocery list items (non-clickable decoration)
 - ✅ Meal plan UX: Fixed button spacing on meal plan cards for better display on all devices (explicit sizes and weights)
 - ✅ Meal plan context menu: Added "Add to Grocery List" option in meal plan detail page with GroceryListPickerDialog
-- ✅ Import logging: Enhanced Schema.org parser with comprehensive [IMPORT]-prefixed logs for debugging (JSON-LD script counts, field inspection, ingredient/instruction parsing details)
-- ✅ Import parsing: Fixed nested JSON handling in SchemaOrgRecipeParser for sites with complex Schema.org structures (recursively extracts text from objects/arrays in recipeIngredient/recipeCategory/keywords fields, handles deeply nested objects by checking text/name/@value fields)
+- ✅ Import logging: Enhanced Schema.org parser with comprehensive [IMPORT]-prefixed logs for debugging (JSON-LD script counts, field inspection, ingredient/instruction parsing details, actual extracted tag values)
+- ✅ Import parsing: Fixed nested JSON handling in SchemaOrgRecipeParser for sites with complex Schema.org structures (recursively extracts text from objects/arrays in recipeIngredient/recipeCategory/keywords fields, handles deeply nested objects by checking text/name/@value fields, handles @type as string or array)
 - ✅ Import URL normalization: Auto-upgrades http:// to https:// and adds https:// prefix when missing to prevent Android network security policy errors
+- ✅ Import cuisine extraction: Extracts cuisine from recipe titles (e.g., "Georgian Beef Stew") when Schema.org recipeCuisine field is missing or incorrect, supports 100+ cuisines
+- ✅ Import tag de-duplication: Removes subset tags when general term exists (e.g., keeps "eggplant", removes "japanese eggplant")
+- ✅ Import Article type support: Detects Article/BlogPosting types with embedded recipe data (recipeIngredient/recipeInstructions fields) and treats them as valid recipes for sites that don't use explicit Recipe type
 
 ### Advanced Features (Phase 5)
 - ✅ Portion scaling: Servings dropdown in RecipeDetailScreen (half, original, 2x, 3x, 4x) with automatic ingredient quantity scaling

@@ -34,6 +34,7 @@ data class ParsedRecipeData(
     val cookTimeMinutes: Int? = null,
     val totalTimeMinutes: Int? = null,
     val tags: List<String> = emptyList(),
+    val cuisine: String? = null,
     val description: String? = null,
     val imageUrl: String? = null,
     val sourceUrl: String? = null

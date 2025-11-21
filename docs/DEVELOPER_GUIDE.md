@@ -94,10 +94,16 @@
 
 ### Import Recipes
 - **Parser Interface**: `data/parsers/RecipeParser.kt`
-- **URL Import**: `data/parsers/SchemaOrgRecipeParser.kt` (handles nested JSON structures via recursive parseJsonArrayToStrings, extracts from text/name/@value fields)
+- **URL Import**: `data/parsers/SchemaOrgRecipeParser.kt`
+  - Handles nested JSON structures via recursive parseJsonArrayToStrings
+  - Extracts from text/name/@value fields in Schema.org objects
+  - Handles @type as string or array (["Recipe", "Article"])
+  - Detects Article/BlogPosting types with embedded recipe data (recipeIngredient/recipeInstructions fields)
+  - Extracts cuisine from titles when recipeCuisine is missing/incorrect (100+ cuisines)
 - **Import Screens**: `ui/screens/ImportSourceSelectionScreen.kt`, `ui/screens/ImportUrlScreen.kt`
 - **ViewModel**: `ui/viewmodels/ImportViewModel.kt` (auto-normalizes URLs: http:// → https://, adds https:// when missing)
-- **Debugging**: Enable [IMPORT] logs in DebugConfig to see JSON-LD parsing progress, field types, extraction results, and URL normalization
+- **Tag Processing**: `utils/TagStandardizer.kt` (removes subset tags, standardizes variations, filters junk)
+- **Debugging**: Enable [IMPORT] logs in DebugConfig to see JSON-LD parsing progress, field types, extraction results, URL normalization, and tag value logging
 
 ### Share/Import Content
 - **Share Helper**: `utils/ShareHelper.kt` (shareRecipe/shareMealPlan/shareGroceryList, photo encoding/decoding, duplicate detection)
