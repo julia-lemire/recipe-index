@@ -182,7 +182,33 @@
 - [ ] PDF tips/notes section is extracted to sourceTips field (separate from user notes)
 - [ ] PDF ingredient quantities are preserved (cleanIngredient only strips "1." not "4 chicken")
 - [ ] PDF title extraction skips date/URL lines (isValidTitle in extractTitle)
+- [ ] PDF title extraction skips CTA patterns (jump to/print/save/share/pin/rate/email)
+- [ ] PDF title extraction skips subscribe/newsletter lines
+- [ ] PDF title extraction skips "More X Recipes" marketing lines
+- [ ] PDF ingredients section requires standalone header (`^ingredients?\s*:?\s*$` not word boundary)
+- [ ] PDF breadcrumb lines skipped during section detection (lines with " > " not triggering ingredients section)
 - [ ] Photo OCR import extracts text from image (planned - PhotoRecipeParser delegates to TextRecipeParser)
+- [ ] OCR checkbox noise is cleaned from ingredients ("U 16 oz" → "16 oz", removes leading U/O/☐/□)
+- [ ] OCR "0z" typo is fixed to "oz" (common OCR misrecognition of letter 'o' as zero)
+- [ ] Breadcrumb navigation filtered from title extraction (lines with " > " skipped)
+- [ ] OCR fractions with spaces normalized ("1 /2 cup" → "½ cup")
+- [ ] ServingSize extraction handles OCR fractions ("Serving Size: 1 /2 cup" → "½ cup")
+- [ ] ServingSize extraction handles unitless fractions ("Serving Size: 1/4" without unit)
+- [ ] ServingSize extraction filters multiplier buttons ("1x 2x 3x" stripped from result)
+
+#### Photo Management in Recipe Detail
+- [ ] RecipeDetailScreen shows "Add Photo" placeholder when no photos exist
+- [ ] RecipeDetailScreen shows AddAPhoto overlay button on photo carousel
+- [ ] File picker launcher selects and saves photo to recipe mediaPaths
+- [ ] savePhotoToStorage() compresses images to max 1920x1920
+- [ ] savePhotoToStorage() saves to media/images/ directory
+
+#### Import Navigation
+- [ ] ImportUrlScreen navigates to RecipeIndex after save from Home entry point
+- [ ] ImportUrlScreen navigates to RecipeIndex after save from RecipeList entry point
+- [ ] ImportPdfScreen navigates to RecipeIndex after save from Home entry point
+- [ ] ImportPhotoScreen navigates to RecipeIndex after save from Home entry point
+- [ ] Navigation uses popUpTo(Home) to clear import screens from back stack
 
 #### Tag Management
 - [ ] TagStandardizer normalizes tag variations to standard forms (planned - e.g., "italian food"→"italian")

@@ -138,16 +138,16 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ RecipeViewModel with StateFlow (delegates to Manager)
 - ✅ ViewModelFactory for dependency injection
 - ✅ RecipeListScreen with cards (servings/times above ingredients per request, favorite toggle, expandable FAB menu for create/import)
-- ✅ RecipeDetailScreen (view recipe, edit/delete/favorite actions, BackHandler)
+- ✅ RecipeDetailScreen (view recipe, edit/delete/favorite actions, BackHandler, photo management with camera/gallery to add photos, image carousel with add overlay)
 - ✅ AddEditRecipeScreen (single screen form with validation, auto-save on back navigation)
 - ✅ Full navigation integration (add, edit, detail, list)
 
 ### Recipe Import (Phase 2)
 - ✅ RecipeParser interface for extensible parsing (URL/PDF/Photo support)
 - ✅ SchemaOrgRecipeParser with Jsoup and Ktor (parses Schema.org JSON-LD markup, HowToStep/HowToSection instructions, ISO 8601 durations, Open Graph fallback, debug logging, main photo extraction, comma-separated tags)
-- ✅ TextRecipeParser with smart pattern matching (detects ingredients/instructions sections, filters website noise, validates content, parses times/servings, cleans formatting)
-- ✅ PdfRecipeParser with PdfBox-Android (extracts text from PDFs, delegates to TextRecipeParser)
-- ✅ PhotoRecipeParser with ML Kit OCR (extracts text from photos/camera, supports multiple images, delegates to TextRecipeParser)
+- ✅ TextRecipeParser with smart pattern matching (detects ingredients/instructions sections, filters website noise, validates content, parses times/servings/servingSize, cleans formatting, OCR noise cleaning for checkbox chars and 0z→oz, breadcrumb filtering in titles, fraction normalization 1/2→½)
+- ✅ PdfRecipeParser with PdfBox-Android (extracts text from PDFs, sortByPosition for multi-column layouts, delegates to TextRecipeParser)
+- ✅ PhotoRecipeParser with ML Kit OCR (extracts text from photos/camera, supports multiple images, delegates to TextRecipeParser with OCR-specific cleaning)
 - ✅ ImportSourceSelectionScreen (choose URL/PDF/Photo import source)
 - ✅ ImportUrlScreen (URL input, loading state, recipe preview/edit before save, auto-save on back)
 - ✅ ImportPdfScreen (file picker, loading state, recipe preview/edit before save)
@@ -324,7 +324,34 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 
 ## Recent Updates (Latest Session)
 
-### Home Screen Redesign
+### PDF Parsing Improvements for Long Webpage Prints
+- ✅ **Standalone Ingredients Header Detection**: Changed section detection from word-boundary match to require standalone header (`^ingredients?\s*:?\s*$`)
+  - Prevents breadcrumb navigation lines like "Skinnytaste > Main Ingredient > Ground Turkey" from triggering false positive ingredients detection
+  - Added `isBreadcrumb` check to skip lines containing " > " during section detection
+- ✅ **Enhanced Title Extraction Filters**: Added noise pattern filtering to `isValidTitle()`
+  - Skips subscribe/newsletter CTA lines
+  - Skips "More X Recipes You May Like" marketing lines
+  - Skips lines starting with jump to/print/save/share/pin/rate/email
+  - Prevents extracting website navigation as recipe title
+- ✅ **ServingSize for Unitless Fractions**: Added pattern for fractions without units (e.g., "Serving Size: 1/4")
+  - Handles recipe website convention of expressing serving size as recipe fraction
+  - Filters out multiplier buttons ("1x 2x 3x") from OCR results
+
+### Navigation Fix for Import from Home Screen
+- ✅ **Consistent Post-Import Navigation**: Changed all import screen navigation from `popBackStack(RecipeIndex)` to `navigate(RecipeIndex) { popUpTo(Home) }`
+  - Fixes silent navigation failure when entering import flow from Home screen
+  - RecipeIndex wasn't in back stack when coming from Home, causing popBackStack to fail
+  - Users now correctly navigate to recipe list after saving regardless of entry point
+
+### UI Improvements
+- ✅ **Simplified Photo Picker**: Replaced camera/gallery selection dialog with single file picker
+  - Uses `ActivityResultContracts.GetContent("image/*")` for simpler UX
+  - File picker provides access to both camera captures and gallery through system UI
+- ✅ **Text Labels Replacing Emojis**: Replaced emoji icons (🍽️, ⏱️, 🔥, ⏰, 📏) with text labels in RecipeDetailScreen
+  - Now shows: "Servings", "Prep:", "Cook:", "Total:", "Portion:"
+  - Better accessibility and clarity per user feedback
+
+### Previous Session - Home Screen Redesign
 - ✅ **HomeViewModel**: New ViewModel for managing home screen data (recent recipes, favorites, this week's meal plan)
 - ✅ **Redesigned Home Screen Layout**: Complete rewrite with new structure
   - Quick Actions at top (Import, Create, View All buttons)
