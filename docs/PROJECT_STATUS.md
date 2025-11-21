@@ -364,6 +364,28 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
   - Menu now always visible when onAddToGroceryList callback provided
   - "Add to Grocery List" option disabled when no recipes selected
   - Previously hidden unless plan was existing with recipes
+- ✅ **Dry Volume Unit Preference**: Added separate unit preference for dry ingredients (flour, sugar, spices)
+  - New dryVolumePreference field in AppSettings separate from liquid volume preference
+  - Allows users to prefer grams for baking ingredients while keeping cups for liquids
+  - Settings UI shows three separate sections: Liquid Volume Units, Dry Volume Units, Weight Units
+- ✅ **Simplified Grocery List Units**: Improved quantity display with fractions and reduced decimal precision
+  - Small quantities (< 0.25) round to nearest 1/4
+  - Common fractions displayed (1/4, 1/3, 1/2, 3/4) instead of decimals
+  - Max 1 decimal place for other quantities (was 2 decimals showing "0.20 tsp")
+- ✅ **Hide Tags in Cook Mode**: Reduced UI clutter by hiding recipe tags when cook mode is active
+  - Tags section now hidden when cookModeEnabled is true
+  - Keeps focus on ingredients and instructions during cooking
+- ✅ **Quick Note Button in Cook Mode**: Added contextual note-taking without leaving cook mode
+  - "Quick Note" button appears in cook mode card
+  - Opens dialog with text field pre-populated with existing notes
+  - Saves notes directly to recipe using recipeViewModel.updateRecipe()
+  - Users can add cooking observations without interrupting workflow
+- ✅ **Unit Conversion Toggle**: Restored SwapHoriz toggle button in ingredients section
+  - Icon button in ingredients header to toggle between showing both units or user preference
+  - When enabled, forces UnitSystem.BOTH to display "1 cup (237 ml) flour" format
+  - When disabled, uses user's granular settings (liquidVolumePreference, weightPreference)
+  - Button highlights with secondaryContainer color when active
+  - Previously removed in favor of settings-only control, but users need on-the-fly switching
 
 ### Meal Planning UX Improvements
 - ✅ **Simplified Date Entry**: Replaced two separate date buttons with single calendar icon button inline with meal plan name field
