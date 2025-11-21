@@ -458,6 +458,17 @@ private fun EditRecipeContent(
             )
         }
 
+        // Cuisine
+        OutlinedTextField(
+            value = recipe.cuisine ?: "",
+            onValueChange = {
+                onRecipeChange(recipe.copy(cuisine = it.ifBlank { null }))
+            },
+            label = { Text("Cuisine") },
+            placeholder = { Text("e.g., Italian, Thai, Mexican") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
         // Tags - Chip-based UI
         Column(
             modifier = Modifier.fillMaxWidth(),
