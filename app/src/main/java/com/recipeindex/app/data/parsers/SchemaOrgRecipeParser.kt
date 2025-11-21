@@ -1,53 +1,24 @@
 package com.recipeindex.app.data.parsers
 
-import com.recipeindex.app.data.entities.Recipe
-import com.recipeindex.app.data.entities.RecipeSource
 import com.recipeindex.app.utils.DebugConfig
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import kotlinx.serialization.json.*
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
 /**
- * SchemaOrgRecipeParser - Parses recipes from URLs using Schema.org Recipe JSON-LD
+ * SchemaOrgRecipeParser - Parses Schema.org Recipe JSON-LD from HTML documents
  *
- * Parsing strategy (in order):
- * 1. Schema.org Recipe JSON-LD (best: structured data with all fields)
- * 2. HTML scraping (fallback: extracts ingredients/instructions from HTML)
- * 3. Open Graph meta tags (last resort: only title/description/image)
+ * Extracts structured recipe data from Schema.org JSON-LD markup embedded in HTML.
+ * Handles Recipe, Article, and BlogPosting types with embedded recipe fields.
  */
-class SchemaOrgRecipeParser(
-    private val httpClient: HttpClient
-) : RecipeParser {
+class SchemaOrgRecipeParser {
 
     private val htmlScraper = HtmlScraper()
 
-    override suspend fun parse(source: String): Result<Recipe> {
-        return try {
-            // Fetch HTML from URL
-            val html = httpClient.get(source).bodyAsText()
-            val document = Jsoup.parse(html)
-
-            // Try Schema.org JSON-LD first, then HTML scraping, then Open Graph
-            val parsedData = parseSchemaOrg(document)
-                ?: htmlScraper.scrape(document)
-                ?: parseOpenGraph(document)
-                ?: return Result.failure(Exception("No recipe data found at URL"))
-
-            // Convert to Recipe entity
-            val recipe = parsedData.toRecipe(sourceUrl = source)
-            Result.success(recipe)
-        } catch (e: Exception) {
-            Result.failure(Exception("Failed to parse recipe from URL: ${e.message}", e))
-        }
-    }
-
     /**
      * Parse Schema.org Recipe JSON-LD from document
+     * @return ParsedRecipeData if Recipe found, null otherwise
      */
-    private fun parseSchemaOrg(document: Document): ParsedRecipeData? {
+    fun parse(document: Document): ParsedRecipeData? {
         // Find script tags with type="application/ld+json"
         val jsonLdScripts = document.select("script[type=application/ld+json]")
 
@@ -559,55 +530,4 @@ class SchemaOrgRecipeParser(
         return false
     }
 
-    /**
-     * Fallback: Parse Open Graph meta tags
-     */
-    private fun parseOpenGraph(document: Document): ParsedRecipeData? {
-        val title = document.select("meta[property=og:title]").attr("content").ifBlank { null }
-        val description = document.select("meta[property=og:description]").attr("content").ifBlank { null }
-        val imageUrl = document.select("meta[property=og:image]").attr("content").ifBlank { null }
-
-        // If we have at least a title, return partial data
-        return if (title != null) {
-            ParsedRecipeData(
-                title = title,
-                description = description,
-                imageUrl = imageUrl
-            )
-        } else {
-            null
-        }
-    }
-}
-
-/**
- * Convert ParsedRecipeData to Recipe entity
- */
-private fun ParsedRecipeData.toRecipe(sourceUrl: String): Recipe {
-    val now = System.currentTimeMillis()
-
-    DebugConfig.debugLog(
-        DebugConfig.Category.IMPORT,
-        "Creating recipe with photo: ${imageUrl ?: "none"}"
-    )
-
-    return Recipe(
-        id = 0,
-        title = title ?: "Imported Recipe",
-        ingredients = ingredients,
-        instructions = instructions,
-        servings = servings ?: 4,
-        prepTimeMinutes = prepTimeMinutes,
-        cookTimeMinutes = cookTimeMinutes,
-        tags = tags,
-        cuisine = cuisine,
-        notes = null, // Notes should be user-added only, not populated during import
-        source = RecipeSource.URL,
-        sourceUrl = sourceUrl,
-        photoPath = imageUrl, // Save image URL to photoPath
-        isFavorite = false,
-        isTemplate = false,
-        createdAt = now,
-        updatedAt = now
-    )
 }
