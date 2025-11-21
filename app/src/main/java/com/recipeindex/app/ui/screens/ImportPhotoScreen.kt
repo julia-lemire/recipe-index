@@ -9,11 +9,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -24,20 +22,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
-import com.recipeindex.app.data.entities.Recipe
+import com.recipeindex.app.ui.components.RecipeImportPreview
+import com.recipeindex.app.ui.components.isRecipeValid
 import com.recipeindex.app.ui.viewmodels.ImportPhotoViewModel
 import java.io.File
 
 /**
  * Import Photo Screen - Capture/select photos and preview/edit imported recipe
  *
- * Supports multiple photos since recipes often span multiple images
+ * Supports multiple photos since recipes often span multiple images.
+ * Uses shared RecipeImportPreview component for consistent preview experience.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -213,18 +211,42 @@ fun ImportPhotoScreen(
             }
 
             is ImportPhotoViewModel.UiState.Editing -> {
-                EditRecipeContent(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues),
-                    recipe = state.recipe,
-                    onRecipeChange = { viewModel.updateRecipe(it) },
-                    onSave = {
-                        viewModel.saveRecipe(state.recipe)
-                        onSaveComplete()
-                    },
-                    errorMessage = state.errorMessage
-                )
+                        .padding(paddingValues)
+                ) {
+                    // Use shared preview component
+                    RecipeImportPreview(
+                        modifier = Modifier.weight(1f),
+                        recipe = state.recipe,
+                        onRecipeChange = { viewModel.updateRecipe(it) },
+                        errorMessage = state.errorMessage
+                    )
+
+                    // Save button at bottom
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shadowElevation = 8.dp
+                    ) {
+                        Button(
+                            onClick = {
+                                viewModel.saveRecipe(state.recipe)
+                                onSaveComplete()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                                .height(56.dp),
+                            enabled = isRecipeValid(state.recipe)
+                        ) {
+                            Text(
+                                text = "Save Recipe",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+                    }
+                }
             }
 
             is ImportPhotoViewModel.UiState.Saved -> {
@@ -423,321 +445,6 @@ private fun LoadingContent(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        }
-    }
-}
-
-/**
- * Edit recipe content - reused pattern from other import screens
- * (In production, this would be extracted to a shared composable)
- */
-@Composable
-private fun EditRecipeContent(
-    modifier: Modifier = Modifier,
-    recipe: Recipe,
-    onRecipeChange: (Recipe) -> Unit,
-    onSave: () -> Unit,
-    errorMessage: String?
-) {
-    var tagInput by remember { mutableStateOf("") }
-
-    // Same implementation as ImportPdfScreen's EditRecipeContent
-    // In production, extract this to a shared composable to avoid duplication
-    Column(
-        modifier = modifier
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = "Review & Edit",
-            style = MaterialTheme.typography.headlineSmall
-        )
-
-        Text(
-            text = "Review the imported recipe and make any necessary edits before saving.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        if (errorMessage != null) {
-            Text(
-                text = errorMessage,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Recipe Photo (if available)
-        recipe.photoPath?.let { photoUrl ->
-            AsyncImage(
-                model = photoUrl,
-                contentDescription = "Recipe photo",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .clip(MaterialTheme.shapes.medium),
-                contentScale = ContentScale.Crop
-            )
-        }
-
-        // Title
-        OutlinedTextField(
-            value = recipe.title,
-            onValueChange = { onRecipeChange(recipe.copy(title = it)) },
-            label = { Text("Title*") },
-            modifier = Modifier.fillMaxWidth(),
-            isError = recipe.title.isBlank()
-        )
-
-        // Ingredients
-        OutlinedTextField(
-            value = recipe.ingredients.joinToString("\n"),
-            onValueChange = {
-                val ingredients = it.split("\n").filter { line -> line.isNotBlank() }
-                onRecipeChange(recipe.copy(ingredients = ingredients))
-            },
-            label = { Text("Ingredients* (one per line)") },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 4,
-            maxLines = 10,
-            isError = recipe.ingredients.isEmpty()
-        )
-
-        // Instructions
-        OutlinedTextField(
-            value = recipe.instructions.joinToString("\n"),
-            onValueChange = {
-                val instructions = it.split("\n").filter { line -> line.isNotBlank() }
-                onRecipeChange(recipe.copy(instructions = instructions))
-            },
-            label = { Text("Instructions* (one step per line)") },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 4,
-            maxLines = 10,
-            isError = recipe.instructions.isEmpty()
-        )
-
-        // Servings and Serving Size
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedTextField(
-                value = recipe.servings.toString(),
-                onValueChange = {
-                    val servings = it.toIntOrNull() ?: recipe.servings
-                    onRecipeChange(recipe.copy(servings = servings))
-                },
-                label = { Text("Servings") },
-                modifier = Modifier.weight(1f)
-            )
-
-            OutlinedTextField(
-                value = recipe.servingSize ?: "",
-                onValueChange = {
-                    onRecipeChange(recipe.copy(servingSize = it.ifBlank { null }))
-                },
-                label = { Text("Serving Size") },
-                placeholder = { Text("e.g., 1 cup, 200g") },
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        // Times
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedTextField(
-                value = recipe.prepTimeMinutes?.toString() ?: "",
-                onValueChange = {
-                    val time = it.toIntOrNull()
-                    onRecipeChange(recipe.copy(prepTimeMinutes = time))
-                },
-                label = { Text("Prep (min)") },
-                modifier = Modifier.weight(1f)
-            )
-
-            OutlinedTextField(
-                value = recipe.cookTimeMinutes?.toString() ?: "",
-                onValueChange = {
-                    val time = it.toIntOrNull()
-                    onRecipeChange(recipe.copy(cookTimeMinutes = time))
-                },
-                label = { Text("Cook (min)") },
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        // Cuisine
-        OutlinedTextField(
-            value = recipe.cuisine ?: "",
-            onValueChange = {
-                onRecipeChange(recipe.copy(cuisine = it.ifBlank { null }))
-            },
-            label = { Text("Cuisine") },
-            placeholder = { Text("e.g., Italian, Thai, Mexican") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Tags - Chip-based UI
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Tags",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            // Display existing tags as removable chips
-            if (recipe.tags.isNotEmpty()) {
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalSpacing = 8.dp,
-                    verticalSpacing = 8.dp
-                ) {
-                    recipe.tags.forEach { tag ->
-                        InputChip(
-                            selected = false,
-                            onClick = {
-                                val updatedTags = recipe.tags.filter { it != tag }
-                                onRecipeChange(recipe.copy(tags = updatedTags))
-                            },
-                            label = { Text(tag) },
-                            trailingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Remove $tag",
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        )
-                    }
-                }
-            }
-
-            // Add new tag field
-            OutlinedTextField(
-                value = tagInput,
-                onValueChange = { tagInput = it },
-                label = { Text("Add tag") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                trailingIcon = {
-                    if (tagInput.isNotBlank()) {
-                        IconButton(
-                            onClick = {
-                                val newTag = tagInput.trim()
-                                if (newTag.isNotBlank() && !recipe.tags.contains(newTag)) {
-                                    val updatedTags = recipe.tags + newTag
-                                    onRecipeChange(recipe.copy(tags = updatedTags))
-                                }
-                                tagInput = ""
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Add tag"
-                            )
-                        }
-                    }
-                },
-                singleLine = true
-            )
-        }
-
-        // Save button
-        Button(
-            onClick = onSave,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = recipe.title.isNotBlank() &&
-                    recipe.ingredients.isNotEmpty() &&
-                    recipe.instructions.isNotEmpty()
-        ) {
-            Text("Save Recipe")
-        }
-    }
-}
-
-/**
- * FlowRow - Custom layout that arranges children in rows, wrapping to new row when needed
- * (Similar to CSS flexbox with flex-wrap)
- */
-@Composable
-private fun FlowRow(
-    modifier: Modifier = Modifier,
-    horizontalSpacing: androidx.compose.ui.unit.Dp = 0.dp,
-    verticalSpacing: androidx.compose.ui.unit.Dp = 0.dp,
-    content: @Composable () -> Unit
-) {
-    Layout(
-        content = content,
-        modifier = modifier
-    ) { measurables, constraints ->
-        val horizontalSpacingPx = horizontalSpacing.roundToPx()
-        val verticalSpacingPx = verticalSpacing.roundToPx()
-
-        val rows = mutableListOf<MutableList<androidx.compose.ui.layout.Placeable>>()
-        var currentRow = mutableListOf<androidx.compose.ui.layout.Placeable>()
-        var currentRowWidth = 0
-        var currentRowHeight = 0
-
-        // Measure children and organize into rows
-        measurables.forEach { measurable ->
-            val placeable = measurable.measure(constraints)
-
-            // Check if we need to start a new row
-            if (currentRow.isNotEmpty() &&
-                currentRowWidth + horizontalSpacingPx + placeable.width > constraints.maxWidth
-            ) {
-                rows.add(currentRow)
-                currentRow = mutableListOf()
-                currentRowWidth = 0
-                currentRowHeight = 0
-            }
-
-            // Add to current row
-            currentRow.add(placeable)
-            currentRowWidth += placeable.width + if (currentRow.size > 1) horizontalSpacingPx else 0
-            currentRowHeight = maxOf(currentRowHeight, placeable.height)
-        }
-
-        // Add last row if not empty
-        if (currentRow.isNotEmpty()) {
-            rows.add(currentRow)
-        }
-
-        // Calculate total height
-        val totalHeight = rows.sumOf { row ->
-            row.maxOfOrNull { it.height } ?: 0
-        } + (rows.size - 1) * verticalSpacingPx
-
-        // Layout children
-        layout(
-            width = constraints.maxWidth,
-            height = totalHeight
-        ) {
-            var yPosition = 0
-
-            rows.forEach { row ->
-                var xPosition = 0
-                val rowHeight = row.maxOfOrNull { it.height } ?: 0
-
-                row.forEach { placeable ->
-                    placeable.placeRelative(
-                        x = xPosition,
-                        y = yPosition
-                    )
-                    xPosition += placeable.width + horizontalSpacingPx
-                }
-
-                yPosition += rowHeight + verticalSpacingPx
-            }
         }
     }
 }
