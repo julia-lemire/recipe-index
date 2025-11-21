@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: Source Tips Field for Website Notes and Substitutions
+- **Decision**: Added sourceTips field to Recipe entity for storing tips, variations, and substitutions from source websites/PDFs, separate from user-added notes
+- **Rationale**: Website recipes often include valuable tips and substitution suggestions that should be preserved during import but kept distinct from user's personal notes
+- **Implementation**: Added sourceTips: String? to Recipe entity and ParsedRecipeData, TextRecipeParser detects Notes/Tips/Variations/Substitutions sections and extracts content with isMarketingNoise() filter, displayed as "Tips & Substitutions" in RecipeDetailScreen (visible in cook mode), editable in ImportUrlScreen/ImportPdfScreen/AddEditRecipeScreen, user notes renamed to "My Notes"
+
 #### Nov 21, 2025: PDF Multi-Column Recovery for Misplaced Ingredients
 - **Decision**: Added comprehensive ingredient recovery for PDF multi-column layouts: PdfRecipeParser uses sortByPosition=true, TextRecipeParser re-extracts ALL lines (skipping instruction filter) when ingredients section is empty, recovery function uses pattern matching to separate ingredients from instructions
 - **Rationale**: PDF text extraction from multi-column layouts places sidebar UI text between section headers and actual content, causing ingredients to appear after "Instructions" header; the looksLikeInstruction() filter was removing ingredient lines before recovery could see them
