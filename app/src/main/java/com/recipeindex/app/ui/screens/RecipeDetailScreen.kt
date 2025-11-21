@@ -222,8 +222,7 @@ fun RecipeDetailScreen(
             ) {
                 // Servings with dropdown
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🍽️", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(Modifier.width(4.dp))
+                    Text("Servings", style = MaterialTheme.typography.bodyMedium)
                     Box {
                         TextButton(
                             onClick = { showServingsMenu = true },
@@ -266,21 +265,21 @@ fun RecipeDetailScreen(
 
                 recipe.prepTimeMinutes?.let {
                     Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("⏱️ ${it}m prep", style = MaterialTheme.typography.bodyMedium)
+                    Text("Prep: ${it}m", style = MaterialTheme.typography.bodyMedium)
                 }
                 recipe.cookTimeMinutes?.let {
                     Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("🔥 ${it}m cook", style = MaterialTheme.typography.bodyMedium)
+                    Text("Cook: ${it}m", style = MaterialTheme.typography.bodyMedium)
                 }
                 recipe.prepTimeMinutes?.let { prep ->
                     recipe.cookTimeMinutes?.let { cook ->
                         Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("⏰ ${prep + cook}m total", style = MaterialTheme.typography.bodyMedium)
+                        Text("Total: ${prep + cook}m", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
                 recipe.servingSize?.let { size ->
                     Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("📏 $size/serving", style = MaterialTheme.typography.bodyMedium)
+                    Text("Portion: $size", style = MaterialTheme.typography.bodyMedium)
                 }
             }
 
