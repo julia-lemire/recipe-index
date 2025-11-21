@@ -161,12 +161,42 @@ class SchemaOrgRecipeParser(
             "[IMPORT] Parsed ${instructions.size} instructions from recipeInstructions field"
         )
 
+        val title = json["name"]?.jsonPrimitive?.contentOrNull ?: ""
         val categories = parseJsonArrayToStrings(json["recipeCategory"], "recipeCategory")
         val cuisines = parseJsonArrayToStrings(json["recipeCuisine"], "recipeCuisine")
         val keywords = parseJsonArrayToStrings(json["keywords"], "keywords")
 
+        // Extract cuisine from title if present (e.g., "Georgian Beef Stew" → "Georgian")
+        val titleCuisine = extractCuisineFromTitle(title)
+        val allCuisines = if (titleCuisine != null && titleCuisine !in cuisines) {
+            cuisines + titleCuisine
+        } else {
+            cuisines
+        }
+
+        // Log extracted tag values for debugging
+        if (categories.isNotEmpty()) {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "[IMPORT] Recipe categories: ${categories.joinToString(", ")}"
+            )
+        }
+        if (allCuisines.isNotEmpty()) {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "[IMPORT] Recipe cuisines: ${allCuisines.joinToString(", ")}" +
+                        if (titleCuisine != null) " (includes \"$titleCuisine\" from title)" else ""
+            )
+        }
+        if (keywords.isNotEmpty()) {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "[IMPORT] Recipe keywords: ${keywords.joinToString(", ")}"
+            )
+        }
+
         return ParsedRecipeData(
-            title = json["name"]?.jsonPrimitive?.contentOrNull,
+            title = title,
             description = json["description"]?.jsonPrimitive?.contentOrNull,
             ingredients = ingredients,
             instructions = instructions,
@@ -174,7 +204,7 @@ class SchemaOrgRecipeParser(
             prepTimeMinutes = parseIsoDuration(json["prepTime"]?.jsonPrimitive?.contentOrNull),
             cookTimeMinutes = parseIsoDuration(json["cookTime"]?.jsonPrimitive?.contentOrNull),
             totalTimeMinutes = parseIsoDuration(json["totalTime"]?.jsonPrimitive?.contentOrNull),
-            tags = categories + cuisines + keywords,
+            tags = categories + allCuisines + keywords,
             imageUrl = parseImage(json["image"])
         )
     }
@@ -406,6 +436,58 @@ class SchemaOrgRecipeParser(
         )
 
         return result
+    }
+
+    /**
+     * Extract cuisine from recipe title
+     * Looks for common cuisine names in titles like "Georgian Beef Stew" or "Italian Pasta"
+     */
+    private fun extractCuisineFromTitle(title: String): String? {
+        val knownCuisines = listOf(
+            "afghan", "african", "albanian", "algerian", "american", "argentinian", "armenian",
+            "asian", "australian", "austrian", "azerbaijani",
+            "bangladeshi", "basque", "belarusian", "belgian", "brazilian", "british", "bulgarian",
+            "cajun", "cambodian", "canadian", "caribbean", "caucasian", "chinese", "colombian",
+            "creole", "croatian", "cuban", "cypriot", "czech",
+            "danish", "dutch",
+            "eastern european", "egyptian", "english", "estonian", "ethiopian",
+            "filipino", "finnish", "french", "fusion",
+            "georgian", "german", "greek", "guatemalan",
+            "haitian", "hawaiian", "honduran", "hungarian",
+            "icelandic", "indian", "indonesian", "iranian", "iraqi", "irish", "israeli", "italian",
+            "jamaican", "japanese", "jewish", "jordanian",
+            "kenyan", "korean", "kurdish",
+            "laotian", "latin", "latvian", "lebanese", "libyan", "lithuanian",
+            "macedonian", "malaysian", "mediterranean", "mexican", "middle eastern", "moldovan",
+            "mongolian", "moroccan", "mozambican",
+            "nepalese", "new zealand", "nicaraguan", "nigerian", "norwegian",
+            "pakistani", "palestinian", "peruvian", "polish", "portuguese", "puerto rican",
+            "romanian", "russian",
+            "salvadoran", "scandinavian", "scottish", "serbian", "singaporean", "slovak",
+            "slovenian", "somali", "south african", "southern", "spanish", "sri lankan",
+            "sudanese", "swedish", "swiss", "syrian",
+            "taiwanese", "tajik", "thai", "tibetan", "trinidadian", "tunisian", "turkish", "turkmen",
+            "ugandan", "ukrainian", "uruguayan", "uzbek",
+            "venezuelan", "vietnamese",
+            "welsh",
+            "yemeni"
+        )
+
+        val lowerTitle = title.lowercase()
+
+        // Look for cuisine names at the start of the title or in parentheses
+        for (cuisine in knownCuisines) {
+            // Check if title starts with cuisine name (e.g., "Georgian Beef Stew")
+            if (lowerTitle.startsWith("$cuisine ") || lowerTitle.startsWith("($cuisine ")) {
+                return cuisine
+            }
+            // Check if cuisine is in parentheses (e.g., "Beef Stew (Georgian)")
+            if (lowerTitle.contains("($cuisine)") || lowerTitle.contains("($cuisine ")) {
+                return cuisine
+            }
+        }
+
+        return null
     }
 
     /**
