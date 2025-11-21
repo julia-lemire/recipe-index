@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.material3.*
@@ -97,6 +98,9 @@ fun RecipeDetailScreen(
     // Quick note dialog state (for cook mode)
     var showQuickNoteDialog by remember { mutableStateOf(false) }
     var quickNoteText by remember { mutableStateOf(recipe.notes ?: "") }
+
+    // Unit conversion toggle (overrides settings temporarily)
+    var showUnitConversions by remember { mutableStateOf(false) }
 
     // Get user's unit preferences from settings
     val settings by settingsViewModel.settings.collectAsState()
@@ -539,6 +543,20 @@ fun RecipeDetailScreen(
                             )
                         }
 
+                        // Unit conversion toggle
+                        IconButton(
+                            onClick = { showUnitConversions = !showUnitConversions },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = if (showUnitConversions) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
+                            )
+                        ) {
+                            Icon(
+                                Icons.Default.SwapHoriz,
+                                contentDescription = if (showUnitConversions) "Hide unit conversions" else "Show unit conversions",
+                                tint = if (showUnitConversions) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
                         // Select All / Deselect All button (only in cook mode)
                         if (cookModeEnabled) {
                             val allIngredientsChecked = checkedIngredients.size == recipe.ingredients.size
@@ -607,10 +625,11 @@ fun RecipeDetailScreen(
                         }
 
                         // Format ingredient according to user's granular unit preferences
+                        // When toggle is on, force show both units; otherwise use settings
                         processedIngredient = IngredientUnitConverter.formatIngredient(
                             processedIngredient,
-                            liquidPreference = settings.liquidVolumePreference,
-                            weightPreference = settings.weightPreference
+                            liquidPreference = if (showUnitConversions) com.recipeindex.app.data.UnitSystem.BOTH else settings.liquidVolumePreference,
+                            weightPreference = if (showUnitConversions) com.recipeindex.app.data.UnitSystem.BOTH else settings.weightPreference
                         )
 
                         Text(
