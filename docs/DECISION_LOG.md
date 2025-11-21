@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: Auto-Upgrade HTTP to HTTPS in URL Import
+- **Decision**: Added automatic URL normalization in ImportViewModel.fetchRecipeFromUrl() that upgrades http:// to https:// and adds https:// prefix when protocol is missing
+- **Rationale**: Android's network security policy blocks cleartext HTTP traffic by default, causing "CLEARTEXT communication not permitted" errors when users paste http:// URLs or forget protocol entirely
+- **Implementation**: Created normalizeUrl() private function with case-insensitive protocol detection, logs normalization when URL is changed for transparency, handles three cases: upgrade http:// → https://, add https:// when missing, pass through https:// unchanged
+
 #### Nov 21, 2025: Nested JSON Structure Handling in URL Import
 - **Decision**: Enhanced SchemaOrgRecipeParser to recursively handle nested JSON objects and arrays in Schema.org fields (recipeIngredient, recipeCategory, recipeCuisine, keywords) by extracting text from common Schema.org properties (text, name, @value)
 - **Rationale**: Many modern recipe websites use complex nested JSON-LD structures where array elements are objects rather than simple strings, causing the parser to crash with "is not a JsonPrimitive" errors and fall back to Open Graph metadata (title + image only), missing all ingredients and instructions

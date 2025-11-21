@@ -96,8 +96,8 @@
 - **Parser Interface**: `data/parsers/RecipeParser.kt`
 - **URL Import**: `data/parsers/SchemaOrgRecipeParser.kt` (handles nested JSON structures via recursive parseJsonArrayToStrings, extracts from text/name/@value fields)
 - **Import Screens**: `ui/screens/ImportSourceSelectionScreen.kt`, `ui/screens/ImportUrlScreen.kt`
-- **ViewModel**: `ui/viewmodels/ImportViewModel.kt`
-- **Debugging**: Enable [IMPORT] logs in DebugConfig to see JSON-LD parsing progress, field types, and extraction results
+- **ViewModel**: `ui/viewmodels/ImportViewModel.kt` (auto-normalizes URLs: http:// → https://, adds https:// when missing)
+- **Debugging**: Enable [IMPORT] logs in DebugConfig to see JSON-LD parsing progress, field types, extraction results, and URL normalization
 
 ### Share/Import Content
 - **Share Helper**: `utils/ShareHelper.kt` (shareRecipe/shareMealPlan/shareGroceryList, photo encoding/decoding, duplicate detection)
