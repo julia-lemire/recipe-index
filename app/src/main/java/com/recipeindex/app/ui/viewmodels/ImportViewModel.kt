@@ -32,9 +32,14 @@ class ImportViewModel(
             _uiState.value = UiState.Loading
 
             try {
-                DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Fetching recipe from URL: $url")
+                // Normalize URL: upgrade http:// to https://, add https:// if missing
+                val normalizedUrl = normalizeUrl(url)
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "Fetching recipe from URL: $normalizedUrl" + if (url != normalizedUrl) " (normalized from: $url)" else ""
+                )
 
-                val result = recipeParser.parse(url)
+                val result = recipeParser.parse(normalizedUrl)
 
                 result.onSuccess { recipe ->
                     DebugConfig.debugLog(
@@ -180,6 +185,25 @@ class ImportViewModel(
         val currentState = _uiState.value
         if (currentState is UiState.Editing) {
             _uiState.value = currentState.copy(recipe = currentState.recipe.copy(tags = tags))
+        }
+    }
+
+    /**
+     * Normalize URL: upgrade http:// to https://, add https:// if missing
+     */
+    private fun normalizeUrl(url: String): String {
+        val trimmed = url.trim()
+        return when {
+            // Upgrade http:// to https://
+            trimmed.startsWith("http://", ignoreCase = true) -> {
+                "https://" + trimmed.substring(7)
+            }
+            // Add https:// if no protocol specified
+            !trimmed.startsWith("https://", ignoreCase = true) && !trimmed.startsWith("http://", ignoreCase = true) -> {
+                "https://$trimmed"
+            }
+            // Already https://, just return
+            else -> trimmed
         }
     }
 
