@@ -1,7 +1,7 @@
 # Recipe Index File Catalog
 
 > **Purpose**: Complete file tree, system relationships, and component descriptions
-> **Last Updated**: 2025-11-20
+> **Last Updated**: 2025-11-21
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -271,7 +271,7 @@ com.recipeindex.app/
 > Using simple one-liner format for all files
 
 ### Data - Entities
-- **Recipe.kt** - Recipe entity with Room annotations: title, ingredients, instructions, servings, times, tags, source, photos, notes, sourceTips (tips/substitutions from source), behavioral flags (isFavorite, isTemplate)
+- **Recipe.kt** - Recipe entity with Room annotations: title, ingredients, instructions, servings, servingSize (portion size e.g. "1 ½ cups", "200g"), times, tags, source, photos, notes, sourceTips (tips/substitutions from source), behavioral flags (isFavorite, isTemplate)
 - **IngredientSubstitution.kt** - Substitution entity with Room annotations: ingredient name (normalized lowercase), category, List<Substitute> (JSON-encoded), isUserAdded, lastModified timestamp
 
 ### Data - Support Classes
@@ -293,12 +293,12 @@ com.recipeindex.app/
 - **SchemaOrgRecipeParser.kt** - Schema.org JSON-LD parser: parse(Document) extracts structured recipe data from JSON-LD, handles Recipe/Article/BlogPosting types with embedded recipe fields, parses recipeCategory/recipeCuisine (keywords field excluded), extracts HTML category links via HtmlScraper, HowToStep/HowToSection instructions, ISO 8601 duration conversion, recursive nested JSON handling, cuisine extraction from titles, debug logging
 - **HtmlScraper.kt** - HTML scraping helper: scrape(Document) searches for ingredients/instructions using CSS selectors ([class*=ingredient] li, [class*=instruction] li, etc.), parseCategories() for HTML category/tag links (rel="category"/"tag"), returns data if ingredients OR instructions found (saves whatever content is available), used by UrlRecipeParser and SchemaOrgRecipeParser for cascading supplementation
 - **OpenGraphParser.kt** - Open Graph parser: parse(Document) extracts title/description/image from og: meta tags, used in cascading supplementation to fill missing metadata fields when Schema.org or HTML scraping miss certain fields, returns ParsedRecipeData with basic metadata
-- **TextRecipeParser.kt** - Smart pattern matching parser: detects ingredients/instructions/notes sections via regex, filters website noise (CTAs/footers/rating prompts) and PDF page noise (URLs/page headers), joins continuation lines for instructions (joinInstructionLines) and prose (joinParagraphLines), validates ingredient/instruction content, supports Unicode fractions (½, ¼, ¾, etc.), parses time strings, extracts servings and sourceTips, cleans bullets/numbering, recovers misplaced ingredients from instructions when PDF multi-column extraction jumbles text order
+- **TextRecipeParser.kt** - Smart pattern matching parser: detects ingredients/instructions/notes sections via regex, filters website noise (CTAs/footers/rating prompts) and PDF page noise (URLs/page headers), joins continuation lines for instructions (joinInstructionLines) and prose (joinParagraphLines), validates ingredient/instruction content, supports Unicode fractions (½, ¼, ¾, etc.), parses time strings, extracts servings/servingSize (portion size)/sourceTips, cleans bullets/numbering, recovers misplaced ingredients from instructions when PDF multi-column extraction jumbles text order
 - **PdfRecipeParser.kt** - PDF text extraction parser: Uses PdfBox-Android PDFTextStripper with sortByPosition=true for better multi-column layout ordering, delegates to TextRecipeParser for recipe parsing
 - **PhotoRecipeParser.kt** - OCR-based parser: Uses ML Kit Text Recognition to extract text from photos/camera, supports multiple photos via parseMultiple(List<Uri>), combines OCR results, delegates to TextRecipeParser
 
 ### Data - Database
-- **AppDatabase.kt** - Room database singleton: Recipe, MealPlan, GroceryList, GroceryItem, IngredientSubstitution, RecipeLog tables, version 8, fallbackToDestructiveMigration
+- **AppDatabase.kt** - Room database singleton: Recipe, MealPlan, GroceryList, GroceryItem, IngredientSubstitution, RecipeLog tables, version 9, fallbackToDestructiveMigration
 - **Converters.kt** - Room type converters: List<String> ↔ delimited string, RecipeSource ↔ string, List<Substitute> ↔ JSON string (kotlinx.serialization), RecipeSourceType ↔ string
 
 ### Navigation

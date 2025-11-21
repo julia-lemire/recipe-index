@@ -1,7 +1,7 @@
 # Recipe Index Developer Guide
 
 > **Purpose**: Quick lookup ("I need to...") and architecture patterns (HOW to implement)
-> **Last Updated**: 2025-11-20
+> **Last Updated**: 2025-11-21
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -67,9 +67,9 @@
 
 ### Work with Recipes
 - **Manager**: `data/ContentManagers/RecipeManager.kt`
-- **Entity**: `data/entities/Recipe.kt` (includes cuisine field for filtering and display)
+- **Entity**: `data/entities/Recipe.kt` (includes servingSize for portion size e.g. "1 ½ cups", "200g", cuisine field for filtering and display)
 - **DAO**: `data/dao/RecipeDao.kt` (searchRecipes() includes cuisine in LIKE query)
-- **Screens**: `ui/screens/RecipeListScreen.kt` (displays cuisine as first tag in cards, shows cuisine in list view info row), `ui/screens/RecipeDetailScreen.kt`, `ui/screens/AddEditRecipeScreen.kt` (cuisine TextField after time fields), `ui/screens/ImportUrlScreen.kt` (cuisine in metadata dialog with Place icon)
+- **Screens**: `ui/screens/RecipeListScreen.kt` (displays cuisine as first tag in cards, shows cuisine in list view info row), `ui/screens/RecipeDetailScreen.kt` (servingSize in info row), `ui/screens/AddEditRecipeScreen.kt` (servingSize and cuisine TextFields after servings), `ui/screens/ImportUrlScreen.kt` (servingSize in metadata dialog), `ui/screens/ImportPdfScreen.kt` (servingSize field)
 
 ### Work with Meal Plans
 - **Manager**: `data/ContentManagers/MealPlanManager.kt`
