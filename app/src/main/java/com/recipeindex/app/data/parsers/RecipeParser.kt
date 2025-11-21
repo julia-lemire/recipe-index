@@ -47,6 +47,7 @@ data class ParsedRecipeData(
     val tags: List<String> = emptyList(),
     val cuisine: String? = null,
     val description: String? = null,
+    val sourceTips: String? = null, // Tips, substitutions, notes from source
     val imageUrls: List<String> = emptyList(), // Multiple images/videos from URL
     val sourceUrl: String? = null
 )
@@ -74,6 +75,7 @@ fun ParsedRecipeData.toRecipeParseResult(sourceUrl: String): RecipeParseResult {
         tags = tags,
         cuisine = cuisine,
         notes = null, // Notes should be user-added only, not populated during import
+        sourceTips = sourceTips, // Tips/substitutions from the source
         source = RecipeSource.URL,
         sourceUrl = sourceUrl,
         photoPath = null, // Deprecated - use mediaPaths instead

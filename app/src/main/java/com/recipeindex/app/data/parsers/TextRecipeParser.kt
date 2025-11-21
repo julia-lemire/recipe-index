@@ -85,10 +85,11 @@ object TextRecipeParser {
             val prepTime = extractPrepTime(sections, lines)
             val cookTime = extractCookTime(sections, lines)
             val tags = extractTags(sections, lines)
+            val sourceTips = extractTips(sections, lines)
 
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
-                "Parsed: title='$title', ${ingredients.size} ingredients, ${instructions.size} instructions"
+                "Parsed: title='$title', ${ingredients.size} ingredients, ${instructions.size} instructions, tips=${sourceTips != null}"
             )
 
             val now = System.currentTimeMillis()
@@ -102,6 +103,7 @@ object TextRecipeParser {
                 cookTimeMinutes = cookTime,
                 tags = TagStandardizer.standardize(tags),
                 notes = null,
+                sourceTips = sourceTips,
                 source = source,
                 sourceUrl = sourceIdentifier,
                 photoPath = null,
@@ -176,6 +178,16 @@ object TextRecipeParser {
                  normalized.contains(Regex("\\bcategories\\b")) ||
                  normalized.contains(Regex("\\bcuisine\\b"))) && !sections.containsKey("tags") -> {
                     sections["tags"] = index
+                }
+                // Notes/Tips section
+                (normalized.contains(Regex("^notes?\\s*:?\\s*$")) ||
+                 normalized.contains(Regex("^tips?\\s*:?\\s*$")) ||
+                 normalized.contains(Regex("^recipe\\s*(notes?|tips?)\\s*:?\\s*$")) ||
+                 normalized.contains(Regex("^cooking\\s*tips?\\s*:?\\s*$")) ||
+                 normalized.contains(Regex("^variations?\\s*:?\\s*$")) ||
+                 normalized.contains(Regex("^substitutions?\\s*:?\\s*$"))) && !sections.containsKey("notes") -> {
+                    DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Found notes/tips at line $index: $line")
+                    sections["notes"] = index
                 }
             }
         }
@@ -332,6 +344,42 @@ object TextRecipeParser {
         return cleaned.split(",")
             .map { it.trim() }
             .filter { it.isNotBlank() }
+    }
+
+    /**
+     * Extract tips/notes from the source (website/PDF)
+     * This captures helpful tips, variations, substitutions from the original source
+     */
+    private fun extractTips(sections: Map<String, Int>, lines: List<String>): String? {
+        val notesIndex = sections["notes"] ?: return null
+        val endIndex = findNextSection(notesIndex, sections)
+
+        val tips = lines.subList(notesIndex + 1, endIndex.coerceAtMost(lines.size))
+            .filter { it.isNotBlank() }
+            .filter { !isMarketingNoise(it) } // Filter marketing but keep useful tips
+            .joinToString("\n")
+
+        return tips.ifBlank { null }
+    }
+
+    /**
+     * Check if a line is marketing/CTA noise (NOT useful tips)
+     * This is a stricter filter than isWebsiteNoise - only removes clearly promotional content
+     */
+    private fun isMarketingNoise(line: String): Boolean {
+        val lower = line.lowercase()
+        val marketingPatterns = listOf(
+            // CTAs
+            Regex("\\b(save|shop|get|view|see|click|subscribe|sign\\s*up|log\\s*in|download)\\b.*\\b(recipes?|ingredients?|meals?|plans?|lists?)"),
+            // Rating prompts
+            Regex("\\b(rating|comment|review|feedback)\\b.*\\b(let|know|help|business|thrive)"),
+            Regex("\\bleave\\s+a\\s+(rating|comment|review)"),
+            // Marketing
+            Regex("\\b(free|newsletter|social|follow|share|pin|tweet)\\b"),
+            // Footer/legal
+            Regex("\\b(privacy|policy|terms|conditions|copyright)\\b")
+        )
+        return marketingPatterns.any { it.containsMatchIn(lower) }
     }
 
     /**

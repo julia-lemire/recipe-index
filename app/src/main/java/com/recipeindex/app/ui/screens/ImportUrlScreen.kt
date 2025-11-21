@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
@@ -882,6 +883,52 @@ private fun RecipePreviewContent(
             }
         }
 
+        // Tips & Substitutions (optional section)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Tips & Substitutions",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                    IconButton(onClick = {
+                        editField = EditField.SOURCE_TIPS
+                        showEditDialog = true
+                    }) {
+                        Icon(Icons.Default.Edit, "Edit tips")
+                    }
+                }
+                if (recipe.sourceTips.isNullOrBlank()) {
+                    Text(
+                        text = "(No tips from source - tap edit to add)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Text(
+                        text = recipe.sourceTips,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 4,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+
         // Save button
         Button(
             onClick = {
@@ -928,7 +975,7 @@ private fun RecipePreviewContent(
  * Helper enum for edit dialog
  */
 private enum class EditField {
-    TITLE, METADATA, INGREDIENTS, INSTRUCTIONS
+    TITLE, METADATA, INGREDIENTS, INSTRUCTIONS, SOURCE_TIPS
 }
 
 /**
@@ -952,6 +999,7 @@ private fun EditFieldDialog(
                     EditField.METADATA -> "Edit Servings & Time"
                     EditField.INGREDIENTS -> "Edit Ingredients"
                     EditField.INSTRUCTIONS -> "Edit Instructions"
+                    EditField.SOURCE_TIPS -> "Edit Tips & Substitutions"
                 }
             )
         },
@@ -1035,6 +1083,18 @@ private fun EditFieldDialog(
                             minLines = 6,
                             maxLines = 12,
                             isError = editedRecipe.instructions.isEmpty()
+                        )
+                    }
+                    EditField.SOURCE_TIPS -> {
+                        OutlinedTextField(
+                            value = editedRecipe.sourceTips ?: "",
+                            onValueChange = {
+                                editedRecipe = editedRecipe.copy(sourceTips = it.ifBlank { null })
+                            },
+                            label = { Text("Tips & Substitutions from source") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 4,
+                            maxLines = 10
                         )
                     }
                 }

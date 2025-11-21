@@ -511,6 +511,18 @@ private fun EditRecipeContent(
             )
         }
 
+        // Tips & Substitutions (optional)
+        OutlinedTextField(
+            value = recipe.sourceTips ?: "",
+            onValueChange = {
+                onRecipeChange(recipe.copy(sourceTips = it.ifBlank { null }))
+            },
+            label = { Text("Tips & Substitutions (optional)") },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 2,
+            maxLines = 6
+        )
+
         // Save button
         Button(
             onClick = onSave,
