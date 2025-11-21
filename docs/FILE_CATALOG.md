@@ -89,6 +89,7 @@ com.recipeindex.app/
 │   │   └── SubstitutionManager.kt
 │   │
 │   ├── parsers/
+│   │   ├── HtmlScraper.kt
 │   │   ├── PdfRecipeParser.kt
 │   │   ├── PhotoRecipeParser.kt
 │   │   ├── RecipeParser.kt
@@ -285,7 +286,8 @@ com.recipeindex.app/
 
 ### Data - Parsers
 - **RecipeParser.kt** - Recipe parser interface: parse(source: String): Result<Recipe> for URL/PDF/Photo parsers
-- **SchemaOrgRecipeParser.kt** - Schema.org JSON-LD parser: Three-tier parsing strategy (Schema.org JSON-LD → HTML scraping → Open Graph), Jsoup HTML parsing, Schema.org Recipe extraction from recipeCategory/recipeCuisine (keywords field excluded), detects Article/BlogPosting types with embedded recipe data, HTML scraping fallback with CSS selectors for ingredients/instructions when structured data unavailable, parses HTML category links (rel="category"/"tag"), HowToStep/HowToSection instructions, ISO 8601 duration conversion, Open Graph fallback, recursive nested JSON handling, cuisine extraction from titles, debug logging
+- **SchemaOrgRecipeParser.kt** - Schema.org JSON-LD parser: Three-tier parsing strategy (Schema.org JSON-LD → HTML scraping → Open Graph), delegates to HtmlScraper for fallback, Jsoup HTML parsing, Schema.org Recipe extraction from recipeCategory/recipeCuisine (keywords field excluded), detects Article/BlogPosting types with embedded recipe data, parses HTML category links via HtmlScraper, HowToStep/HowToSection instructions, ISO 8601 duration conversion, Open Graph fallback, recursive nested JSON handling, cuisine extraction from titles, debug logging
+- **HtmlScraper.kt** - HTML scraping helper: Searches for ingredients/instructions using CSS selectors ([class*=ingredient] li, [class*=instruction] li, etc.), parseCategories() for HTML category/tag links (rel="category"/"tag"), only returns data if BOTH ingredients AND instructions found (minimum viable recipe), used as fallback by SchemaOrgRecipeParser
 - **TextRecipeParser.kt** - Smart pattern matching parser: detects ingredients/instructions sections via regex, filters website noise (CTAs/footers), validates ingredient/instruction content, parses time strings ("1h 30min"), extracts servings, cleans bullets/numbering from unstructured text
 - **PdfRecipeParser.kt** - PDF text extraction parser: Uses PdfBox-Android PDFTextStripper to extract all text from PDF files, delegates to TextRecipeParser for recipe parsing
 - **PhotoRecipeParser.kt** - OCR-based parser: Uses ML Kit Text Recognition to extract text from photos/camera, supports multiple photos via parseMultiple(List<Uri>), combines OCR results, delegates to TextRecipeParser
