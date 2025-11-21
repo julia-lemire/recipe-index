@@ -564,8 +564,10 @@ fun RecipeIndexNavigation(
                         "Recipe imported, navigating to recipe list"
                     )
                     importViewModel.reset()
-                    // Pop back to recipe list, clearing import screens from stack
-                    navController.popBackStack(Screen.RecipeIndex.route, inclusive = false)
+                    // Navigate to recipe list, clearing import screens from stack
+                    navController.navigate(Screen.RecipeIndex.route) {
+                        popUpTo(Screen.Home.route) { inclusive = false }
+                    }
                 }
             )
         }
@@ -586,8 +588,10 @@ fun RecipeIndexNavigation(
                         "PDF recipe imported, navigating to recipe list"
                     )
                     pdfImportViewModel.reset()
-                    // Pop back to recipe list, clearing import screens from stack
-                    navController.popBackStack(Screen.RecipeIndex.route, inclusive = false)
+                    // Navigate to recipe list, clearing import screens from stack
+                    navController.navigate(Screen.RecipeIndex.route) {
+                        popUpTo(Screen.Home.route) { inclusive = false }
+                    }
                 }
             )
         }
@@ -608,8 +612,10 @@ fun RecipeIndexNavigation(
                         "Photo recipe imported, navigating to recipe list"
                     )
                     photoImportViewModel.reset()
-                    // Pop back to recipe list, clearing import screens from stack
-                    navController.popBackStack(Screen.RecipeIndex.route, inclusive = false)
+                    // Navigate to recipe list, clearing import screens from stack
+                    navController.navigate(Screen.RecipeIndex.route) {
+                        popUpTo(Screen.Home.route) { inclusive = false }
+                    }
                 }
             )
         }
