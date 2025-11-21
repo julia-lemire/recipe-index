@@ -1,6 +1,8 @@
 package com.recipeindex.app.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -10,16 +12,19 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.input.ImeAction
@@ -216,12 +221,13 @@ fun ImportUrlScreen(
                         .fillMaxSize()
                         .padding(paddingValues),
                     recipe = state.recipe,
+                    imageUrls = state.imageUrls,
                     existingTags = existingTags,
                     onRecipeChange = { viewModel.updateRecipe(it) },
-                    onSave = {
-                        viewModel.saveRecipe(state.recipe)
-                        onSaveComplete()
+                    onSave = { selectedImageUrls ->
+                        viewModel.saveRecipe(state.recipe, selectedImageUrls)
                     },
+                    onSaveComplete = onSaveComplete,
                     errorMessage = state.errorMessage
                 )
             }
@@ -381,14 +387,17 @@ private fun LoadingContent(
 private fun RecipePreviewContent(
     modifier: Modifier = Modifier,
     recipe: Recipe,
+    imageUrls: List<String>,
     existingTags: List<String>,
     onRecipeChange: (Recipe) -> Unit,
-    onSave: () -> Unit,
+    onSave: (List<String>) -> Unit,  // Now accepts selected image URLs
+    onSaveComplete: () -> Unit,
     errorMessage: String?
 ) {
     var tagInput by remember { mutableStateOf("") }
     var showEditDialog by remember { mutableStateOf(false) }
     var editField by remember { mutableStateOf<EditField?>(null) }
+    var selectedImageUrls by remember(imageUrls) { mutableStateOf(imageUrls.take(1).toSet()) }  // Default to first image selected
 
     // Filter existing tags based on user input
     val suggestedTags = remember(tagInput, existingTags, recipe.tags) {
@@ -448,7 +457,88 @@ private fun RecipePreviewContent(
             }
         }
 
-        // Recipe Photo
+        // Media Selection - Show found images for user to select
+        if (imageUrls.isNotEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Recipe Images (${selectedImageUrls.size}/${imageUrls.size} selected)",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "Tap images to select/deselect. Selected images will be downloaded and saved with the recipe.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // Image grid
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        imageUrls.forEach { imageUrl ->
+                            val isSelected = imageUrl in selectedImageUrls
+                            Box(
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clip(MaterialTheme.shapes.small)
+                                    .clickable {
+                                        selectedImageUrls = if (isSelected) {
+                                            selectedImageUrls - imageUrl
+                                        } else {
+                                            selectedImageUrls + imageUrl
+                                        }
+                                    }
+                            ) {
+                                AsyncImage(
+                                    model = imageUrl,
+                                    contentDescription = "Recipe image option",
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+
+                                // Selection overlay
+                                if (isSelected) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            Icons.Default.CheckCircle,
+                                            contentDescription = "Selected",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(Color.Black.copy(alpha = 0.2f))
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Recipe Photo (legacy display - will be replaced by carousel)
         recipe.photoPath?.let { photoUrl ->
             AsyncImage(
                 model = photoUrl,
@@ -793,14 +883,17 @@ private fun RecipePreviewContent(
 
         // Save button
         Button(
-            onClick = onSave,
+            onClick = {
+                onSave(selectedImageUrls.toList())
+                onSaveComplete()
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             enabled = recipe.title.isNotBlank() && recipe.ingredients.isNotEmpty() && recipe.instructions.isNotEmpty()
         ) {
             Text(
-                text = "Save Recipe",
+                text = "Save Recipe" + if (selectedImageUrls.isNotEmpty()) " (${selectedImageUrls.size} images)" else "",
                 style = MaterialTheme.typography.titleMedium
             )
         }

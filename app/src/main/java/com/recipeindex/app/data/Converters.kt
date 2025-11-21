@@ -1,6 +1,7 @@
 package com.recipeindex.app.data
 
 import androidx.room.TypeConverter
+import com.recipeindex.app.data.entities.MediaItem
 import com.recipeindex.app.data.entities.RecipeSource
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -65,6 +66,24 @@ class Converters {
         } else {
             try {
                 json.decodeFromString(ListSerializer(Substitute.serializer()), value)
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+    }
+
+    @TypeConverter
+    fun fromMediaItemList(value: List<MediaItem>): String {
+        return json.encodeToString(value)
+    }
+
+    @TypeConverter
+    fun toMediaItemList(value: String): List<MediaItem> {
+        return if (value.isEmpty()) {
+            emptyList()
+        } else {
+            try {
+                json.decodeFromString(ListSerializer(MediaItem.serializer()), value)
             } catch (e: Exception) {
                 emptyList()
             }

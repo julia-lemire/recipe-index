@@ -23,6 +23,15 @@ interface RecipeParser {
 }
 
 /**
+ * RecipeParseResult - Result of parsing that includes both recipe and extracted media URLs
+ * Used by URL parser to communicate found image/video URLs before downloading
+ */
+data class RecipeParseResult(
+    val recipe: Recipe,
+    val imageUrls: List<String> = emptyList()
+)
+
+/**
  * ParsedRecipeData - Intermediate representation of parsed recipe data
  *
  * Used before converting to full Recipe entity
@@ -38,22 +47,23 @@ data class ParsedRecipeData(
     val tags: List<String> = emptyList(),
     val cuisine: String? = null,
     val description: String? = null,
-    val imageUrl: String? = null,
+    val imageUrls: List<String> = emptyList(), // Multiple images/videos from URL
     val sourceUrl: String? = null
 )
 
 /**
- * Convert ParsedRecipeData to Recipe entity
+ * Convert ParsedRecipeData to RecipeParseResult
+ * Returns both the recipe entity and the list of image URLs for user selection
  */
-fun ParsedRecipeData.toRecipe(sourceUrl: String): Recipe {
+fun ParsedRecipeData.toRecipeParseResult(sourceUrl: String): RecipeParseResult {
     val now = System.currentTimeMillis()
 
     DebugConfig.debugLog(
         DebugConfig.Category.IMPORT,
-        "Creating recipe with photo: ${imageUrl ?: "none"}"
+        "Creating recipe with ${imageUrls.size} image URLs found"
     )
 
-    return Recipe(
+    val recipe = Recipe(
         id = 0,
         title = title ?: "Imported Recipe",
         ingredients = ingredients,
@@ -66,10 +76,16 @@ fun ParsedRecipeData.toRecipe(sourceUrl: String): Recipe {
         notes = null, // Notes should be user-added only, not populated during import
         source = RecipeSource.URL,
         sourceUrl = sourceUrl,
-        photoPath = imageUrl, // Save image URL to photoPath
+        photoPath = null, // Deprecated - use mediaPaths instead
+        mediaPaths = emptyList(), // Will be populated after user selects and downloads images
         isFavorite = false,
         isTemplate = false,
         createdAt = now,
         updatedAt = now
+    )
+
+    return RecipeParseResult(
+        recipe = recipe,
+        imageUrls = imageUrls
     )
 }

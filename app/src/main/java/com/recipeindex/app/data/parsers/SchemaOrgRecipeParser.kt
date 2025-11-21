@@ -196,7 +196,7 @@ class SchemaOrgRecipeParser {
             totalTimeMinutes = parseIsoDuration(json["totalTime"]?.jsonPrimitive?.contentOrNull),
             tags = categories + keywords,  // Note: cuisines NOT included in tags anymore
             cuisine = cuisine,
-            imageUrl = parseImage(json["image"])
+            imageUrls = parseImages(json["image"])
         )
     }
 
@@ -332,33 +332,46 @@ class SchemaOrgRecipeParser {
     }
 
     /**
-     * Parse image - can be string URL or ImageObject
+     * Parse images - can be string URL, ImageObject, or array of either
+     * Returns list of all image URLs found
      */
-    private fun parseImage(element: JsonElement?): String? {
+    private fun parseImages(element: JsonElement?): List<String> {
         DebugConfig.debugLog(
             DebugConfig.Category.IMPORT,
-            "Parsing image, element type: ${element?.javaClass?.simpleName}"
+            "Parsing images, element type: ${element?.javaClass?.simpleName}"
         )
 
-        val imageUrl = when (element) {
-            is JsonPrimitive -> element.contentOrNull
-            is JsonObject -> element["url"]?.jsonPrimitive?.contentOrNull
+        val imageUrls = when (element) {
+            is JsonPrimitive -> {
+                listOfNotNull(element.contentOrNull)
+            }
+            is JsonObject -> {
+                // Single ImageObject - extract url field
+                listOfNotNull(element["url"]?.jsonPrimitive?.contentOrNull)
+            }
             is JsonArray -> {
+                // Array of images - extract all
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
                     "Image is array with ${element.size} items"
                 )
-                element.firstOrNull()?.let { parseImage(it) }
+                element.mapNotNull { item ->
+                    when (item) {
+                        is JsonPrimitive -> item.contentOrNull
+                        is JsonObject -> item["url"]?.jsonPrimitive?.contentOrNull
+                        else -> null
+                    }
+                }
             }
-            else -> null
+            else -> emptyList()
         }
 
         DebugConfig.debugLog(
             DebugConfig.Category.IMPORT,
-            "Extracted image URL: ${imageUrl ?: "none"}"
+            "Extracted ${imageUrls.size} image URLs: ${imageUrls.joinToString(", ")}"
         )
 
-        return imageUrl
+        return imageUrls.filter { it.isNotBlank() }
     }
 
     /**

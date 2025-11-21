@@ -28,7 +28,11 @@ class UrlRecipeParser(
     private val htmlScraper = HtmlScraper()
     private val openGraphParser = OpenGraphParser()
 
-    override suspend fun parse(source: String): Result<Recipe> {
+    /**
+     * Parse recipe from URL with media URLs
+     * Returns RecipeParseResult containing both recipe and list of found image URLs
+     */
+    suspend fun parseWithMedia(source: String): Result<RecipeParseResult> {
         return try {
             // Fetch HTML from URL
             val html = httpClient.get(source).bodyAsText()
@@ -47,7 +51,7 @@ class UrlRecipeParser(
             if (recipeData != null) {
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
-                    "[IMPORT] Found Schema.org JSON-LD data"
+                    "[IMPORT] Found Schema.org JSON-LD data with ${recipeData.imageUrls.size} images"
                 )
             }
 
@@ -56,14 +60,16 @@ class UrlRecipeParser(
             if (htmlScrapedData != null) {
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
-                    "[IMPORT] Found HTML scraped data - supplementing missing fields"
+                    "[IMPORT] Found HTML scraped data with ${htmlScrapedData.imageUrls.size} images - supplementing missing fields"
                 )
                 recipeData = if (recipeData != null) {
                     // Merge: prefer Schema.org data, supplement with HTML scraping
+                    // Combine imageUrls from both sources (deduped)
+                    val combinedImageUrls = (recipeData.imageUrls + htmlScrapedData.imageUrls).distinct()
                     recipeData.copy(
                         title = recipeData.title ?: htmlScrapedData.title,
                         description = recipeData.description ?: htmlScrapedData.description,
-                        imageUrl = recipeData.imageUrl ?: htmlScrapedData.imageUrl,
+                        imageUrls = combinedImageUrls,
                         ingredients = recipeData.ingredients.ifEmpty { htmlScrapedData.ingredients },
                         instructions = recipeData.instructions.ifEmpty { htmlScrapedData.instructions },
                         tags = recipeData.tags.ifEmpty { htmlScrapedData.tags }
@@ -79,14 +85,16 @@ class UrlRecipeParser(
             if (openGraphData != null) {
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
-                    "[IMPORT] Found Open Graph data - supplementing remaining missing metadata"
+                    "[IMPORT] Found Open Graph data with ${openGraphData.imageUrls.size} images - supplementing remaining missing metadata"
                 )
                 recipeData = if (recipeData != null) {
                     // Merge: prefer previous data, supplement with Open Graph
+                    // Add Open Graph images if not already present
+                    val combinedImageUrls = (recipeData.imageUrls + openGraphData.imageUrls).distinct()
                     recipeData.copy(
                         title = recipeData.title ?: openGraphData.title,
                         description = recipeData.description ?: openGraphData.description,
-                        imageUrl = recipeData.imageUrl ?: openGraphData.imageUrl
+                        imageUrls = combinedImageUrls
                     )
                 } else {
                     // No Schema.org or HTML scraping data, use Open Graph as last resort
@@ -94,10 +102,14 @@ class UrlRecipeParser(
                 }
             }
 
-            // Convert merged data to Recipe
+            // Convert merged data to RecipeParseResult
             if (recipeData != null) {
-                val recipe = recipeData.toRecipe(sourceUrl = source)
-                return Result.success(recipe)
+                val result = recipeData.toRecipeParseResult(sourceUrl = source)
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "[IMPORT] Parse complete with ${result.imageUrls.size} total image URLs"
+                )
+                return Result.success(result)
             }
 
             // No data found from any parser
@@ -105,5 +117,10 @@ class UrlRecipeParser(
         } catch (e: Exception) {
             Result.failure(Exception("Failed to parse recipe from URL: ${e.message}", e))
         }
+    }
+
+    override suspend fun parse(source: String): Result<Recipe> {
+        // Call parseWithMedia and extract just the recipe for backward compatibility
+        return parseWithMedia(source).map { it.recipe }
     }
 }
