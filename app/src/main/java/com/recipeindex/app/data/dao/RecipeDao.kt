@@ -22,7 +22,7 @@ interface RecipeDao {
     @Query("SELECT * FROM recipes WHERE isFavorite = 1 ORDER BY updatedAt DESC")
     fun getFavoriteRecipes(): Flow<List<Recipe>>
 
-    @Query("SELECT * FROM recipes WHERE title LIKE '%' || :query || '%' ORDER BY updatedAt DESC")
+    @Query("SELECT * FROM recipes WHERE title LIKE '%' || :query || '%' OR cuisine LIKE '%' || :query || '%' ORDER BY updatedAt DESC")
     fun searchRecipes(query: String): Flow<List<Recipe>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

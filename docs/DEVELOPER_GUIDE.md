@@ -67,9 +67,9 @@
 
 ### Work with Recipes
 - **Manager**: `data/ContentManagers/RecipeManager.kt`
-- **Entity**: `data/entities/Recipe.kt`
-- **DAO**: `data/dao/RecipeDao.kt`
-- **Screens**: `ui/screens/RecipeListScreen.kt`, `ui/screens/RecipeDetailScreen.kt`
+- **Entity**: `data/entities/Recipe.kt` (includes cuisine field for filtering and display)
+- **DAO**: `data/dao/RecipeDao.kt` (searchRecipes() includes cuisine in LIKE query)
+- **Screens**: `ui/screens/RecipeListScreen.kt` (displays cuisine as first tag in cards, shows cuisine in list view info row), `ui/screens/RecipeDetailScreen.kt`, `ui/screens/AddEditRecipeScreen.kt` (cuisine TextField after time fields), `ui/screens/ImportUrlScreen.kt` (cuisine in metadata dialog with Place icon)
 
 ### Work with Meal Plans
 - **Manager**: `data/ContentManagers/MealPlanManager.kt`
@@ -134,7 +134,7 @@
 
 ### Filter, Sort, and Group Lists
 - **Core Library**: `utils/filtersort/core/` (Filter<T>, Sort<T>, GroupBy<T,K>, FilterSortGroupManager)
-- **Recipe Implementations**: `utils/filtersort/recipe/` (RecipeFilters.kt, RecipeSorts.kt, RecipeGroupings.kt)
+- **Recipe Implementations**: `utils/filtersort/recipe/` (RecipeFilters.kt with FavoriteFilter/TagFilter/CuisineFilter/SourceFilter/CookTimeFilter/ServingsFilter/HasPhotoFilter/HasNotesFilter, RecipeSorts.kt, RecipeGroupings.kt)
 - **Meal Plan Implementations**: `utils/filtersort/mealplan/` (MealPlanFilters.kt with ContainsRecipeFilter for finding plans with specific recipes, MealPlanSorts.kt, MealPlanGroupings.kt)
 - **Grocery List Implementations**: `utils/filtersort/grocerylist/` (GroceryListFilters.kt, GroceryListSorts.kt, GroceryListGroupings.kt)
 - **UI Components**: `utils/filtersort/ui/` (FilterChipRow with horizontal scroll and clear all, SortMenu with dropdown and direction toggle)

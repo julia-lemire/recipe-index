@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: Cuisine Field UI Support
+- **Decision**: Added UI support for cuisine field across recipe import, edit, display, filtering, and search functionality
+- **Rationale**: The cuisine field was already in the Recipe model (populated during URL import) but had no UI exposure, preventing users from viewing, editing, or filtering by cuisine, resulting in lost data value
+- **Implementation**: Added cuisine TextField to AddEditRecipeScreen (after time fields) and ImportUrlScreen metadata dialog (with Place icon in preview), displays cuisine as first tag (1/3) in recipe cards using buildList to prioritize cuisine before regular tags, shows cuisine in list view info row after time, created CuisineFilter in RecipeFilters.kt following TagFilter pattern, updated RecipeDao.searchRecipes() query to include "OR cuisine LIKE" clause for search functionality
+
 #### Nov 21, 2025: Cascading Data Supplementation for URL Recipe Import
 - **Decision**: Refactored UrlRecipeParser to use cascading supplementation strategy where each parser tier supplements missing data without overwriting data from previous tiers (Schema.org → HTML scraping → Open Graph)
 - **Rationale**: Previous all-or-nothing approach (Schema.org OR HTML scraping OR Open Graph) meant partial data was lost when one parser failed completely, even when another parser could supplement missing fields (e.g., HTML scraping found 14 ingredients but no instructions → rejected → fell back to Open Graph with no recipe data)

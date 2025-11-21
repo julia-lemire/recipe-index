@@ -504,40 +504,62 @@ private fun RecipePreviewContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    // Servings
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = "${recipe.servings} servings",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-
-                    // Times
-                    val totalTime = (recipe.prepTimeMinutes ?: 0) + (recipe.cookTimeMinutes ?: 0)
-                    if (totalTime > 0) {
+                        // Servings
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                Icons.Default.Schedule,
+                                Icons.Default.Person,
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = "${totalTime}m total",
+                                text = "${recipe.servings} servings",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+                        // Times
+                        val totalTime = (recipe.prepTimeMinutes ?: 0) + (recipe.cookTimeMinutes ?: 0)
+                        if (totalTime > 0) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "${totalTime}m total",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+
+                    // Cuisine
+                    if (!recipe.cuisine.isNullOrBlank()) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Place,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = recipe.cuisine!!,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
@@ -883,6 +905,15 @@ private fun EditFieldDialog(
                                 modifier = Modifier.weight(1f)
                             )
                         }
+                        OutlinedTextField(
+                            value = editedRecipe.cuisine ?: "",
+                            onValueChange = {
+                                editedRecipe = editedRecipe.copy(cuisine = it.ifBlank { null })
+                            },
+                            label = { Text("Cuisine") },
+                            placeholder = { Text("e.g., Italian, Thai, Mexican") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                     EditField.INGREDIENTS -> {
                         OutlinedTextField(
