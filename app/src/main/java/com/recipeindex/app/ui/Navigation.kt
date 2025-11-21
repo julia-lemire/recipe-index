@@ -59,6 +59,13 @@ fun RecipeIndexNavigation(
     ) {
         // Home screen
         composable(Screen.Home.route) {
+            var showListPicker by remember { mutableStateOf(false) }
+            var showMealPlanPicker by remember { mutableStateOf(false) }
+            var selectedRecipeId by remember { mutableStateOf(0L) }
+
+            val groceryLists by groceryListViewModel.groceryLists.collectAsState()
+            val mealPlans by mealPlanViewModel.mealPlans.collectAsState()
+
             HomeScreen(
                 viewModel = homeViewModel,
                 onMenuClick = onMenuClick,
@@ -76,8 +83,71 @@ fun RecipeIndexNavigation(
                 },
                 onNavigateToMealPlanDetail = { planId ->
                     navController.navigate(Screen.EditMealPlan.createRoute(planId))
+                },
+                onToggleFavorite = { recipeId ->
+                    recipeViewModel.toggleFavorite(recipeId)
+                    homeViewModel.refresh()
+                },
+                onDeleteRecipe = { recipeId ->
+                    recipeViewModel.deleteRecipe(recipeId) {
+                        homeViewModel.refresh()
+                    }
+                },
+                onAddToGroceryList = { recipeId ->
+                    selectedRecipeId = recipeId
+                    showListPicker = true
+                },
+                onAddToMealPlan = { recipeId ->
+                    selectedRecipeId = recipeId
+                    showMealPlanPicker = true
+                },
+                onShareRecipe = { recipe ->
+                    com.recipeindex.app.utils.ShareHelper.shareRecipe(
+                        navController.context,
+                        recipe,
+                        recipe.mediaPaths.firstOrNull { it.type == com.recipeindex.app.data.entities.MediaType.IMAGE }?.path
+                            ?: recipe.photoPath
+                    )
                 }
             )
+
+            // Grocery list picker dialog
+            if (showListPicker) {
+                GroceryListPickerDialog(
+                    availableLists = groceryLists,
+                    onDismiss = { showListPicker = false },
+                    onListSelected = { listId ->
+                        groceryListViewModel.addRecipesToList(listId, listOf(selectedRecipeId))
+                        showListPicker = false
+                    },
+                    onCreateNew = { listName ->
+                        groceryListViewModel.createList(listName) { listId ->
+                            groceryListViewModel.addRecipesToList(listId, listOf(selectedRecipeId))
+                        }
+                        showListPicker = false
+                    }
+                )
+            }
+
+            // Meal plan picker dialog
+            if (showMealPlanPicker) {
+                com.recipeindex.app.ui.components.MealPlanPickerDialog(
+                    availablePlans = mealPlans,
+                    onDismiss = { showMealPlanPicker = false },
+                    onPlanSelected = { planId ->
+                        mealPlanViewModel.addRecipeToPlan(planId, selectedRecipeId)
+                        showMealPlanPicker = false
+                    },
+                    onCreateNew = { planName ->
+                        val newPlan = com.recipeindex.app.data.entities.MealPlan(
+                            name = planName,
+                            recipeIds = listOf(selectedRecipeId)
+                        )
+                        mealPlanViewModel.createMealPlan(newPlan)
+                        showMealPlanPicker = false
+                    }
+                )
+            }
         }
 
         // Recipe Index (list)
@@ -285,6 +355,8 @@ fun RecipeIndexNavigation(
                 onCancel = {
                     navController.popBackStack()
                 }
+                // Note: onAddToGroceryList not provided for new meal plans
+                // Menu will not appear until plan is saved and edited
             )
         }
 

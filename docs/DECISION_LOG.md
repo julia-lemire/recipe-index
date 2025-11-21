@@ -46,6 +46,31 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: Recipe Detail Image Carousel with HorizontalPager
+- **Decision**: Replaced single image display in RecipeDetailScreen with HorizontalPager carousel showing all images from mediaPaths, with page indicator dots
+- **Rationale**: Users could only see first imported image even when they selected multiple during import, wasting selected media and providing incomplete recipe context
+- **Implementation**: Added HorizontalPager with rememberPagerState for swipeable image gallery, page indicator dots (CircleShape Box) shown at bottom when 2+ images exist, filters mediaPaths for MediaType.IMAGE, falls back to photoPath for legacy recipes, indicator uses primary color for active page and 30% alpha for inactive
+
+#### Nov 21, 2025: Cook Mode UI Reorganization
+- **Decision**: Moved Select All/Deselect All toggle buttons from Cook Mode card header to individual section headers (Ingredients and Instructions), with intelligent button text based on checked state
+- **Rationale**: Button in Cook Mode card header looked like part of timer section causing confusion, and didn't work because state wasn't being updated
+- **Implementation**: Removed button from Cook Mode title row, added toggle buttons to Ingredients and Instructions section headers (only visible in cook mode), button shows "Select All" when not all items checked or "Deselect All" when all checked, wired onClick to toggle all items using recipe.ingredients.indices.toSet() or instructionSteps.indices.toSet()
+
+#### Nov 21, 2025: MediaPaths UI Adoption Across All Screens
+- **Decision**: Updated all UI screens (RecipeCard, RecipeDetailScreen, MealPlanningScreen, HomeScreen) to display images from new mediaPaths field instead of deprecated photoPath
+- **Rationale**: Images were being saved correctly to mediaPaths during import but UI was still reading from empty photoPath field, causing "images not appearing" bug despite successful storage
+- **Implementation**: Changed all AsyncImage model parameters from recipe.photoPath to recipe.mediaPaths.firstOrNull { it.type == MediaType.IMAGE }?.path with fallback to photoPath for backward compatibility, updated share operations to use first image from mediaPaths
+
+#### Nov 21, 2025: Home Screen Navigation Callback Wiring
+- **Decision**: Wired all RecipeCard action callbacks (delete, favorite, add to grocery/meal plan, share) in HomeScreen by adding callback parameters and implementing them in Navigation.kt with proper ViewModel access
+- **Rationale**: RecipeCard callbacks in home screen carousels were placeholder comments, making all card menu actions non-functional (delete, favorite, etc. did nothing)
+- **Implementation**: Added onToggleFavorite, onDeleteRecipe, onAddToGroceryList, onAddToMealPlan, onShareRecipe parameters to HomeScreen, wired them in Navigation.kt with recipeViewModel.toggleFavorite(), recipeViewModel.deleteRecipe() + homeViewModel.refresh(), grocery/meal plan picker dialogs, ShareHelper.shareRecipe() with first mediaPaths image
+
+#### Nov 21, 2025: Meal Plan Context Menu Visibility Fix
+- **Decision**: Changed AddEditMealPlanScreen to always show overflow menu when onAddToGroceryList callback provided, with "Add to Grocery List" option disabled when no recipes selected
+- **Rationale**: Menu was completely hidden unless plan was existing with recipes (mealPlan != null && selectedRecipeIds.isNotEmpty()), making "Add to Grocery List" feature undiscoverable
+- **Implementation**: Simplified condition from (mealPlan != null && selectedRecipeIds.isNotEmpty() && onAddToGroceryList != null) to just (onAddToGroceryList != null), added enabled = selectedRecipeIds.isNotEmpty() to DropdownMenuItem for proper disabled state when no recipes
+
 #### Nov 21, 2025: Home Screen Redesign with Recipe Highlights
 - **Decision**: Redesigned home screen to be content-focused with recipe carousels (Recent, Favorites) and This Week's Meal Plan section, with Quick Actions at the top
 - **Rationale**: Original home screen was empty placeholder with just navigation links, providing no value or engagement for users returning to the app

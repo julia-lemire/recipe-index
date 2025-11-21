@@ -341,6 +341,29 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ **Image Selection Save Fix**: Fixed selected images not being saved with imported recipes
   - Removed premature `onSaveComplete()` call from Save button that navigated away before image downloads finished
   - Existing state observer properly waits for `UiState.Saved` before navigation
+- ✅ **Image Display Fix**: Fixed imported recipe images not appearing in UI
+  - Updated RecipeCard, RecipeDetailScreen, MealPlanningScreen to use `mediaPaths` instead of deprecated `photoPath`
+  - Images were being saved correctly but UI was looking at wrong field
+  - Added fallback to `photoPath` for backward compatibility with legacy recipes
+
+### UI/UX Bug Fixes
+- ✅ **Home Screen Recipe Actions**: Fixed all recipe card actions not working from home screen
+  - Wired up delete, favorite, add to grocery list, add to meal plan, and share callbacks
+  - Added grocery list and meal plan picker dialogs for home screen
+  - Delete now triggers homeViewModel.refresh() to update carousels
+- ✅ **Recipe Detail Image Carousel**: Added swipeable image gallery to show all imported photos
+  - Replaced single image with HorizontalPager carousel
+  - Page indicator dots appear when 2+ images present
+  - Allows viewing all selected images from import, not just first one
+- ✅ **Cook Mode Select All Button**: Fixed button location and functionality
+  - Removed confusing button from Cook Mode card header (looked like part of timer)
+  - Added intelligent toggle buttons to Ingredients and Instructions section headers
+  - Button shows "Select All" or "Deselect All" based on current state
+  - Actually works now to toggle all items in each section
+- ✅ **Meal Plan Context Menu**: Fixed missing overflow menu in meal plan detail screen
+  - Menu now always visible when onAddToGroceryList callback provided
+  - "Add to Grocery List" option disabled when no recipes selected
+  - Previously hidden unless plan was existing with recipes
 
 ### Meal Planning UX Improvements
 - ✅ **Simplified Date Entry**: Replaced two separate date buttons with single calendar icon button inline with meal plan name field
