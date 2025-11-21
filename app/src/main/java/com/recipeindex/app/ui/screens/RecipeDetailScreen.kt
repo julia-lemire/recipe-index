@@ -771,9 +771,9 @@ fun RecipeDetailScreen(
                     onClick = {
                         // Update recipe notes
                         recipeViewModel.updateRecipe(
-                            recipe.copy(notes = quickNoteText.ifBlank { null })
+                            recipe.copy(notes = quickNoteText.ifBlank { null }),
+                            onSuccess = { showQuickNoteDialog = false }
                         )
-                        showQuickNoteDialog = false
                     }
                 ) {
                     Text("Save")
