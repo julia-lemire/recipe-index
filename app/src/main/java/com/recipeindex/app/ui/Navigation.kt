@@ -46,6 +46,7 @@ fun RecipeIndexNavigation(
     val importViewModel: ImportViewModel = viewModel(factory = viewModelFactory)
     val settingsViewModel: SettingsViewModel = viewModel(factory = viewModelFactory)
     val substitutionViewModel: SubstitutionViewModel = viewModel(factory = viewModelFactory)
+    val homeViewModel: com.recipeindex.app.ui.viewmodels.HomeViewModel = viewModel(factory = viewModelFactory)
 
     // Initialize substitution database with default data on first run
     LaunchedEffect(Unit) {
@@ -58,7 +59,25 @@ fun RecipeIndexNavigation(
     ) {
         // Home screen
         composable(Screen.Home.route) {
-            HomeScreen(onMenuClick = onMenuClick)
+            HomeScreen(
+                viewModel = homeViewModel,
+                onMenuClick = onMenuClick,
+                onNavigateToImport = {
+                    navController.navigate(Screen.ImportSourceSelection.route)
+                },
+                onNavigateToCreate = {
+                    navController.navigate(Screen.AddRecipe.route)
+                },
+                onNavigateToRecipes = {
+                    navController.navigate(Screen.RecipeIndex.route)
+                },
+                onNavigateToRecipeDetail = { recipeId ->
+                    navController.navigate(Screen.RecipeDetail.createRoute(recipeId))
+                },
+                onNavigateToMealPlanDetail = { planId ->
+                    navController.navigate(Screen.EditMealPlan.createRoute(planId))
+                }
+            )
         }
 
         // Recipe Index (list)

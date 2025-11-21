@@ -58,6 +58,9 @@ class ViewModelFactory(
             modelClass.isAssignableFrom(SubstitutionViewModel::class.java) -> {
                 SubstitutionViewModel(substitutionManager) as T
             }
+            modelClass.isAssignableFrom(HomeViewModel::class.java) -> {
+                HomeViewModel(recipeManager, mealPlanManager) as T
+            }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }

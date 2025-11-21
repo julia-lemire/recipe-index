@@ -113,7 +113,13 @@ class ImportViewModel(
      * Update the recipe being edited
      */
     fun updateRecipe(recipe: Recipe) {
-        _uiState.value = UiState.Editing(recipe = recipe)
+        val currentState = _uiState.value
+        if (currentState is UiState.Editing) {
+            // Preserve tagModifications and imageUrls when updating recipe
+            _uiState.value = currentState.copy(recipe = recipe)
+        } else {
+            _uiState.value = UiState.Editing(recipe = recipe)
+        }
     }
 
     /**
@@ -232,7 +238,20 @@ class ImportViewModel(
     fun applyTagModifications(tags: List<String>) {
         val currentState = _uiState.value
         if (currentState is UiState.Editing) {
-            _uiState.value = currentState.copy(recipe = currentState.recipe.copy(tags = tags))
+            _uiState.value = currentState.copy(
+                recipe = currentState.recipe.copy(tags = tags),
+                tagModifications = null // Clear modifications after applying
+            )
+        }
+    }
+
+    /**
+     * Clear tag modifications without applying changes (user dismissed dialog)
+     */
+    fun clearTagModifications() {
+        val currentState = _uiState.value
+        if (currentState is UiState.Editing) {
+            _uiState.value = currentState.copy(tagModifications = null)
         }
     }
 

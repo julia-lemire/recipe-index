@@ -263,7 +263,8 @@ fun ImportUrlScreen(
                         DebugConfig.Category.UI,
                         "[TAG_DIALOG_SHOW] onDismiss called from screen"
                     )
-                    // Keep the standardized tags
+                    // Keep the standardized tags, but clear modifications so dialog doesn't show again
+                    viewModel.clearTagModifications()
                     showTagModificationDialog = false
                 }
             )
