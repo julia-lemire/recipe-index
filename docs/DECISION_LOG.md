@@ -46,15 +46,30 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: Cuisine Field UI Support
+- **Decision**: Added UI support for cuisine field across recipe import, edit, display, filtering, and search functionality
+- **Rationale**: The cuisine field was already in the Recipe model (populated during URL import) but had no UI exposure, preventing users from viewing, editing, or filtering by cuisine, resulting in lost data value
+- **Implementation**: Added cuisine TextField to AddEditRecipeScreen (after time fields) and ImportUrlScreen metadata dialog (with Place icon in preview), displays cuisine as first tag (1/3) in recipe cards using buildList to prioritize cuisine before regular tags, shows cuisine in list view info row after time, created CuisineFilter in RecipeFilters.kt following TagFilter pattern, updated RecipeDao.searchRecipes() query to include "OR cuisine LIKE" clause for search functionality
+
+#### Nov 21, 2025: Cascading Data Supplementation for URL Recipe Import
+- **Decision**: Refactored UrlRecipeParser to use cascading supplementation strategy where each parser tier supplements missing data without overwriting data from previous tiers (Schema.org → HTML scraping → Open Graph)
+- **Rationale**: Previous all-or-nothing approach (Schema.org OR HTML scraping OR Open Graph) meant partial data was lost when one parser failed completely, even when another parser could supplement missing fields (e.g., HTML scraping found 14 ingredients but no instructions → rejected → fell back to Open Graph with no recipe data)
+- **Implementation**: Changed from if/else branching to cascading merge using copy() with elvis operators (title = recipeData.title ?: newData.title) and ifEmpty { } for lists, all three parsers attempt extraction regardless of previous results, data preference order: Schema.org > HTML scraping > Open Graph, enables saving partial recipes (ingredients without instructions) supplemented with metadata from other sources, comprehensive logging at each supplementation step
+
+#### Nov 21, 2025: HTML Scraping Accepts Partial Recipe Data
+- **Decision**: Changed HtmlScraper validation to accept ingredients OR instructions instead of requiring BOTH
+- **Rationale**: Real-world recipe sites may have ingredients in structured lists but instructions in unconventional formats, rejecting partial data meant losing valuable ingredient lists that users could manually supplement
+- **Implementation**: Changed HtmlScraper.scrape() validation from (ingredients.isNotEmpty() && instructions.isNotEmpty()) to (ingredients.isNotEmpty() || instructions.isNotEmpty()), updated logging to clarify "need at least one" instead of "need both", enables cascading supplementation to fill missing fields from other parsers
+
 #### Nov 21, 2025: Controller Pattern for URL Recipe Import
 - **Decision**: Refactored URL import to use controller pattern with UrlRecipeParser orchestrating specialized parsers (SchemaOrgRecipeParser, HtmlScraper, OpenGraphParser) instead of having all logic in SchemaOrgRecipeParser
 - **Rationale**: SchemaOrgRecipeParser was handling multiple responsibilities (HTTP fetching, orchestration, Schema.org parsing, HTML scraping, Open Graph parsing) violating single responsibility principle and making code harder to test and maintain
 - **Implementation**: Created UrlRecipeParser as controller that fetches HTML and delegates to specialized parsers in order, refactored SchemaOrgRecipeParser to pure Schema.org JSON-LD parser with parse(Document) signature removing HTTP client dependency, extracted OpenGraphParser for Open Graph meta tag extraction, moved toRecipe() extension to RecipeParser.kt for reuse, updated MainActivity to use UrlRecipeParser, follows same delegation pattern as PdfRecipeParser→TextRecipeParser
 
 #### Nov 21, 2025: HTML Scraping Fallback for Recipe Import
-- **Decision**: Added HTML scraping fallback layer between Schema.org JSON-LD parsing and Open Graph fallback, using common CSS selector patterns to extract ingredients and instructions from HTML when structured data is unavailable
+- **Decision**: Added HTML scraping fallback layer using common CSS selector patterns to extract ingredients and instructions from HTML when structured data is unavailable
 - **Rationale**: Many recipe sites lack proper Schema.org markup or use Article types without embedded recipe fields, causing imports to fall back to Open Graph (title + image only) and lose all ingredient/instruction data
-- **Implementation**: Created parseHtmlScraping() method in SchemaOrgRecipeParser that searches for ingredient/instruction lists using CSS selectors ([class*=ingredient] li, [id*=instruction] li, etc.), only returns data if BOTH ingredients AND instructions found (minimum viable recipe), integrated into three-tier parsing flow: Schema.org → HTML scraping → Open Graph, comprehensive logging for debugging selector matches
+- **Implementation**: Created HtmlScraper class that searches for ingredient/instruction lists using CSS selectors ([class*=ingredient] li, [id*=instruction] li, etc.), returns ParsedRecipeData if ingredients OR instructions found (saves whatever is available), integrated into cascading supplementation flow: Schema.org → HTML scraping → Open Graph, comprehensive logging for debugging selector matches
 
 #### Nov 21, 2025: Article/BlogPosting Type Detection with Embedded Recipe Data
 - **Decision**: Enhanced isRecipeType() to detect Article/BlogPosting Schema.org types that contain embedded recipe data (recipeIngredient or recipeInstructions fields) and treat them as valid recipes

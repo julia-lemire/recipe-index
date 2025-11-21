@@ -560,14 +560,23 @@ private fun RecipeCard(
                 }
 
                 // Tags with wrapping (using custom FlowRow) - limit to 3 tags
-                if (recipe.tags.isNotEmpty()) {
+                // Show cuisine as first tag if present, then up to 2 regular tags
+                val displayTags = buildList {
+                    recipe.cuisine?.let { add(it) }
+                    val remainingSlots = 3 - size
+                    if (remainingSlots > 0 && recipe.tags.isNotEmpty()) {
+                        addAll(prioritizeAndLimitTags(recipe.tags, maxTags = remainingSlots))
+                    }
+                }
+
+                if (displayTags.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalSpacing = 6.dp,
                         verticalSpacing = 4.dp
                     ) {
-                        prioritizeAndLimitTags(recipe.tags, maxTags = 3).forEach { tag ->
+                        displayTags.forEach { tag ->
                             SuggestionChip(
                                 onClick = { },
                                 label = { Text(tag, style = MaterialTheme.typography.labelSmall) }
@@ -623,7 +632,7 @@ private fun RecipeListItem(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Info row: Servings, Prep, Cook
+                // Info row: Servings, Prep, Cook, Cuisine
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -646,6 +655,18 @@ private fun RecipeListItem(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+                    if (!recipe.cuisine.isNullOrBlank()) {
+                        Text(
+                            text = "•",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = recipe.cuisine!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }

@@ -233,7 +233,9 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Import cuisine extraction: Extracts cuisine from recipe titles (e.g., "Georgian Beef Stew") when Schema.org recipeCuisine field is missing or incorrect, supports 100+ cuisines
 - ✅ Import tag de-duplication: Removes subset tags when general term exists (e.g., keeps "eggplant", removes "japanese eggplant")
 - ✅ Import Article type support: Detects Article/BlogPosting types with embedded recipe data (recipeIngredient/recipeInstructions fields) and treats them as valid recipes for sites that don't use explicit Recipe type
-- ✅ Import HTML scraping fallback: Three-tier parsing strategy (Schema.org JSON-LD → HTML scraping → Open Graph) searches for ingredients/instructions using common CSS selector patterns when structured data is unavailable
+- ✅ Import cascading supplementation: UrlRecipeParser uses cascading data supplementation where each parser (Schema.org → HTML scraping → Open Graph) supplements missing fields without overwriting previous data, enabling maximum data extraction from any combination of sources
+- ✅ Import partial recipe data: HTML scraper accepts ingredients OR instructions (not requiring both), saves partial recipes that users can manually complete, supplemented with metadata from Open Graph
+- ✅ Cuisine field UI: Added cuisine input field to AddEditRecipeScreen and ImportUrlScreen (editable via metadata dialog), displays cuisine with Place icon in import preview, shows cuisine as first tag (1/3) in recipe cards, includes cuisine in list view info row, added CuisineFilter for filtering recipes by cuisine, updated search to include cuisine field
 
 ### Advanced Features (Phase 5)
 - ✅ Portion scaling: Servings dropdown in RecipeDetailScreen (half, original, 2x, 3x, 4x) with automatic ingredient quantity scaling

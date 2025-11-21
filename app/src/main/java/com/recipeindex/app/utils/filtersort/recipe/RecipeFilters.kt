@@ -108,3 +108,17 @@ class HasNotesFilter : Filter<Recipe> {
         return !item.notes.isNullOrBlank()
     }
 }
+
+/**
+ * Filter recipes by cuisine
+ */
+class CuisineFilter(
+    private val cuisine: String
+) : Filter<Recipe> {
+    override val id: String = "cuisine_$cuisine"
+    override val label: String = cuisine.replaceFirstChar { it.uppercase() }
+
+    override fun matches(item: Recipe): Boolean {
+        return item.cuisine?.equals(cuisine, ignoreCase = true) == true
+    }
+}
