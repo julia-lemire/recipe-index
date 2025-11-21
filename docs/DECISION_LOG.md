@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: Controller Pattern for URL Recipe Import
+- **Decision**: Refactored URL import to use controller pattern with UrlRecipeParser orchestrating specialized parsers (SchemaOrgRecipeParser, HtmlScraper, OpenGraphParser) instead of having all logic in SchemaOrgRecipeParser
+- **Rationale**: SchemaOrgRecipeParser was handling multiple responsibilities (HTTP fetching, orchestration, Schema.org parsing, HTML scraping, Open Graph parsing) violating single responsibility principle and making code harder to test and maintain
+- **Implementation**: Created UrlRecipeParser as controller that fetches HTML and delegates to specialized parsers in order, refactored SchemaOrgRecipeParser to pure Schema.org JSON-LD parser with parse(Document) signature removing HTTP client dependency, extracted OpenGraphParser for Open Graph meta tag extraction, moved toRecipe() extension to RecipeParser.kt for reuse, updated MainActivity to use UrlRecipeParser, follows same delegation pattern as PdfRecipeParser→TextRecipeParser
+
 #### Nov 21, 2025: HTML Scraping Fallback for Recipe Import
 - **Decision**: Added HTML scraping fallback layer between Schema.org JSON-LD parsing and Open Graph fallback, using common CSS selector patterns to extract ingredients and instructions from HTML when structured data is unavailable
 - **Rationale**: Many recipe sites lack proper Schema.org markup or use Article types without embedded recipe fields, causing imports to fall back to Open Graph (title + image only) and lose all ingredient/instruction data
