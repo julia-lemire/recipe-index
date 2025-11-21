@@ -94,9 +94,10 @@
 
 ### Import Recipes
 - **Parser Interface**: `data/parsers/RecipeParser.kt`
-- **URL Import**: `data/parsers/SchemaOrgRecipeParser.kt`
+- **URL Import**: `data/parsers/SchemaOrgRecipeParser.kt` (handles nested JSON structures via recursive parseJsonArrayToStrings, extracts from text/name/@value fields)
 - **Import Screens**: `ui/screens/ImportSourceSelectionScreen.kt`, `ui/screens/ImportUrlScreen.kt`
 - **ViewModel**: `ui/viewmodels/ImportViewModel.kt`
+- **Debugging**: Enable [IMPORT] logs in DebugConfig to see JSON-LD parsing progress, field types, and extraction results
 
 ### Share/Import Content
 - **Share Helper**: `utils/ShareHelper.kt` (shareRecipe/shareMealPlan/shareGroceryList, photo encoding/decoding, duplicate detection)
