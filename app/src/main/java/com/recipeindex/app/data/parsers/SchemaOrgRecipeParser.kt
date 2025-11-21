@@ -13,8 +13,10 @@ import org.jsoup.nodes.Document
 /**
  * SchemaOrgRecipeParser - Parses recipes from URLs using Schema.org Recipe JSON-LD
  *
- * Supports recipe websites that use Schema.org Recipe markup (most modern sites)
- * Falls back to Open Graph meta tags if Schema.org not found
+ * Parsing strategy (in order):
+ * 1. Schema.org Recipe JSON-LD (best: structured data with all fields)
+ * 2. HTML scraping (fallback: extracts ingredients/instructions from HTML)
+ * 3. Open Graph meta tags (last resort: only title/description/image)
  */
 class SchemaOrgRecipeParser(
     private val httpClient: HttpClient
@@ -26,8 +28,9 @@ class SchemaOrgRecipeParser(
             val html = httpClient.get(source).bodyAsText()
             val document = Jsoup.parse(html)
 
-            // Try Schema.org JSON-LD first
+            // Try Schema.org JSON-LD first, then HTML scraping, then Open Graph
             val parsedData = parseSchemaOrg(document)
+                ?: parseHtmlScraping(document)
                 ?: parseOpenGraph(document)
                 ?: return Result.failure(Exception("No recipe data found at URL"))
 
@@ -562,6 +565,115 @@ class SchemaOrgRecipeParser(
         return document.select("a[rel*=category], a[rel*=tag]")
             .map { it.text().trim() }
             .filter { it.isNotBlank() }
+    }
+
+    /**
+     * Fallback: Scrape recipe data from HTML when Schema.org JSON-LD not available
+     * Looks for common HTML patterns for ingredients and instructions
+     */
+    private fun parseHtmlScraping(document: Document): ParsedRecipeData? {
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "[IMPORT] Attempting HTML scraping fallback"
+        )
+
+        // Try to find title
+        val title = document.select("h1").first()?.text()
+            ?: document.select("meta[property=og:title]").attr("content")
+
+        // Try to find ingredients - common patterns
+        val ingredients = mutableListOf<String>()
+
+        // Look for lists with ingredient-related class names or IDs
+        val ingredientSelectors = listOf(
+            "[class*=ingredient] li",
+            "[id*=ingredient] li",
+            "[class*=ing] li",
+            "ul[class*=ingredient] li",
+            "ol[class*=ingredient] li",
+            ".ingredients li",
+            "#ingredients li"
+        )
+
+        for (selector in ingredientSelectors) {
+            val items = document.select(selector)
+            if (items.isNotEmpty()) {
+                items.forEach { item ->
+                    val text = item.text().trim()
+                    if (text.isNotBlank() && text.length > 3) {
+                        ingredients.add(text)
+                    }
+                }
+                if (ingredients.isNotEmpty()) {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.IMPORT,
+                        "[IMPORT] Found ${ingredients.size} ingredients using selector: $selector"
+                    )
+                    break  // Found ingredients, stop searching
+                }
+            }
+        }
+
+        // Try to find instructions - common patterns
+        val instructions = mutableListOf<String>()
+
+        // Look for lists with instruction-related class names or IDs
+        val instructionSelectors = listOf(
+            "[class*=instruction] li",
+            "[id*=instruction] li",
+            "[class*=direction] li",
+            "[id*=direction] li",
+            "[class*=step] li",
+            "ol[class*=instruction] li",
+            "ol[class*=direction] li",
+            ".instructions li",
+            "#instructions li",
+            ".directions li",
+            "#directions li"
+        )
+
+        for (selector in instructionSelectors) {
+            val items = document.select(selector)
+            if (items.isNotEmpty()) {
+                items.forEach { item ->
+                    val text = item.text().trim()
+                    if (text.isNotBlank() && text.length > 10) {  // Instructions are usually longer
+                        instructions.add(text)
+                    }
+                }
+                if (instructions.isNotEmpty()) {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.IMPORT,
+                        "[IMPORT] Found ${instructions.size} instructions using selector: $selector"
+                    )
+                    break  // Found instructions, stop searching
+                }
+            }
+        }
+
+        // Only return data if we found both ingredients and instructions
+        return if (ingredients.isNotEmpty() && instructions.isNotEmpty()) {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "[IMPORT] HTML scraping successful: ${ingredients.size} ingredients, ${instructions.size} instructions"
+            )
+
+            // Also try to get categories from HTML
+            val htmlCategories = parseHtmlCategories(document)
+
+            ParsedRecipeData(
+                title = title ?: "Scraped Recipe",
+                ingredients = ingredients,
+                instructions = instructions,
+                tags = htmlCategories
+            )
+        } else {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "[IMPORT] HTML scraping failed: ${ingredients.size} ingredients, ${instructions.size} instructions (need both)"
+            )
+            null
+        }
     }
 
     /**
