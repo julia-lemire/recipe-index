@@ -183,6 +183,19 @@
 - [ ] PDF ingredient quantities are preserved (cleanIngredient only strips "1." not "4 chicken")
 - [ ] PDF title extraction skips date/URL lines (isValidTitle in extractTitle)
 - [ ] Photo OCR import extracts text from image (planned - PhotoRecipeParser delegates to TextRecipeParser)
+- [ ] OCR checkbox noise is cleaned from ingredients ("U 16 oz" → "16 oz", removes leading U/O/☐/□)
+- [ ] OCR "0z" typo is fixed to "oz" (common OCR misrecognition of letter 'o' as zero)
+- [ ] Breadcrumb navigation filtered from title extraction (lines with " > " skipped)
+- [ ] OCR fractions with spaces normalized ("1 /2 cup" → "½ cup")
+- [ ] ServingSize extraction handles OCR fractions ("Serving Size: 1 /2 cup" → "½ cup")
+
+#### Photo Management in Recipe Detail
+- [ ] RecipeDetailScreen shows "Add Photo" placeholder when no photos exist
+- [ ] RecipeDetailScreen shows AddAPhoto overlay button on photo carousel
+- [ ] Camera launcher captures and saves photo to recipe mediaPaths
+- [ ] Gallery launcher selects and saves photo to recipe mediaPaths
+- [ ] savePhotoToStorage() compresses images to max 1920x1920
+- [ ] savePhotoToStorage() saves to media/images/ directory
 
 #### Tag Management
 - [ ] TagStandardizer normalizes tag variations to standard forms (planned - e.g., "italian food"→"italian")

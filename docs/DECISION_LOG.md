@@ -46,6 +46,26 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: Photo Management in Recipe Detail Screen
+- **Decision**: Added inline photo management to RecipeDetailScreen allowing users to add photos via camera or gallery directly from the recipe view
+- **Rationale**: Users need to add photos to recipes after import (capturing completed dish, adding step photos) without navigating to edit screen; missing photos placeholder encourages photo addition
+- **Implementation**: Camera/gallery launchers using ActivityResultContracts, savePhotoToStorage() compresses and saves to media/images/, AlertDialog with camera/gallery options, "Add Photo" placeholder card when no photos, IconButton overlay on photo carousel when photos exist, updates recipe.mediaPaths via recipeViewModel.updateRecipe()
+
+#### Nov 21, 2025: OCR Noise Cleaning for Photo Import
+- **Decision**: Added pre-cleaning of OCR artifacts in TextRecipeParser's looksLikeIngredient() and cleanIngredient() functions to handle common OCR errors
+- **Rationale**: Photo OCR often misreads checkbox icons as "U" or "O" characters and confuses "oz" with "0z" (zero instead of letter), causing valid ingredients like "16 oz radishes" to be filtered out
+- **Implementation**: cleanIngredient() removes leading U/O/☐/□ followed by space, replaces word-boundary "0z" with "oz" and "0unces" with "ounces", looksLikeIngredient() pre-cleans line before pattern matching to ensure "U 16 0z radishes" matches quantity patterns
+
+#### Nov 21, 2025: Breadcrumb Navigation Filtering in Title Extraction
+- **Decision**: Added breadcrumb pattern detection (" > ") to extractTitle()'s isValidTitle() filter in TextRecipeParser
+- **Rationale**: Photo OCR of recipe websites captures breadcrumb navigation (e.g., "Skinnytaste > Recipes > Air Fryer Recipes > Air Fryer Radishes") as first line, incorrectly using it as recipe title instead of the actual title
+- **Implementation**: isValidTitle() now returns false for lines containing " > ", allowing extraction to skip breadcrumb lines and find the actual recipe title
+
+#### Nov 21, 2025: OCR Fraction Handling in Serving Size Extraction
+- **Decision**: Enhanced extractServingSizeFromLine() to handle OCR-style fractions with spaces (e.g., "1 /2") and normalize them to Unicode fractions
+- **Rationale**: OCR often splits fractions with spaces ("1 /2 cup" instead of "½ cup"), causing serving size patterns to fail matching; normalizing improves extraction accuracy
+- **Implementation**: Added "/" to pattern character class, post-processing removes spaces around slashes ("1 /2" → "1/2") then converts ASCII fractions to Unicode (1/2→½, 1/4→¼, 3/4→¾, 1/3→⅓, 2/3→⅔)
+
 #### Nov 21, 2025: Serving Size / Portion Size Field
 - **Decision**: Added servingSize field to Recipe entity for storing portion/serving size information (e.g., "1 ½ cups", "200g") separate from the servings count
 - **Rationale**: Users need to know portion size per serving for dietary tracking and meal planning; extracting from PDF patterns like "Serving Size: 1 ½ cups" preserves valuable nutritional context

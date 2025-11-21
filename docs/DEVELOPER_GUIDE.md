@@ -365,12 +365,13 @@ Dialog logs help diagnose issues with multiple dialogs appearing or edits not be
 **Structure** (TextRecipeParser):
 - Detect section boundaries via regex (Ingredients/Instructions/Notes headers)
 - Filter noise: `isWebsiteNoise()` (CTAs, ratings, marketing), `isPdfPageNoise()` (URLs, page headers)
+- OCR cleaning: Remove checkbox chars (U/O/☐/□), fix 0z→oz, breadcrumb filtering in titles (skip lines with " > ")
 - Join continuation lines: `joinInstructionLines()` for numbered steps, `joinParagraphLines()` for prose
-- Validate content: `looksLikeIngredient()`, `looksLikeInstruction()` with pattern matching
-- Clean content: Remove bullets/numbering but preserve quantities
+- Validate content: `looksLikeIngredient()`, `looksLikeInstruction()` with pattern matching (pre-cleans OCR noise before matching)
+- Clean content: Remove bullets/numbering but preserve quantities, normalize fractions ("1 /2" → "½")
 
-**Key insight**: PDF text extraction splits long lines across multiple rows. Lines not starting with a digit continue the previous instruction. URLs and page headers (`11/18/25, 12:34 PM...`) must be filtered.
+**Key insight**: PDF text extraction splits long lines across multiple rows. Lines not starting with a digit continue the previous instruction. URLs and page headers (`11/18/25, 12:34 PM...`) must be filtered. Photo OCR often misreads checkbox icons as "U" characters and "oz" as "0z".
 
-**Example**: "3 Transfer to pan..." + "everything halfway." → joined as one instruction step. Tips section joins lines into coherent paragraphs.
+**Example**: "3 Transfer to pan..." + "everything halfway." → joined as one instruction step. "U 16 0z radishes" → "16 oz radishes" after OCR cleaning.
 
 ---
