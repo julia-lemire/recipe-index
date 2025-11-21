@@ -534,6 +534,12 @@ class SchemaOrgRecipeParser(
         }
 
         if (hasArticleType) {
+            // Log what fields the Article has
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "[IMPORT] Article/BlogPosting found with fields: ${obj.keys.joinToString(", ")}"
+            )
+
             // Consider it a recipe if it has recipeIngredient or recipeInstructions
             val hasRecipeFields = obj.containsKey("recipeIngredient") || obj.containsKey("recipeInstructions")
             if (hasRecipeFields) {
