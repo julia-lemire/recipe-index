@@ -1,7 +1,7 @@
 # Recipe Index Test Scenarios
 
 > **Purpose**: Test coverage and scenarios to implement for automated testing
-> **Last Updated**: 2025-11-20
+> **Last Updated**: 2025-11-21
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -120,6 +120,10 @@
 - [ ] Parse Article/BlogPosting with embedded recipe data (planned - detect @type: "Article" with recipeIngredient/recipeInstructions)
 - [ ] HTML scraping fallback extracts ingredients (planned - finds ingredients using CSS selectors when Schema.org unavailable)
 - [ ] HTML scraping fallback extracts instructions (planned - finds instructions using CSS selectors when Schema.org unavailable)
+- [ ] Extract multiple image URLs from recipe page (planned - Schema.org + HTML scraping + Open Graph)
+- [ ] ImportUrlScreen displays image selection grid with checkboxes (planned)
+- [ ] ImportUrlScreen saves selected images to mediaPaths (planned)
+- [ ] ImportUrlScreen downloads images before navigation (planned)
 - [ ] HTML scraping fallback requires both ingredients and instructions (planned - returns null if only one found)
 - [x] Fallback to Open Graph when no Schema.org (SchemaOrgRecipeParserTest.kt:parse falls back to Open Graph)
 - [x] Fail when no recipe data found (SchemaOrgRecipeParserTest.kt:parse fails when no recipe data found)
@@ -255,6 +259,9 @@
 - [ ] DateRangePickerDialog allows selecting date range (planned - UI test)
 - [ ] DateRangePickerDialog shows Clear button when dates selected (planned - UI test)
 - [ ] AddEditMealPlanScreen shows selected dates as supporting text (planned - UI test)
+- [ ] AddEditMealPlanScreen overflow menu visible when onAddToGroceryList callback provided (planned)
+- [ ] AddEditMealPlanScreen "Add to Grocery List" menu item disabled when no recipes selected (planned)
+- [ ] AddEditMealPlanScreen "Add to Grocery List" menu item enabled when recipes selected (planned)
 - [ ] Meal plan persists across app restarts (planned - integration test needed)
 - [ ] Adding meal plan to grocery list shows success snackbar (planned - UI test)
 - [ ] Success snackbar includes meal plan name and list name (planned - UI test)
@@ -319,10 +326,33 @@
 - [ ] Cascade delete: deleting GroceryList deletes all GroceryItems (planned)
 
 ### UI Screens
+
+#### HomeScreen
+- [ ] HomeScreen displays Recent Recipes carousel with last 5 recipes by creation date (planned)
+- [ ] HomeScreen displays Favorites carousel with starred recipes (planned)
+- [ ] HomeScreen displays This Week's Meal Plan when date range includes today (planned)
+- [ ] HomeScreen Quick Actions navigate to import, create, and recipe list (planned)
+- [ ] HomeScreen recipe cards support delete, favorite, add to grocery list, add to meal plan (planned)
+- [ ] HomeScreen refreshes carousels after recipe deletion (planned)
+- [ ] HomeScreen shows empty state when no recipes exist (planned)
+
+#### RecipeListScreen
 - [ ] RecipeListScreen displays delete option in card context menu (planned)
 - [ ] RecipeListScreen deletes recipe when delete menu item clicked (planned)
 - [ ] RecipeListScreen shows delete in red with trash icon (planned)
 - [ ] RecipeListScreen FAB navigates to tabbed import screen (planned)
+- [ ] RecipeListScreen displays images from mediaPaths with photoPath fallback (planned)
+- [ ] RecipeListScreen RecipeCard is internal and reusable in HomeScreen (planned)
+
+#### RecipeDetailScreen
+- [ ] RecipeDetailScreen displays swipeable image carousel when multiple images exist (planned)
+- [ ] RecipeDetailScreen shows page indicator dots for 2+ images (planned)
+- [ ] RecipeDetailScreen Cook Mode Select All button toggles all ingredients (planned)
+- [ ] RecipeDetailScreen Cook Mode Select All button toggles all instructions (planned)
+- [ ] RecipeDetailScreen Cook Mode buttons show in section headers, not timer card (planned)
+- [ ] RecipeDetailScreen Cook Mode button text changes based on checked state (planned)
+
+#### ImportSourceSelectionScreen
 - [ ] ImportSourceSelectionScreen displays Import and Create tabs (planned)
 - [ ] ImportSourceSelectionScreen Import tab shows URL/PDF/Photo cards (planned)
 - [ ] ImportSourceSelectionScreen Create tab shows manual entry button (planned)
