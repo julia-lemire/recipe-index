@@ -10,11 +10,11 @@ import org.jsoup.Jsoup
 /**
  * UrlRecipeParser - Controller for parsing recipes from URLs
  *
- * Orchestrates three-tier parsing strategy:
+ * Orchestrates two-tier parsing strategy:
  * 1. Schema.org Recipe JSON-LD (best: structured data with all fields)
- * 2. HTML scraping (fallback: extracts ingredients/instructions from HTML)
- * 3. Open Graph meta tags (last resort: only title/description/image)
+ * 2. HTML scraping (fallback: extracts whatever ingredients/instructions found in HTML)
  *
+ * Note: Open Graph fallback removed - only provides metadata without recipe content.
  * Delegates to specialized parsers for each strategy.
  */
 class UrlRecipeParser(
@@ -33,7 +33,7 @@ class UrlRecipeParser(
 
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
-                "[IMPORT] Starting URL parse with three-tier strategy"
+                "[IMPORT] Starting URL parse with two-tier strategy"
             )
 
             // Try Schema.org JSON-LD first
@@ -58,25 +58,9 @@ class UrlRecipeParser(
                 return Result.success(recipe)
             }
 
-            // Try Open Graph last resort
-            val openGraphData = openGraphParser.parse(document)
-            if (openGraphData != null) {
-                // Validate that we have at least some recipe content
-                if (openGraphData.ingredients.isEmpty() && openGraphData.instructions.isEmpty()) {
-                    DebugConfig.debugLog(
-                        DebugConfig.Category.IMPORT,
-                        "[IMPORT] Open Graph data found but no ingredients or instructions - rejecting"
-                    )
-                    return Result.failure(Exception("No recipe content found at URL (only metadata available)"))
-                }
-
-                DebugConfig.debugLog(
-                    DebugConfig.Category.IMPORT,
-                    "[IMPORT] Using Open Graph data (minimal)"
-                )
-                val recipe = openGraphData.toRecipe(sourceUrl = source)
-                return Result.success(recipe)
-            }
+            // Open Graph is truly a last resort - only provides metadata (title/description/image)
+            // Note: No longer fall back to Open Graph if we have nothing else
+            // Users can manually add ingredients/instructions if they really want to save the recipe
 
             // No data found
             Result.failure(Exception("No recipe data found at URL"))
