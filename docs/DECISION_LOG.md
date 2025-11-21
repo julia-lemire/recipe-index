@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: PDF Multi-Column Recovery for Misplaced Ingredients
+- **Decision**: Added ingredient recovery logic to TextRecipeParser that detects and extracts misplaced ingredients from the instructions section when PDF text extraction produces jumbled column order
+- **Rationale**: PDF text extraction from multi-column layouts (common on recipe websites) often places sidebar UI text between section headers and actual content, causing ingredients to appear after "Instructions" header and be lost
+- **Implementation**: Enhanced isWebsiteNoise() with plural forms (recipes?, ingredients?, lists?) and rating prompts detection, looksLikeIngredient() with Unicode fraction support (½, ¼, etc.) and expanded food list, new recoverMisplacedIngredients() function that separates ingredient-like lines (measurements, parenthetical descriptions like "(from 1 small onion)") from real instructions (cooking verbs, temperatures, "until" phrases) when initial extraction yields 0 ingredients
+
 #### Nov 21, 2025: Unit Conversion Toggle Button Restoration
 - **Decision**: Restored SwapHoriz toggle button in RecipeDetailScreen ingredients section header that was previously removed, allowing users to toggle between showing both units inline or using their settings preference
 - **Rationale**: Users need ability to quickly switch between unit systems while viewing recipes without navigating to settings, especially when cooking with unfamiliar measurements
