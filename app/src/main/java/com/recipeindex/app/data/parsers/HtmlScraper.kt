@@ -109,12 +109,22 @@ class HtmlScraper {
             "[class*=direction] li",
             "[id*=direction] li",
             "[class*=step] li",
+            "[class*=method] li",  // Some sites use "method"
             "ol[class*=instruction] li",
             "ol[class*=direction] li",
             ".instructions li",
             "#instructions li",
             ".directions li",
-            "#directions li"
+            "#directions li",
+            ".method li",
+            "#method li",
+            // Also try paragraphs within instruction containers
+            "[class*=instruction] p",
+            "[class*=direction] p",
+            "[class*=step] p",
+            "[class*=method] p",
+            // Try ordered lists without specific classes (common pattern)
+            "ol li"
         )
 
         for (selector in instructionSelectors) {
@@ -127,6 +137,16 @@ class HtmlScraper {
                     }
                 }
                 if (instructions.isNotEmpty()) {
+                    // For generic "ol li" selector, require at least 3 items to reduce false positives
+                    if (selector == "ol li" && instructions.size < 3) {
+                        DebugConfig.debugLog(
+                            DebugConfig.Category.IMPORT,
+                            "[IMPORT] Found only ${instructions.size} items with generic 'ol li' selector - skipping"
+                        )
+                        instructions.clear()
+                        continue
+                    }
+
                     DebugConfig.debugLog(
                         DebugConfig.Category.IMPORT,
                         "[IMPORT] Found ${instructions.size} instructions using selector: $selector"
