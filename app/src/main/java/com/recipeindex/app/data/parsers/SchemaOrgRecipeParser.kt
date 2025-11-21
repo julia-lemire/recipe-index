@@ -135,7 +135,7 @@ class SchemaOrgRecipeParser(
             "[IMPORT] Recipe JSON-LD fields: ${json.keys.joinToString(", ")}"
         )
 
-        val ingredients = parseJsonArrayToStrings(json["recipeIngredient"])
+        val ingredients = parseJsonArrayToStrings(json["recipeIngredient"], "recipeIngredient")
         DebugConfig.debugLog(
             DebugConfig.Category.IMPORT,
             "[IMPORT] Parsed ${ingredients.size} ingredients from recipeIngredient field"
@@ -147,6 +147,10 @@ class SchemaOrgRecipeParser(
             "[IMPORT] Parsed ${instructions.size} instructions from recipeInstructions field"
         )
 
+        val categories = parseJsonArrayToStrings(json["recipeCategory"], "recipeCategory")
+        val cuisines = parseJsonArrayToStrings(json["recipeCuisine"], "recipeCuisine")
+        val keywords = parseJsonArrayToStrings(json["keywords"], "keywords")
+
         return ParsedRecipeData(
             title = json["name"]?.jsonPrimitive?.contentOrNull,
             description = json["description"]?.jsonPrimitive?.contentOrNull,
@@ -156,8 +160,7 @@ class SchemaOrgRecipeParser(
             prepTimeMinutes = parseIsoDuration(json["prepTime"]?.jsonPrimitive?.contentOrNull),
             cookTimeMinutes = parseIsoDuration(json["cookTime"]?.jsonPrimitive?.contentOrNull),
             totalTimeMinutes = parseIsoDuration(json["totalTime"]?.jsonPrimitive?.contentOrNull),
-            tags = parseJsonArrayToStrings(json["recipeCategory"]) +
-                   parseJsonArrayToStrings(json["recipeCuisine"]),
+            tags = categories + cuisines + keywords,
             imageUrl = parseImage(json["image"])
         )
     }
@@ -326,18 +329,69 @@ class SchemaOrgRecipeParser(
     /**
      * Parse JSON array to list of strings
      * Handles comma-separated strings (e.g., "tag1, tag2, tag3")
+     * Handles nested objects and arrays by extracting text recursively
      */
-    private fun parseJsonArrayToStrings(element: JsonElement?): List<String> {
-        return when (element) {
-            is JsonArray -> element.mapNotNull { it.jsonPrimitive?.contentOrNull }
+    private fun parseJsonArrayToStrings(element: JsonElement?, fieldName: String = "unknown"): List<String> {
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "[IMPORT] Parsing field '$fieldName', type: ${element?.javaClass?.simpleName ?: "null"}"
+        )
+
+        val result = when (element) {
+            is JsonArray -> {
+                DebugConfig.debugLog(
+                    DebugConfig.Category.IMPORT,
+                    "[IMPORT] Field '$fieldName' is array with ${element.size} items"
+                )
+                element.mapNotNull { item ->
+                    when (item) {
+                        is JsonPrimitive -> item.contentOrNull
+                        is JsonObject -> {
+                            // Try to extract text from common Schema.org text fields
+                            val extracted = item["text"]?.jsonPrimitive?.contentOrNull
+                                ?: item["name"]?.jsonPrimitive?.contentOrNull
+                                ?: item["@value"]?.jsonPrimitive?.contentOrNull
+
+                            if (extracted == null) {
+                                DebugConfig.debugLog(
+                                    DebugConfig.Category.IMPORT,
+                                    "[IMPORT] Could not extract text from object in '$fieldName'. Available fields: ${item.keys.joinToString()}"
+                                )
+                            }
+                            extracted
+                        }
+                        is JsonArray -> {
+                            // Recursively parse nested arrays and join with comma
+                            parseJsonArrayToStrings(item, "$fieldName[nested]").joinToString(", ")
+                                .ifBlank { null }
+                        }
+                        else -> null
+                    }
+                }.filter { it.isNotBlank() }
+            }
             is JsonPrimitive -> {
                 // Split comma-separated values and trim whitespace
                 element.content.split(",")
                     .map { it.trim() }
                     .filter { it.isNotBlank() }
             }
+            is JsonObject -> {
+                // Single object - try to extract text field
+                listOfNotNull(
+                    element["text"]?.jsonPrimitive?.contentOrNull
+                        ?: element["name"]?.jsonPrimitive?.contentOrNull
+                        ?: element["@value"]?.jsonPrimitive?.contentOrNull
+                )
+            }
             else -> emptyList()
         }
+
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "[IMPORT] Field '$fieldName' parsed to ${result.size} strings"
+        )
+
+        return result
     }
 
     /**
