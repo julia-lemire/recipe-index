@@ -22,6 +22,9 @@ data class AppSettings(
     /** Liquid volume unit preference (cups, tbsp, tsp, fl oz vs ml, L) */
     val liquidVolumePreference: UnitSystem = UnitSystem.IMPERIAL,
 
+    /** Dry volume unit preference for ingredients like flour, sugar, spices (cups vs grams) */
+    val dryVolumePreference: UnitSystem = UnitSystem.IMPERIAL,
+
     /** Weight unit preference (oz, lbs vs g, kg) */
     val weightPreference: UnitSystem = UnitSystem.IMPERIAL,
 

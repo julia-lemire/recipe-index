@@ -126,6 +126,52 @@ fun SettingsScreen(
 
             Divider()
 
+            // Dry Volume Units Section
+            SettingsSection(title = "Dry Volume Units") {
+                Text(
+                    text = "Choose how dry ingredients are displayed (flour, sugar, spices)",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Dry Volume Radio Buttons
+                UnitSystem.values().forEach { unit ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = settings.dryVolumePreference == unit,
+                            onClick = { viewModel.setDryVolumePreference(unit) }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = when (unit) {
+                                    UnitSystem.IMPERIAL -> "Imperial"
+                                    UnitSystem.METRIC -> "Metric"
+                                    UnitSystem.BOTH -> "Show Both"
+                                },
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Text(
+                                text = when (unit) {
+                                    UnitSystem.IMPERIAL -> "Cups for dry ingredients"
+                                    UnitSystem.METRIC -> "Grams for dry ingredients"
+                                    UnitSystem.BOTH -> "Show both units (e.g., \"1 cup (120g)\")"
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
             // Weight Units Section
             SettingsSection(title = "Weight Units") {
                 Text(

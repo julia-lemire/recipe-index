@@ -42,6 +42,9 @@ class SettingsManager(context: Context) {
             liquidVolumePreference = UnitSystem.valueOf(
                 prefs.getString(KEY_LIQUID_VOLUME_PREFERENCE, UnitSystem.IMPERIAL.name) ?: UnitSystem.IMPERIAL.name
             ),
+            dryVolumePreference = UnitSystem.valueOf(
+                prefs.getString(KEY_DRY_VOLUME_PREFERENCE, UnitSystem.IMPERIAL.name) ?: UnitSystem.IMPERIAL.name
+            ),
             weightPreference = UnitSystem.valueOf(
                 prefs.getString(KEY_WEIGHT_PREFERENCE, UnitSystem.IMPERIAL.name) ?: UnitSystem.IMPERIAL.name
             ),
@@ -97,6 +100,15 @@ class SettingsManager(context: Context) {
     }
 
     /**
+     * Update dry volume unit preference
+     */
+    fun setDryVolumePreference(preference: UnitSystem) {
+        prefs.edit().putString(KEY_DRY_VOLUME_PREFERENCE, preference.name).apply()
+        _settings.value = _settings.value.copy(dryVolumePreference = preference)
+        DebugConfig.debugLog(DebugConfig.Category.SETTINGS, "Dry volume preference changed to: $preference")
+    }
+
+    /**
      * Update weight unit preference
      */
     fun setWeightPreference(preference: UnitSystem) {
@@ -129,6 +141,7 @@ class SettingsManager(context: Context) {
         private const val KEY_SHOW_PHOTOS_IN_LIST = "show_photos_in_list"
         private const val KEY_DEFAULT_SERVINGS = "default_servings"
         private const val KEY_LIQUID_VOLUME_PREFERENCE = "liquid_volume_preference"
+        private const val KEY_DRY_VOLUME_PREFERENCE = "dry_volume_preference"
         private const val KEY_WEIGHT_PREFERENCE = "weight_preference"
         private const val KEY_RECIPE_VIEW_MODE = "recipe_view_mode"
     }

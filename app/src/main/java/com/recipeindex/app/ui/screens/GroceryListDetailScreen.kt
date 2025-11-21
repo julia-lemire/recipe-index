@@ -824,9 +824,27 @@ private fun formatItemName(item: GroceryItem): String {
 }
 
 private fun formatQuantity(quantity: Double): String {
-    return if (quantity % 1.0 == 0.0) {
-        quantity.toInt().toString()
-    } else {
-        String.format("%.2f", quantity).trimEnd('0').trimEnd('.')
+    // For very small quantities (< 0.25), round to nearest 1/4
+    if (quantity < 0.25 && quantity > 0) {
+        return "1/4"
     }
+
+    // For quantities less than 1, try to express as common fractions
+    if (quantity < 1.0) {
+        return when {
+            quantity >= 0.9 -> "1"
+            quantity >= 0.625 -> "3/4"
+            quantity >= 0.4 -> "1/2"
+            quantity >= 0.25 -> "1/3"
+            else -> "1/4"
+        }
+    }
+
+    // For whole numbers
+    if (quantity % 1.0 == 0.0) {
+        return quantity.toInt().toString()
+    }
+
+    // For other decimals, show max 1 decimal place
+    return String.format("%.1f", quantity).trimEnd('0').trimEnd('.')
 }

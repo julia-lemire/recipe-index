@@ -84,8 +84,8 @@ fun RecipeIndexNavigation(
                 onNavigateToMealPlanDetail = { planId ->
                     navController.navigate(Screen.EditMealPlan.createRoute(planId))
                 },
-                onToggleFavorite = { recipeId ->
-                    recipeViewModel.toggleFavorite(recipeId)
+                onToggleFavorite = { recipeId, isFavorite ->
+                    recipeViewModel.toggleFavorite(recipeId, isFavorite)
                     homeViewModel.refresh()
                 },
                 onDeleteRecipe = { recipeId ->

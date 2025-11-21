@@ -28,6 +28,8 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.material3.*
@@ -92,6 +94,13 @@ fun RecipeDetailScreen(
     // Substitution dialog state
     var showSubstitutionDialog by remember { mutableStateOf(false) }
     var selectedIngredientForSub by remember { mutableStateOf<Triple<String, Double?, String>?>(null) } // ingredient, quantity, unit
+
+    // Quick note dialog state (for cook mode)
+    var showQuickNoteDialog by remember { mutableStateOf(false) }
+    var quickNoteText by remember { mutableStateOf(recipe.notes ?: "") }
+
+    // Unit conversion toggle (overrides settings temporarily)
+    var showUnitConversions by remember { mutableStateOf(false) }
 
     // Get user's unit preferences from settings
     val settings by settingsViewModel.settings.collectAsState()
@@ -491,6 +500,20 @@ fun RecipeDetailScreen(
                                 }
                             }
                         }
+
+                        // Quick note button
+                        FilledTonalButton(
+                            onClick = { showQuickNoteDialog = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                Icons.Default.Note,
+                                contentDescription = "Add Quick Note",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Quick Note")
+                        }
                     }
                 }
             }
@@ -517,6 +540,20 @@ fun RecipeDetailScreen(
                                 text = "Scaled for $selectedServings servings",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // Unit conversion toggle
+                        IconButton(
+                            onClick = { showUnitConversions = !showUnitConversions },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = if (showUnitConversions) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
+                            )
+                        ) {
+                            Icon(
+                                Icons.Default.SwapHoriz,
+                                contentDescription = if (showUnitConversions) "Hide unit conversions" else "Show unit conversions",
+                                tint = if (showUnitConversions) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
@@ -588,10 +625,11 @@ fun RecipeDetailScreen(
                         }
 
                         // Format ingredient according to user's granular unit preferences
+                        // When toggle is on, force show both units; otherwise use settings
                         processedIngredient = IngredientUnitConverter.formatIngredient(
                             processedIngredient,
-                            liquidPreference = settings.liquidVolumePreference,
-                            weightPreference = settings.weightPreference
+                            liquidPreference = if (showUnitConversions) com.recipeindex.app.data.UnitSystem.BOTH else settings.liquidVolumePreference,
+                            weightPreference = if (showUnitConversions) com.recipeindex.app.data.UnitSystem.BOTH else settings.weightPreference
                         )
 
                         Text(
@@ -627,8 +665,8 @@ fun RecipeDetailScreen(
                 }
             )
 
-            // Tags
-            if (recipe.tags.isNotEmpty()) {
+            // Tags (hidden in cook mode)
+            if (recipe.tags.isNotEmpty() && !cookModeEnabled) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         text = "Tags",
@@ -708,6 +746,44 @@ fun RecipeDetailScreen(
             unit = selectedIngredientForSub!!.third,
             viewModel = substitutionViewModel,
             onDismiss = { showSubstitutionDialog = false }
+        )
+    }
+
+    // Quick note dialog (cook mode)
+    if (showQuickNoteDialog) {
+        AlertDialog(
+            onDismissRequest = { showQuickNoteDialog = false },
+            title = { Text("Quick Note") },
+            text = {
+                OutlinedTextField(
+                    value = quickNoteText,
+                    onValueChange = { quickNoteText = it },
+                    label = { Text("Notes") },
+                    placeholder = { Text("Add notes about this recipe...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    maxLines = 10
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // Update recipe notes
+                        recipeViewModel.updateRecipe(
+                            recipe.copy(notes = quickNoteText.ifBlank { null })
+                        )
+                        showQuickNoteDialog = false
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showQuickNoteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
         )
     }
 }

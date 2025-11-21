@@ -55,6 +55,13 @@ class SettingsViewModel(
     }
 
     /**
+     * Update dry volume unit preference
+     */
+    fun setDryVolumePreference(preference: UnitSystem) {
+        settingsManager.setDryVolumePreference(preference)
+    }
+
+    /**
      * Update weight unit preference
      */
     fun setWeightPreference(preference: UnitSystem) {
