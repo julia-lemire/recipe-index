@@ -18,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -33,8 +32,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Refresh
@@ -117,10 +114,6 @@ fun RecipeDetailScreen(
     // Unit conversion toggle (overrides settings temporarily)
     var showUnitConversions by remember { mutableStateOf(false) }
 
-    // Photo management state
-    var showPhotoOptionsDialog by remember { mutableStateOf(false) }
-    var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
-
     // Helper function to save a photo to app storage
     fun savePhotoToStorage(uri: Uri): MediaItem? {
         return try {
@@ -162,23 +155,8 @@ fun RecipeDetailScreen(
         }
     }
 
-    // Camera launcher
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success && tempPhotoUri != null) {
-            val mediaItem = savePhotoToStorage(tempPhotoUri!!)
-            if (mediaItem != null) {
-                val updatedRecipe = recipe.copy(
-                    mediaPaths = recipe.mediaPaths + mediaItem
-                )
-                recipeViewModel.updateRecipe(updatedRecipe) {}
-            }
-        }
-    }
-
-    // Gallery launcher
-    val galleryLauncher = rememberLauncherForActivityResult(
+    // File picker launcher for adding photos
+    val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
@@ -462,7 +440,7 @@ fun RecipeDetailScreen(
 
                     // Add photo button (top right)
                     IconButton(
-                        onClick = { showPhotoOptionsDialog = true },
+                        onClick = { photoPickerLauncher.launch("image/*") },
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(8.dp)
@@ -508,7 +486,7 @@ fun RecipeDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(120.dp)
-                        .clickable { showPhotoOptionsDialog = true }
+                        .clickable { photoPickerLauncher.launch("image/*") }
                 ) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -532,56 +510,6 @@ fun RecipeDetailScreen(
                         }
                     }
                 }
-            }
-
-            // Photo options dialog
-            if (showPhotoOptionsDialog) {
-                AlertDialog(
-                    onDismissRequest = { showPhotoOptionsDialog = false },
-                    title = { Text("Add Photo") },
-                    text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(
-                                onClick = {
-                                    showPhotoOptionsDialog = false
-                                    // Create temp file for camera
-                                    val tempDir = File(context.cacheDir, "camera")
-                                    if (!tempDir.exists()) tempDir.mkdirs()
-                                    val tempFile = File.createTempFile("recipe_photo_", ".jpg", tempDir)
-                                    val photoUri = FileProvider.getUriForFile(
-                                        context,
-                                        "${context.packageName}.fileprovider",
-                                        tempFile
-                                    )
-                                    tempPhotoUri = photoUri
-                                    cameraLauncher.launch(photoUri)
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Take Photo")
-                            }
-                            OutlinedButton(
-                                onClick = {
-                                    showPhotoOptionsDialog = false
-                                    galleryLauncher.launch("image/*")
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(Icons.Default.PhotoLibrary, contentDescription = null)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Choose from Gallery")
-                            }
-                        }
-                    },
-                    confirmButton = {},
-                    dismissButton = {
-                        TextButton(onClick = { showPhotoOptionsDialog = false }) {
-                            Text("Cancel")
-                        }
-                    }
-                )
             }
 
             // Cook Mode: Timer and Controls
