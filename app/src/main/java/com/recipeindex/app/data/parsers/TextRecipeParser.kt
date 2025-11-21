@@ -185,16 +185,32 @@ object TextRecipeParser {
 
     /**
      * Extract title - usually first line or line before ingredients
+     * Skips lines that look like dates, timestamps, URLs, or metadata
      */
     private fun extractTitle(sections: Map<String, Int>, lines: List<String>): String {
         val ingredientsIndex = sections["ingredients"]
 
+        // Filter out lines that shouldn't be titles
+        fun isValidTitle(line: String): Boolean {
+            if (line.length < 4) return false
+            val lower = line.lowercase()
+            // Skip date/time patterns like "11/18/25, 12:34 PM"
+            if (Regex("^\\d{1,2}/\\d{1,2}/\\d{2,4}").containsMatchIn(line)) return false
+            // Skip URL-like lines
+            if (Regex("^https?://|www\\.|\\.(com|org|net|io)").containsMatchIn(lower)) return false
+            // Skip lines that are mostly numbers/punctuation
+            if (line.count { it.isLetter() } < line.length / 2) return false
+            return true
+        }
+
         return if (ingredientsIndex != null && ingredientsIndex > 0) {
-            // Title is likely the line before ingredients section
-            lines.take(ingredientsIndex).firstOrNull { it.length > 3 } ?: lines.firstOrNull() ?: "Imported Recipe"
+            // Title is likely before ingredients section - find first valid title
+            lines.take(ingredientsIndex).firstOrNull { isValidTitle(it) }
+                ?: lines.firstOrNull { isValidTitle(it) }
+                ?: "Imported Recipe"
         } else {
-            // Use first non-empty line
-            lines.firstOrNull() ?: "Imported Recipe"
+            // Use first valid line
+            lines.firstOrNull { isValidTitle(it) } ?: "Imported Recipe"
         }
     }
 
@@ -344,7 +360,7 @@ object TextRecipeParser {
     }
 
     /**
-     * Check if a line is website noise (navigation, CTA, footer text)
+     * Check if a line is website noise (navigation, CTA, footer text, notes/tips)
      */
     private fun isWebsiteNoise(line: String): Boolean {
         val lower = line.lowercase()
@@ -369,7 +385,18 @@ object TextRecipeParser {
             Regex("\\b(newsletter|social|follow|share|pin|tweet)\\b"),
             // Footer/legal
             Regex("\\b(privacy|policy|terms|conditions|copyright)\\b"),
-            Regex("^(home|about|contact|blog|search)$", RegexOption.IGNORE_CASE)
+            Regex("^(home|about|contact|blog|search)$", RegexOption.IGNORE_CASE),
+            // Notes, tips, and suggestions (not part of actual recipe steps)
+            Regex("^(notes?|tips?|pro\\s*tips?|suggestions?|recipe\\s*notes?|recipe\\s*tips?|cooking\\s*tips?)\\s*:?\\s*$", RegexOption.IGNORE_CASE),
+            Regex("^(notes?|tips?|pro\\s*tips?|suggestions?|recipe\\s*notes?):", RegexOption.IGNORE_CASE),
+            // Helpful hints / editorial content
+            Regex("^(helpful\\s*hints?|did\\s*you\\s*know|fun\\s*fact):", RegexOption.IGNORE_CASE),
+            // Variation suggestions
+            Regex("^(variations?|substitutions?|alternatives?)\\s*:?\\s*$", RegexOption.IGNORE_CASE),
+            // "You can also..." type suggestions
+            Regex("^you\\s+(can|could|may|might)\\s+(also|substitute|swap|replace|use)", RegexOption.IGNORE_CASE),
+            // Author/source attribution
+            Regex("^(recipe\\s+by|adapted\\s+from|source|originally\\s+from|via)\\s*:", RegexOption.IGNORE_CASE)
         )
 
         return noisyPatterns.any { it.containsMatchIn(lower) }
@@ -420,12 +447,13 @@ object TextRecipeParser {
     }
 
     /**
-     * Clean ingredient line - remove leading bullets, numbers, etc.
+     * Clean ingredient line - remove leading bullets and step numbering
+     * Note: Only removes "1. " style numbering, NOT bare quantities like "4 chicken"
      */
     private fun cleanIngredient(line: String): String {
         return line
             .replace(Regex("^[•\\-*]\\s*"), "") // Remove bullets
-            .replace(Regex("^\\d+\\.?\\s*"), "") // Remove numbering
+            .replace(Regex("^\\d+\\.\\s+"), "") // Remove step numbering (requires period + space)
             .trim()
     }
 
