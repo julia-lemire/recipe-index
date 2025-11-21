@@ -20,7 +20,7 @@ import com.recipeindex.app.data.managers.SettingsManager
 import com.recipeindex.app.data.managers.SubstitutionManager
 import com.recipeindex.app.data.parsers.PdfRecipeParser
 import com.recipeindex.app.data.parsers.PhotoRecipeParser
-import com.recipeindex.app.data.parsers.SchemaOrgRecipeParser
+import com.recipeindex.app.data.parsers.UrlRecipeParser
 import com.recipeindex.app.ui.components.AppNavigationDrawer
 import com.recipeindex.app.ui.theme.HearthTheme
 import com.recipeindex.app.ui.viewmodels.ViewModelFactory
@@ -88,7 +88,7 @@ class MainActivity : ComponentActivity() {
                 level = LogLevel.INFO
             }
         }
-        val urlRecipeParser = SchemaOrgRecipeParser(httpClient)
+        val urlRecipeParser = UrlRecipeParser(httpClient)
 
         // Setup PDF and Photo parsers
         val pdfRecipeParser = PdfRecipeParser(applicationContext)
