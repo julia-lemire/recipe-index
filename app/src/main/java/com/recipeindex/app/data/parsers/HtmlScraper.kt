@@ -8,7 +8,7 @@ import org.jsoup.nodes.Document
  * HtmlScraper - Scrapes recipe data from HTML when Schema.org markup unavailable
  *
  * Fallback scraper that searches for ingredients and instructions using common CSS selector patterns.
- * Only returns data if BOTH ingredients AND instructions are found (minimum viable recipe).
+ * Returns data if ingredients OR instructions are found (saves whatever content is available).
  */
 class HtmlScraper {
 
@@ -32,8 +32,8 @@ class HtmlScraper {
         // Try to find instructions - common patterns
         val instructions = findInstructions(document)
 
-        // Only return data if we found both ingredients and instructions
-        return if (ingredients.isNotEmpty() && instructions.isNotEmpty()) {
+        // Return data if we found ingredients OR instructions (save what we can find)
+        return if (ingredients.isNotEmpty() || instructions.isNotEmpty()) {
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
                 "[IMPORT] HTML scraping successful: ${ingredients.size} ingredients, ${instructions.size} instructions"
@@ -51,7 +51,7 @@ class HtmlScraper {
         } else {
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
-                "[IMPORT] HTML scraping failed: ${ingredients.size} ingredients, ${instructions.size} instructions (need both)"
+                "[IMPORT] HTML scraping failed: ${ingredients.size} ingredients, ${instructions.size} instructions (need at least one)"
             )
             null
         }

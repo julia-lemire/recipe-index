@@ -10,10 +10,13 @@ import org.jsoup.Jsoup
 /**
  * UrlRecipeParser - Controller for parsing recipes from URLs
  *
- * Orchestrates three-tier parsing strategy:
+ * Orchestrates cascading data supplementation strategy:
  * 1. Schema.org Recipe JSON-LD (best: structured data with all fields)
- * 2. HTML scraping (fallback: extracts ingredients/instructions from HTML)
- * 3. Open Graph meta tags (last resort: only title/description/image)
+ * 2. HTML scraping (supplements missing ingredients/instructions)
+ * 3. Open Graph (supplements remaining missing metadata: title/description/image)
+ *
+ * Each step supplements missing data without overwriting data from previous steps.
+ * This ensures maximum data extraction from any combination of available sources.
  *
  * Delegates to specialized parsers for each strategy.
  */
@@ -33,52 +36,71 @@ class UrlRecipeParser(
 
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
-                "[IMPORT] Starting URL parse with three-tier strategy"
+                "[IMPORT] Starting URL parse with cascading supplementation strategy"
             )
 
-            // Try Schema.org JSON-LD first
-            val schemaOrgData = schemaOrgParser.parse(document)
-            if (schemaOrgData != null) {
+            // Try all parsers and cascade data: Schema.org → HTML scraping → Open Graph
+            // Each step supplements missing data without overwriting previous data
+
+            // Step 1: Try Schema.org JSON-LD (best source)
+            var recipeData: ParsedRecipeData? = schemaOrgParser.parse(document)
+            if (recipeData != null) {
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
-                    "[IMPORT] Using Schema.org JSON-LD data"
+                    "[IMPORT] Found Schema.org JSON-LD data"
                 )
-                val recipe = schemaOrgData.toRecipe(sourceUrl = source)
-                return Result.success(recipe)
             }
 
-            // Try HTML scraping fallback
+            // Step 2: Supplement with HTML scraping for missing fields
             val htmlScrapedData = htmlScraper.scrape(document)
             if (htmlScrapedData != null) {
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
-                    "[IMPORT] Using HTML scraped data"
+                    "[IMPORT] Found HTML scraped data - supplementing missing fields"
                 )
-                val recipe = htmlScrapedData.toRecipe(sourceUrl = source)
-                return Result.success(recipe)
+                recipeData = if (recipeData != null) {
+                    // Merge: prefer Schema.org data, supplement with HTML scraping
+                    recipeData.copy(
+                        title = recipeData.title ?: htmlScrapedData.title,
+                        description = recipeData.description ?: htmlScrapedData.description,
+                        imageUrl = recipeData.imageUrl ?: htmlScrapedData.imageUrl,
+                        ingredients = recipeData.ingredients.ifEmpty { htmlScrapedData.ingredients },
+                        instructions = recipeData.instructions.ifEmpty { htmlScrapedData.instructions },
+                        tags = recipeData.tags.ifEmpty { htmlScrapedData.tags }
+                    )
+                } else {
+                    // No Schema.org data, use HTML scraping as base
+                    htmlScrapedData
+                }
             }
 
-            // Try Open Graph last resort
+            // Step 3: Supplement with Open Graph for any remaining missing metadata
             val openGraphData = openGraphParser.parse(document)
             if (openGraphData != null) {
-                // Validate that we have at least some recipe content
-                if (openGraphData.ingredients.isEmpty() && openGraphData.instructions.isEmpty()) {
-                    DebugConfig.debugLog(
-                        DebugConfig.Category.IMPORT,
-                        "[IMPORT] Open Graph data found but no ingredients or instructions - rejecting"
-                    )
-                    return Result.failure(Exception("No recipe content found at URL (only metadata available)"))
-                }
-
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
-                    "[IMPORT] Using Open Graph data (minimal)"
+                    "[IMPORT] Found Open Graph data - supplementing remaining missing metadata"
                 )
-                val recipe = openGraphData.toRecipe(sourceUrl = source)
+                recipeData = if (recipeData != null) {
+                    // Merge: prefer previous data, supplement with Open Graph
+                    recipeData.copy(
+                        title = recipeData.title ?: openGraphData.title,
+                        description = recipeData.description ?: openGraphData.description,
+                        imageUrl = recipeData.imageUrl ?: openGraphData.imageUrl
+                    )
+                } else {
+                    // No Schema.org or HTML scraping data, use Open Graph as last resort
+                    openGraphData
+                }
+            }
+
+            // Convert merged data to Recipe
+            if (recipeData != null) {
+                val recipe = recipeData.toRecipe(sourceUrl = source)
                 return Result.success(recipe)
             }
 
-            // No data found
+            // No data found from any parser
             Result.failure(Exception("No recipe data found at URL"))
         } catch (e: Exception) {
             Result.failure(Exception("Failed to parse recipe from URL: ${e.message}", e))
