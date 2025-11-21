@@ -142,6 +142,7 @@ com.recipeindex.app/
 │   │
 │   ├── viewmodels/
 │   │   ├── GroceryListViewModel.kt
+│   │   ├── HomeViewModel.kt
 │   │   ├── ImportPdfViewModel.kt
 │   │   ├── ImportPhotoViewModel.kt
 │   │   ├── ImportViewModel.kt
@@ -308,7 +309,7 @@ com.recipeindex.app/
 - **Navigation.kt** - All navigation logic: NavHost with routes for Home, RecipeIndex, Search, MealPlanning, GroceryLists, SubstitutionGuide, Settings (drawer), AddRecipe, EditRecipe, RecipeDetail, AddEditSubstitution, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto, uses LaunchedEffect for ViewModel data loading on detail/edit screens (prevents recomposition race conditions), DisposableEffect cleanup for shared ViewModel state, LaunchedEffect initializes substitution database with defaults
 
 ### UI - Screens
-- **HomeScreen.kt** - Landing page: This week's meal plans, recipe suggestions
+- **HomeScreen.kt** - Landing page with recipe highlights: Quick Actions at top (Import, Create, View All buttons), This Week's Meal Plan section (shows dates and recipe count or empty state), Recent Recipes carousel (horizontal LazyRow with last 5 by createdAt), Favorites carousel (horizontal LazyRow with starred recipes up to 5), empty state when no recipes exist, uses HomeViewModel for data, full navigation integration
 - **RecipeListScreen.kt** - Recipe browsing: LazyColumn with RecipeCards (photo, title, servings/times, tags), toggle-able search bar (matching MealPlanningScreen), single FAB goes to tabbed add recipe screen, favorite toggle, delete from card menu, FilterChipRow and SortMenu integrated, empty state, Coil AsyncImage for photos (180dp)
 - **SearchScreen.kt** - Global recipe search: Dedicated search screen accessible from navigation drawer, always-visible search bar at top, displays results as clickable cards with recipe details (title, description, cook time, servings), empty state and loading indicators, navigates to RecipeDetailScreen on card click
 - **AddEditRecipeScreen.kt** - Recipe add/edit form: Single screen with title, servings, times, ingredients, instructions, tags, notes, validation, auto-save on back
@@ -336,11 +337,12 @@ com.recipeindex.app/
 
 ### UI - ViewModels
 - **RecipeViewModel.kt** - Recipe UI state: StateFlow for recipes/currentRecipe/isLoading/error, delegates all business logic to RecipeManager, event functions (loadRecipes, createRecipe, updateRecipe, deleteRecipe, toggleFavorite, searchRecipes)
-- **ImportViewModel.kt** - URL import UI state: StateFlow<UiState> (Input → Loading → Editing(recipe, errorMessage, tagModifications) → Saved), fetchRecipeFromUrl() with tag standardization tracking, applyTagModifications(), getAllExistingTags() for auto-suggestion, updateRecipe(), saveRecipe(), reset()
+- **HomeViewModel.kt** - Home screen UI state: StateFlow<UiState> (Loading → Success(thisWeeksMealPlan, recentRecipes, favoriteRecipes) → Error), loads recent recipes (last 5 by createdAt), favorite recipes (up to 5), current week's meal plan (filtering by date range), refresh() to reload all data
+- **ImportViewModel.kt** - URL import UI state: StateFlow<UiState> (Input → Loading → Editing(recipe, errorMessage, tagModifications, imageUrls) → Saved), fetchRecipeFromUrl() with tag standardization tracking, applyTagModifications(), clearTagModifications(), getAllExistingTags() for auto-suggestion, updateRecipe() preserving state fields, saveRecipe() with media download, reset()
 - **ImportPdfViewModel.kt** - PDF import UI state: StateFlow<UiState> (SelectFile → Loading → Editing → Saved), fetchRecipeFromPdf(Uri), updateRecipe(), saveRecipe(), reset()
 - **ImportPhotoViewModel.kt** - Photo import UI state: StateFlow<UiState> (SelectPhoto → Loading → Editing → Saved), fetchRecipeFromPhoto(Uri), fetchRecipeFromPhotos(List<Uri>), updateRecipe(), saveRecipe(), reset()
 - **SubstitutionViewModel.kt** - Substitution UI state: StateFlow for searchQuery/selectedCategory/selectedDietaryTag/substitutions/categories, reactive filtering using Flow operators (combine, flatMapLatest, map), getSubstitutionByIngredient(), observeSubstitutionById(), createOrUpdateSubstitution(), deleteSubstitution(), calculateConvertedAmount(), formatAmount(), initializeDefaultSubstitutions(), delegates CRUD to SubstitutionManager
-- **ViewModelFactory.kt** - ViewModel dependency injection: Creates RecipeViewModel, MealPlanViewModel, GroceryListViewModel, ImportViewModel, ImportPdfViewModel, ImportPhotoViewModel, SettingsViewModel, SubstitutionViewModel with manager and parser dependencies
+- **ViewModelFactory.kt** - ViewModel dependency injection: Creates RecipeViewModel, HomeViewModel, MealPlanViewModel, GroceryListViewModel, ImportViewModel, ImportPdfViewModel, ImportPhotoViewModel, SettingsViewModel, SubstitutionViewModel with manager and parser dependencies
 
 ### UI - Theme
 - **Color.kt** - Hearth color palette: Terracotta, Clay, SageGreen, Cream neutrals, cooking mode high-contrast colors
