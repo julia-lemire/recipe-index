@@ -363,15 +363,17 @@ Dialog logs help diagnose issues with multiple dialogs appearing or edits not be
 ### Text/PDF Parsing Pattern
 **Use when**: Extracting structured recipe data from unstructured text (PDFs, OCR results)
 **Structure** (TextRecipeParser):
-- Detect section boundaries via regex (Ingredients/Instructions/Notes headers)
-- Filter noise: `isWebsiteNoise()` (CTAs, ratings, marketing), `isPdfPageNoise()` (URLs, page headers)
-- OCR cleaning: Remove checkbox chars (U/O/☐/□), fix 0z→oz, breadcrumb filtering in titles (skip lines with " > ")
+- Detect section boundaries via regex with standalone header matching (`^ingredients?\s*:?\s*$`) and breadcrumb skipping (lines with " > ")
+- Filter noise: `isWebsiteNoise()` (CTAs, ratings, marketing, subscribe/newsletter, "more X recipes"), `isPdfPageNoise()` (URLs, page headers)
+- Title extraction: `isValidTitle()` filters breadcrumbs, CTA patterns (jump to/print/save/share/pin/rate/email), subscribe prompts
+- OCR cleaning: Remove checkbox chars (U/O/☐/□), fix 0z→oz
 - Join continuation lines: `joinInstructionLines()` for numbered steps, `joinParagraphLines()` for prose
 - Validate content: `looksLikeIngredient()`, `looksLikeInstruction()` with pattern matching (pre-cleans OCR noise before matching)
 - Clean content: Remove bullets/numbering but preserve quantities, normalize fractions ("1 /2" → "½")
+- Extract serving size: Patterns for "Serving Size:", "Portion:", "Per Serving:" including unitless fractions
 
-**Key insight**: PDF text extraction splits long lines across multiple rows. Lines not starting with a digit continue the previous instruction. URLs and page headers (`11/18/25, 12:34 PM...`) must be filtered. Photo OCR often misreads checkbox icons as "U" characters and "oz" as "0z".
+**Key insight**: PDF text extraction from webpages includes breadcrumb navigation that can trigger false section detection. Require standalone headers (`^ingredients?$`) not word-boundary matches. Long webpage prints contain CTA/marketing text that pollutes title extraction.
 
-**Example**: "3 Transfer to pan..." + "everything halfway." → joined as one instruction step. "U 16 0z radishes" → "16 oz radishes" after OCR cleaning.
+**Example**: "3 Transfer to pan..." + "everything halfway." → joined as one instruction step. "U 16 0z radishes" → "16 oz radishes" after OCR cleaning. "Skinnytaste > Main Ingredient" correctly skipped as breadcrumb.
 
 ---
