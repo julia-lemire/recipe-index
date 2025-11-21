@@ -17,7 +17,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.data.entities.Recipe
-import com.recipeindex.app.ui.components.RecipeCard
 import com.recipeindex.app.ui.viewmodels.HomeViewModel
 import com.recipeindex.app.utils.DebugConfig
 import java.text.SimpleDateFormat
