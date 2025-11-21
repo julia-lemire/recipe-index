@@ -46,6 +46,21 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 21, 2025: Cuisine Extraction from Recipe Titles
+- **Decision**: Extract cuisine names from recipe titles as fallback when recipeCuisine Schema.org field is missing or incorrect, using comprehensive list of 100+ known cuisines
+- **Rationale**: Recipe websites often set recipeCuisine to their publication location (e.g., "American" for Food & Wine) rather than the actual cuisine origin, causing Georgian/Thai/Italian recipes to be misclassified
+- **Implementation**: Created extractCuisineFromTitle() that checks if title starts with cuisine name ("Georgian Beef Stew") or has cuisine in parentheses ("Beef Stew (Georgian)"), adds extracted cuisine to tags if not already present from recipeCuisine field, logs when cuisine is extracted from title vs Schema.org
+
+#### Nov 21, 2025: Subset Tag Removal
+- **Decision**: Remove multi-word tags when a component word exists as standalone tag (e.g., "japanese eggplant" removed when "eggplant" present) via findSubsets() function
+- **Rationale**: Prevents tag fragmentation where recipes with same ingredient get split across multiple similar tags, reduces clutter in tag lists while maintaining searchability through general terms
+- **Implementation**: Added removeSubsets() applied after distinct() in both standardize() and standardizeWithTracking(), checks each multi-word tag to see if any 3+ character word exists standalone, logs which subsets are removed and why, only removes more specific tag keeping general term
+
+#### Nov 21, 2025: Array Type Handling in Schema.org JSON-LD
+- **Decision**: Handle @type field as either string ("Recipe") or array (["Recipe", "Article"]) in Schema.org JSON-LD detection via isRecipeType() helper
+- **Rationale**: Modern recipe sites use multi-type Schema.org markup for SEO (combining Recipe with Article/BlogPosting), accessing .jsonPrimitive on array caused "is not a JsonPrimitive" crashes before ingredient parsing
+- **Implementation**: Created isRecipeType() that checks JsonPrimitive.content == "Recipe" for strings, uses .any() to check if "Recipe" exists in JsonArray for arrays, replaced direct .jsonPrimitive?.content checks across all three detection paths (single object, array, @graph)
+
 #### Nov 21, 2025: Auto-Upgrade HTTP to HTTPS in URL Import
 - **Decision**: Added automatic URL normalization in ImportViewModel.fetchRecipeFromUrl() that upgrades http:// to https:// and adds https:// prefix when protocol is missing
 - **Rationale**: Android's network security policy blocks cleartext HTTP traffic by default, causing "CLEARTEXT communication not permitted" errors when users paste http:// URLs or forget protocol entirely
