@@ -127,9 +127,9 @@
 - **Text File Import (For Poor Quality Images/Manual Entry)**:
   - `ui/screens/ImportSourceSelectionScreen.kt` (4th card "From Text File" in Import tab)
   - `ui/screens/ImportTextScreen.kt` (file picker → TextRecipeParser → RecipeImportPreview)
-  - `utils/RecipeTemplateHelper.kt` (template with formatting instructions, share via email/cloud)
+  - `utils/RecipeTemplateHelper.kt` (template with explicit section headers like "Title:", "Servings:", etc. and [bracket] placeholders, share via email/cloud)
   - `ui/screens/SettingsScreen.kt` ("Get Recipe Template" button in Import/Export section)
-  - Workflow: Get template from Settings → edit on computer → import via "From Text File"
+  - Workflow: Get template from Settings → replace [brackets] with recipe content → save as .txt → import via "From Text File"
 - **Intent Handling**: `ui/MainActivity.kt` (handleIncomingIntent for ACTION_SEND/ACTION_VIEW, AndroidManifest intent filters)
 - **Share Buttons**: RecipeCard/MealPlanCard context menus, GroceryListCard action row, GroceryListDetailScreen top bar
 

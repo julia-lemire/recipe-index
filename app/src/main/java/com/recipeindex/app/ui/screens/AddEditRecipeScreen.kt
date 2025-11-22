@@ -97,6 +97,7 @@ fun AddEditRecipeScreen(
                     source = recipe?.source ?: RecipeSource.MANUAL,
                     sourceUrl = recipe?.sourceUrl,
                     photoPath = recipe?.photoPath,
+                    mediaPaths = recipe?.mediaPaths ?: emptyList(),
                     isFavorite = recipe?.isFavorite ?: false,
                     isTemplate = recipe?.isTemplate ?: false,
                     createdAt = recipe?.createdAt ?: System.currentTimeMillis(),

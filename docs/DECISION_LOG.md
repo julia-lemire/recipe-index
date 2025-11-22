@@ -46,6 +46,16 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 22, 2025: HomeScreen Quick Actions Simplification
+- **Decision**: Removed Create button from Quick Actions section and changed Import button icon from Add (+) to Download
+- **Rationale**: Download icon better represents import action semantically; Create button was redundant since manual entry is accessible via import flow
+- **Implementation**: HomeScreen.kt QuickActionsSection reduced to Import (Download icon) and View All buttons, EmptyStateSection Import button also uses Download icon for consistency, removed unused onCreateClick parameter
+
+#### Nov 22, 2025: Explicit Title Section in Recipe Template
+- **Decision**: Added explicit "Title:" section header to recipe template and parser, using [bracket] placeholders for all replaceable fields
+- **Rationale**: Original template instructions were confusing about which line becomes the title; explicit section headers remove ambiguity and make template self-documenting
+- **Implementation**: RecipeTemplateHelper.kt template now starts with "Title: [Recipe Title]", TextRecipeParser detectSections() recognizes `^title\s*:` pattern, extractTitle() prioritizes explicit Title: header over heuristic detection, template instructions simplified to 3 lines
+
 #### Nov 22, 2025: Recipe Text Template Import Feature
 - **Decision**: Added text file import option with shareable recipe template for manual recipe entry when OCR/PDF import fails
 - **Rationale**: Users with old recipes in poor image quality cannot rely on OCR; needed a way to draft recipes on a computer in a text editor and import them via the app

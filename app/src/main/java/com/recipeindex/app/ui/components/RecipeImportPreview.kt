@@ -80,6 +80,7 @@ fun RecipeImportPreview(
     Column(
         modifier = modifier
             .padding(16.dp)
+            .imePadding()
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -607,6 +608,9 @@ fun RecipeImportPreview(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+
+        // Extra space at bottom for keyboard/scrolling
+        Spacer(modifier = Modifier.height(100.dp))
     }
 
     // Edit dialog for detailed field editing

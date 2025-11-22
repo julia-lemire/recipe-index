@@ -282,125 +282,134 @@ fun RecipeDetailScreen(
                 }
             }
 
-            // Compact info line (Servings | Prep | Cook | Total)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Servings with dropdown
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Servings", style = MaterialTheme.typography.bodyMedium)
-                    Box {
-                        TextButton(
-                            onClick = { showServingsMenu = true },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                            modifier = Modifier.height(32.dp)
-                        ) {
-                            Text(
-                                "$selectedServings",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
-                        }
-                        DropdownMenu(
-                            expanded = showServingsMenu,
-                            onDismissRequest = { showServingsMenu = false }
-                        ) {
-                            listOf(
-                                recipe.servings / 2,
-                                recipe.servings,
-                                recipe.servings * 2,
-                                recipe.servings * 3,
-                                recipe.servings * 4
-                            ).distinct().filter { it > 0 }.forEach { servings ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            if (servings == recipe.servings) "$servings (original)" else "$servings",
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                    },
-                                    onClick = {
-                                        selectedServings = servings
-                                        showServingsMenu = false
-                                    }
+            // Info rows - Line 1: Servings & Portion, Line 2: Times
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Row 1: Servings & Portion Size
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Servings with dropdown
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Servings", style = MaterialTheme.typography.bodyMedium)
+                        Box {
+                            TextButton(
+                                onClick = { showServingsMenu = true },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Text(
+                                    "$selectedServings",
+                                    style = MaterialTheme.typography.bodyMedium
                                 )
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
+                            }
+                            DropdownMenu(
+                                expanded = showServingsMenu,
+                                onDismissRequest = { showServingsMenu = false }
+                            ) {
+                                listOf(
+                                    recipe.servings / 2,
+                                    recipe.servings,
+                                    recipe.servings * 2,
+                                    recipe.servings * 3,
+                                    recipe.servings * 4
+                                ).distinct().filter { it > 0 }.forEach { servings ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                if (servings == recipe.servings) "$servings (original)" else "$servings",
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        },
+                                        onClick = {
+                                            selectedServings = servings
+                                            showServingsMenu = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
-                }
-
-                recipe.prepTimeMinutes?.let {
-                    Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Prep: ${it}m", style = MaterialTheme.typography.bodyMedium)
-                }
-                recipe.cookTimeMinutes?.let {
-                    Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Cook: ${it}m", style = MaterialTheme.typography.bodyMedium)
-                }
-                recipe.prepTimeMinutes?.let { prep ->
-                    recipe.cookTimeMinutes?.let { cook ->
+                    recipe.servingSize?.let { size ->
                         Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("Total: ${prep + cook}m", style = MaterialTheme.typography.bodyMedium)
+                        Text("Portion: $size", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
-                recipe.servingSize?.let { size ->
-                    Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Portion: $size", style = MaterialTheme.typography.bodyMedium)
+
+                // Row 2: Prep, Cook, Total Time
+                val hasTimeInfo = recipe.prepTimeMinutes != null || recipe.cookTimeMinutes != null
+                if (hasTimeInfo) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        recipe.prepTimeMinutes?.let {
+                            Text("Prep: ${it}m", style = MaterialTheme.typography.bodyMedium)
+                        }
+                        recipe.cookTimeMinutes?.let {
+                            if (recipe.prepTimeMinutes != null) {
+                                Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Text("Cook: ${it}m", style = MaterialTheme.typography.bodyMedium)
+                        }
+                        recipe.prepTimeMinutes?.let { prep ->
+                            recipe.cookTimeMinutes?.let { cook ->
+                                Text("•", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Total: ${prep + cook}m", style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
                 }
             }
 
             // Action buttons row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                OutlinedButton(
+                TextButton(
                     onClick = onAddToGroceryList,
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(24.dp))
                         Text("Grocery", style = MaterialTheme.typography.labelSmall)
                     }
                 }
-                OutlinedButton(
+                TextButton(
                     onClick = onAddToMealPlan,
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(24.dp))
                         Text("Meal Plan", style = MaterialTheme.typography.labelSmall)
                     }
                 }
-                OutlinedButton(
+                TextButton(
                     onClick = {
                         ShareHelper.shareRecipe(context, recipe, recipe.photoPath)
                     },
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(24.dp))
                         Text("Share", style = MaterialTheme.typography.labelSmall)
                     }
                 }
-                OutlinedButton(
+                TextButton(
                     onClick = { onToggleFavorite(!recipe.isFavorite) },
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = if (recipe.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = if (recipe.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                     )
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Icon(
                             if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = null,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                         Text("Favorite", style = MaterialTheme.typography.labelSmall)
                     }
