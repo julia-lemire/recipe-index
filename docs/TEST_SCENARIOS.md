@@ -146,6 +146,9 @@
 - [ ] Ignore keywords field even if present (planned - prevent garbage tags)
 
 #### Text Import (TextRecipeParser)
+- [ ] Detect explicit "Title:" section header (planned - detectSections recognizes `^title\s*:` pattern)
+- [ ] Extract title from explicit "Title:" header when present (planned - extractTitle prioritizes explicit header)
+- [ ] Skip section headers when searching for implicit title (planned - isValidTitle filters Title:, Servings:, etc.)
 - [x] Detect ingredients section (TextRecipeParserTest.kt:detectSections finds ingredients section)
 - [x] Detect instructions with variations (TextRecipeParserTest.kt:detectSections finds instructions with variations)
 - [ ] Extract serving size from "Serving Size: 1 ½ cups" pattern (planned)
@@ -214,8 +217,9 @@
 - [ ] ImportTextScreen uses shared RecipeImportPreview component (planned)
 
 #### Text File Import
-- [ ] RecipeTemplateHelper.RECIPE_TEMPLATE contains valid sample recipe text (planned)
-- [ ] RecipeTemplateHelper.getTemplateWithInstructions() prepends usage instructions (planned)
+- [ ] RecipeTemplateHelper.RECIPE_TEMPLATE uses explicit "Title:" section header (planned)
+- [ ] RecipeTemplateHelper.RECIPE_TEMPLATE uses [bracket] placeholders for all fields (planned)
+- [ ] RecipeTemplateHelper.getTemplateWithInstructions() prepends simplified 3-line usage guide (planned)
 - [ ] RecipeTemplateHelper.shareTemplate() launches Android share sheet (planned - integration test)
 - [ ] ImportTextScreen shows file selection UI in SelectFile state (planned)
 - [ ] ImportTextScreen file picker accepts text/plain files (planned)
@@ -404,10 +408,13 @@
 - [ ] HomeScreen displays Recent Recipes carousel with last 5 recipes by creation date (planned)
 - [ ] HomeScreen displays Favorites carousel with starred recipes (planned)
 - [ ] HomeScreen displays This Week's Meal Plan when date range includes today (planned)
-- [ ] HomeScreen Quick Actions navigate to import, create, and recipe list (planned)
+- [ ] HomeScreen Quick Actions shows Import button with Download icon (planned)
+- [ ] HomeScreen Quick Actions shows View All button (planned)
+- [ ] HomeScreen Quick Actions navigates to import and recipe list (planned)
 - [ ] HomeScreen recipe cards support delete, favorite, add to grocery list, add to meal plan (planned)
 - [ ] HomeScreen refreshes carousels after recipe deletion (planned)
 - [ ] HomeScreen shows empty state when no recipes exist (planned)
+- [ ] HomeScreen empty state Import button uses Download icon (planned)
 
 #### RecipeListScreen
 - [ ] RecipeListScreen displays delete option in card context menu (planned)
