@@ -1,38 +1,40 @@
 package com.recipeindex.app.ui.viewmodels
 
 import android.net.Uri
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.data.managers.RecipeManager
 import com.recipeindex.app.data.parsers.PdfRecipeParser
 import com.recipeindex.app.utils.DebugConfig
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
  * ImportPdfViewModel - Handles PDF recipe import flow
+ *
+ * Extends BaseFileImportViewModel for shared updateRecipe/saveRecipe/showError/reset functionality.
+ * Implements PDF-specific fetchRecipeFromPdf and initial SelectFile state.
  */
 class ImportPdfViewModel(
     private val pdfParser: PdfRecipeParser,
-    private val recipeManager: RecipeManager
-) : ViewModel() {
+    recipeManager: RecipeManager
+) : BaseFileImportViewModel<ImportPdfViewModel.SelectFile>(recipeManager, "PDF") {
 
-    sealed class UiState {
-        data class SelectFile(val errorMessage: String? = null) : UiState()
-        data object Loading : UiState()
-        data class Editing(val recipe: Recipe, val errorMessage: String? = null) : UiState()
-        data object Saved : UiState()
+    /**
+     * Initial state for PDF import - waiting for file selection
+     */
+    data class SelectFile(override val errorMessage: String? = null) : BaseUiState
+
+    override fun createInitialState(): SelectFile = SelectFile()
+
+    override fun setInitialError(message: String) {
+        _uiState.value = SelectFile(errorMessage = message)
     }
 
-    private val _uiState = MutableStateFlow<UiState>(UiState.SelectFile())
-    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
-
+    /**
+     * Fetch recipe from PDF file
+     */
     fun fetchRecipeFromPdf(uri: Uri) {
         viewModelScope.launch {
-            _uiState.value = UiState.Loading
+            setLoading()
 
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
@@ -46,74 +48,14 @@ class ImportPdfViewModel(
                     DebugConfig.Category.IMPORT,
                     "Successfully parsed PDF recipe: ${recipe.title}"
                 )
-                _uiState.value = UiState.Editing(recipe)
+                setEditing(recipe)
             }.onFailure { error ->
                 DebugConfig.debugLog(
                     DebugConfig.Category.IMPORT,
                     "Failed to parse PDF: ${error.message}"
                 )
-                _uiState.value = UiState.SelectFile(errorMessage = "Failed to parse PDF: ${error.message}")
+                setInitialError("Failed to parse PDF: ${error.message}")
             }
         }
-    }
-
-    fun updateRecipe(recipe: Recipe) {
-        val currentState = _uiState.value
-        if (currentState is UiState.Editing) {
-            _uiState.value = currentState.copy(recipe = recipe, errorMessage = null)
-        }
-    }
-
-    fun saveRecipe(recipe: Recipe) {
-        viewModelScope.launch {
-            DebugConfig.debugLog(
-                DebugConfig.Category.IMPORT,
-                "Saving imported PDF recipe: ${recipe.title}"
-            )
-
-            val result = if (recipe.id == 0L) {
-                recipeManager.createRecipe(recipe)
-            } else {
-                recipeManager.updateRecipe(recipe)
-            }
-
-            result.onSuccess {
-                DebugConfig.debugLog(
-                    DebugConfig.Category.IMPORT,
-                    "Successfully saved PDF recipe: ${recipe.title}"
-                )
-                _uiState.value = UiState.Saved
-            }.onFailure { error ->
-                DebugConfig.debugLog(
-                    DebugConfig.Category.IMPORT,
-                    "Failed to save PDF recipe: ${error.message}"
-                )
-                val currentState = _uiState.value
-                if (currentState is UiState.Editing) {
-                    _uiState.value = currentState.copy(
-                        errorMessage = "Failed to save recipe: ${error.message}"
-                    )
-                }
-            }
-        }
-    }
-
-    fun showError(message: String) {
-        val currentState = _uiState.value
-        when (currentState) {
-            is UiState.SelectFile -> {
-                _uiState.value = currentState.copy(errorMessage = message)
-            }
-            is UiState.Editing -> {
-                _uiState.value = currentState.copy(errorMessage = message)
-            }
-            else -> {
-                DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Error: $message")
-            }
-        }
-    }
-
-    fun reset() {
-        _uiState.value = UiState.SelectFile()
     }
 }

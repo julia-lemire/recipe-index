@@ -5,6 +5,8 @@ import com.recipeindex.app.data.dao.MealPlanDao
 import com.recipeindex.app.data.dao.RecipeDao
 import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.resultOf
+import com.recipeindex.app.utils.resultOfValidated
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -61,95 +63,65 @@ class MealPlanManager(
     /**
      * Create new meal plan with validation and auto-tagging
      */
-    suspend fun createMealPlan(mealPlan: MealPlan): Result<Long> {
-        return try {
-            validateMealPlan(mealPlan)
+    suspend fun createMealPlan(mealPlan: MealPlan): Result<Long> = resultOfValidated(
+        successLog = "createMealPlan: ${mealPlan.name}",
+        errorLog = "createMealPlan failed",
+        validate = { validateMealPlan(mealPlan) }
+    ) {
+        // Auto-aggregate tags from recipes
+        val aggregatedTags = aggregateTagsFromRecipes(mealPlan.recipeIds)
+        val eventTags = detectSpecialEventFromName(mealPlan.name)
+        val allTags = (aggregatedTags + eventTags).distinct()
 
-            // Auto-aggregate tags from recipes
-            val aggregatedTags = aggregateTagsFromRecipes(mealPlan.recipeIds)
-
-            // Auto-detect special event from name
-            val eventTags = detectSpecialEventFromName(mealPlan.name)
-
-            // Combine all tags
-            val allTags = (aggregatedTags + eventTags).distinct()
-
-            val updatedPlan = mealPlan.copy(
-                tags = allTags,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
-            )
-
-            val planId = mealPlanDao.insert(updatedPlan)
-            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "createMealPlan: $planId with ${allTags.size} tags")
-            Result.success(planId)
-        } catch (e: Exception) {
-            DebugConfig.error(DebugConfig.Category.MANAGER, "createMealPlan failed", e)
-            Result.failure(e)
-        }
+        val updatedPlan = mealPlan.copy(
+            tags = allTags,
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis()
+        )
+        mealPlanDao.insert(updatedPlan)
     }
 
     /**
      * Update existing meal plan with auto-tagging
      */
-    suspend fun updateMealPlan(mealPlan: MealPlan): Result<Unit> {
-        return try {
-            validateMealPlan(mealPlan)
+    suspend fun updateMealPlan(mealPlan: MealPlan): Result<Unit> = resultOfValidated(
+        successLog = "updateMealPlan: ${mealPlan.id}",
+        errorLog = "updateMealPlan failed",
+        validate = { validateMealPlan(mealPlan) }
+    ) {
+        // Auto-aggregate tags from recipes
+        val aggregatedTags = aggregateTagsFromRecipes(mealPlan.recipeIds)
+        val eventTags = detectSpecialEventFromName(mealPlan.name)
+        val allTags = (aggregatedTags + eventTags).distinct()
 
-            // Auto-aggregate tags from recipes
-            val aggregatedTags = aggregateTagsFromRecipes(mealPlan.recipeIds)
-
-            // Auto-detect special event from name
-            val eventTags = detectSpecialEventFromName(mealPlan.name)
-
-            // Combine all tags
-            val allTags = (aggregatedTags + eventTags).distinct()
-
-            val updatedPlan = mealPlan.copy(
-                tags = allTags,
-                updatedAt = System.currentTimeMillis()
-            )
-
-            mealPlanDao.update(updatedPlan)
-            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "updateMealPlan: ${mealPlan.id}")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            DebugConfig.error(DebugConfig.Category.MANAGER, "updateMealPlan failed", e)
-            Result.failure(e)
-        }
+        val updatedPlan = mealPlan.copy(
+            tags = allTags,
+            updatedAt = System.currentTimeMillis()
+        )
+        mealPlanDao.update(updatedPlan)
     }
 
     /**
      * Delete meal plan
      */
-    suspend fun deleteMealPlan(mealPlan: MealPlan): Result<Unit> {
-        return try {
-            mealPlanDao.delete(mealPlan)
-            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "deleteMealPlan: ${mealPlan.id}")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            DebugConfig.error(DebugConfig.Category.MANAGER, "deleteMealPlan failed", e)
-            Result.failure(e)
-        }
+    suspend fun deleteMealPlan(mealPlan: MealPlan): Result<Unit> = resultOf(
+        successLog = "deleteMealPlan: ${mealPlan.id}",
+        errorLog = "deleteMealPlan failed"
+    ) {
+        mealPlanDao.delete(mealPlan)
     }
 
     /**
      * Duplicate meal plan with new name
      */
     suspend fun duplicateMealPlan(mealPlan: MealPlan, newName: String): Result<Long> {
-        return try {
-            val duplicatedPlan = mealPlan.copy(
-                id = 0, // Auto-generate new ID
-                name = newName,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
-            )
-
-            createMealPlan(duplicatedPlan)
-        } catch (e: Exception) {
-            DebugConfig.error(DebugConfig.Category.MANAGER, "duplicateMealPlan failed", e)
-            Result.failure(e)
-        }
+        val duplicatedPlan = mealPlan.copy(
+            id = 0, // Auto-generate new ID
+            name = newName,
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis()
+        )
+        return createMealPlan(duplicatedPlan)
     }
 
     /**
