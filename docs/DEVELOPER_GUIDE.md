@@ -113,8 +113,9 @@
 - **Open Graph Parser**: `data/parsers/OpenGraphParser.kt`
   - Supplements missing metadata (title/description/image) from og: meta tags
   - Used to fill gaps when Schema.org or HTML scraping miss certain fields
-- **Import Screens**: `ui/screens/ImportSourceSelectionScreen.kt`, `ui/screens/ImportUrlScreen.kt`
-- **ViewModel**: `ui/viewmodels/ImportViewModel.kt` (auto-normalizes URLs: http:// → https://, adds https:// when missing)
+- **Import Screens**: `ui/screens/ImportSourceSelectionScreen.kt`, `ui/screens/ImportUrlScreen.kt`, `ui/screens/ImportPdfScreen.kt`, `ui/screens/ImportPhotoScreen.kt`, `ui/screens/ImportTextScreen.kt`
+- **ViewModels**: `ui/viewmodels/ImportViewModel.kt` (URL), `ui/viewmodels/ImportPdfViewModel.kt`, `ui/viewmodels/ImportPhotoViewModel.kt`, `ui/viewmodels/ImportTextViewModel.kt`
+- **Recipe Template**: `utils/RecipeTemplateHelper.kt` (shareable text template for manual recipe entry, used with ImportTextScreen)
 - **Tag Processing**: `utils/TagStandardizer.kt` (removes subset tags, standardizes variations, filters junk)
 - **Debugging**: Enable [IMPORT] logs in DebugConfig to see cascading supplementation attempts, JSON-LD parsing progress, HTML scraping results, Open Graph supplementation, field types, extraction results, URL normalization, and tag value logging
 
@@ -123,12 +124,12 @@
 - **Models**: `utils/ShareModels.kt` (SharePackage, ImportResult, DuplicateAction)
 - **Import Manager**: `data/managers/ImportManager.kt` (importFromJson with duplicate detection, importRecipeWithAction, importMealPlanFromJson, importGroceryListFromJson)
 - **Import Dialogs**: `ui/components/ImportDialog.kt` (RecipeDuplicateDialog, MealPlanImportDialog, GroceryListImportDialog)
-- **Manual Import (Multiple Entry Points)**:
-  - `ui/screens/ImportSourceSelectionScreen.kt` (4th card "From File" in Import tab - primary location)
-  - `ui/screens/MealPlanningScreen.kt` (FileUpload icon button in TopAppBar)
-  - `ui/screens/GroceryListScreen.kt` (FileUpload icon button in TopAppBar)
-  - `ui/screens/SettingsScreen.kt` (backup catch-all location)
-  - All use OpenDocument contract, store JSON in MainActivity.pendingImportJson, show snackbar feedback
+- **Text File Import (For Poor Quality Images/Manual Entry)**:
+  - `ui/screens/ImportSourceSelectionScreen.kt` (4th card "From Text File" in Import tab)
+  - `ui/screens/ImportTextScreen.kt` (file picker → TextRecipeParser → RecipeImportPreview)
+  - `utils/RecipeTemplateHelper.kt` (template with formatting instructions, share via email/cloud)
+  - `ui/screens/SettingsScreen.kt` ("Get Recipe Template" button in Import/Export section)
+  - Workflow: Get template from Settings → edit on computer → import via "From Text File"
 - **Intent Handling**: `ui/MainActivity.kt` (handleIncomingIntent for ACTION_SEND/ACTION_VIEW, AndroidManifest intent filters)
 - **Share Buttons**: RecipeCard/MealPlanCard context menus, GroceryListCard action row, GroceryListDetailScreen top bar
 

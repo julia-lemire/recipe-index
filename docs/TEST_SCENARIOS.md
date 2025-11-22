@@ -211,6 +211,26 @@
 - [ ] ImportUrlScreen Save button passes selectedImageUrls to saveRecipe (planned)
 - [ ] ImportPdfScreen uses shared RecipeImportPreview component (planned)
 - [ ] ImportPhotoScreen uses shared RecipeImportPreview component (planned)
+- [ ] ImportTextScreen uses shared RecipeImportPreview component (planned)
+
+#### Text File Import
+- [ ] RecipeTemplateHelper.RECIPE_TEMPLATE contains valid sample recipe text (planned)
+- [ ] RecipeTemplateHelper.getTemplateWithInstructions() prepends usage instructions (planned)
+- [ ] RecipeTemplateHelper.shareTemplate() launches Android share sheet (planned - integration test)
+- [ ] ImportTextScreen shows file selection UI in SelectFile state (planned)
+- [ ] ImportTextScreen file picker accepts text/plain files (planned)
+- [ ] ImportTextScreen transitions to Loading state during parsing (planned)
+- [ ] ImportTextScreen transitions to Editing state with parsed recipe (planned)
+- [ ] ImportTextScreen displays RecipeImportPreview with parsed recipe (planned)
+- [ ] ImportTextScreen auto-saves on back navigation when recipe valid (planned)
+- [ ] ImportTextScreen shows error when file read fails (planned)
+- [ ] ImportTextScreen shows error when parsing fails (planned)
+- [ ] ImportTextScreen navigates to RecipeIndex after save (planned)
+- [ ] ImportTextViewModel.parseTextContent() uses TextRecipeParser directly (planned)
+- [ ] ImportTextViewModel.parseTextContent() sets source to MANUAL (planned)
+- [ ] SettingsScreen "Get Recipe Template" button calls shareTemplate() (planned - UI test)
+- [ ] ImportSourceSelectionScreen shows "From Text File" card (planned - UI test)
+- [ ] ImportSourceSelectionScreen navigates to ImportTextScreen on Text File click (planned)
 
 #### Photo Management in Recipe Detail
 - [ ] RecipeDetailScreen shows "Add Photo" placeholder when no photos exist
@@ -224,6 +244,7 @@
 - [ ] ImportUrlScreen navigates to RecipeIndex after save from RecipeList entry point
 - [ ] ImportPdfScreen navigates to RecipeIndex after save from Home entry point
 - [ ] ImportPhotoScreen navigates to RecipeIndex after save from Home entry point
+- [ ] ImportTextScreen navigates to RecipeIndex after save from Home entry point
 - [ ] Navigation uses popUpTo(Home) to clear import screens from back stack
 
 #### Tag Management
@@ -416,10 +437,11 @@
 
 #### ImportSourceSelectionScreen
 - [ ] ImportSourceSelectionScreen displays Import and Create tabs (planned)
-- [ ] ImportSourceSelectionScreen Import tab shows URL/PDF/Photo cards (planned)
+- [ ] ImportSourceSelectionScreen Import tab shows URL/PDF/Photo/Text File cards (planned)
 - [ ] ImportSourceSelectionScreen Create tab shows manual entry button (planned)
 - [ ] ImportSourceSelectionScreen navigates to correct import screen (planned)
 - [ ] ImportSourceSelectionScreen navigates to manual entry screen (planned)
+- [ ] ImportSourceSelectionScreen navigates to ImportTextScreen on Text File click (planned)
 
 #### GroceryListDetailScreen
 - [ ] GroceryListDetailScreen formats quantities < 0.25 as "1/4" (planned)
