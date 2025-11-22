@@ -9,11 +9,47 @@ Analyzed Kotlin codebase with 23,621 total lines across 51 files. Identified mul
 
 ---
 
-## CRITICAL FINDINGS (3+ Occurrences)
+## COMPLETED REFACTORING (Nov 22, 2025)
 
-### 1. REPETITIVE IMPORT SCREEN VALIDATION LOGIC
-**Files Affected:** 3 files, ~100+ duplicated lines of identical code
-- `/home/user/recipe-index/app/src/main/java/com/recipeindex/app/ui/screens/ImportUrlScreen.kt` (410 lines)
+### 1. ResultUtils.kt - Manager Try-Catch Boilerplate ✅
+**Created:** `app/src/main/java/com/recipeindex/app/utils/ResultUtils.kt`
+- `resultOf()` for suspend operations with optional logging
+- `resultOfValidated()` for operations with validation
+- `resultOfSync()` for non-suspend operations
+
+**Updated Managers:**
+- RecipeManager: 8 methods simplified
+- MealPlanManager: 4 methods simplified
+- GroceryListManager: 12 methods simplified
+
+### 2. BaseFileImportViewModel - Shared ViewModel Base ✅
+**Created:** `app/src/main/java/com/recipeindex/app/ui/viewmodels/BaseFileImportViewModel.kt`
+- Shared states: LoadingState, EditingState, SavedState
+- Shared methods: updateRecipe(), saveRecipe(), showError(), reset()
+
+**Refactored ViewModels:**
+- ImportPdfViewModel: 119 → 61 lines
+- ImportPhotoViewModel: 150 → 92 lines
+
+### 3. RecipeValidation.kt - Centralized Validation ✅
+**Created:** `app/src/main/java/com/recipeindex/app/utils/RecipeValidation.kt`
+- `isValid()` for button enablement
+- `getValidationError()` for UI error messages
+- `validateOrThrow()` for manager operations
+
+**Updated Consumers:**
+- RecipeManager, RecipeImportPreview, all 3 Import screens
+
+**Net reduction:** ~300+ lines of duplicate code removed
+
+---
+
+## REMAINING FINDINGS (Not Yet Addressed)
+
+### 1. ~~REPETITIVE IMPORT SCREEN VALIDATION LOGIC~~ ✅ COMPLETED
+_Consolidated into RecipeValidation.kt - see Completed section above_
+
+### 2. Large Files to Modularize
 - `/home/user/recipe-index/app/src/main/java/com/recipeindex/app/ui/screens/ImportPhotoScreen.kt` (476 lines)
 - `/home/user/recipe-index/app/src/main/java/com/recipeindex/app/ui/screens/ImportPdfScreen.kt` (335 lines)
 
