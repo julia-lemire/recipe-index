@@ -1,7 +1,7 @@
 # Recipe Index Decision Log
 
 > **Purpose**: Architectural decision records (WHAT/WHY/WHEN decisions were made)
-> **Last Updated**: 2025-11-21
+> **Last Updated**: 2025-11-22
 
 **See Also:**
 - [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) - Quick lookup ("I need to...") and architecture patterns (HOW to implement)
@@ -45,6 +45,16 @@
 
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
+
+#### Nov 22, 2025: Shared RecipeImportPreview Component
+- **Decision**: Created shared RecipeImportPreview component in ui/components/ used by all three import screens (URL, PDF, Photo) for consistent WYSIWYG preview experience
+- **Rationale**: Each import screen had duplicate preview code (~300 lines each) with inconsistent behavior; URL screen had image selection, PDF/Photo screens didn't; bug where pre-selected images weren't being saved required fixing in multiple places
+- **Implementation**: RecipeImportPreview.kt provides WYSIWYG preview cards for all fields, per-field edit dialogs, image selection grid with checkmark overlays, inline tag editing with auto-suggestions; all import screens now delegate to this shared component with ~800 lines of duplicate code removed
+
+#### Nov 22, 2025: Image Selection State Lifted to Screen Level
+- **Decision**: Moved selectedImageUrls state from child composable (RecipePreviewContent) to parent screen level (ImportUrlScreen) and added LaunchedEffect for auto-initialization with first image
+- **Rationale**: handleBack() couldn't access selectedImageUrls when it was inside the child composable, causing pre-selected first image to not be saved (0 images saved on back navigation even though UI showed 1 selected)
+- **Implementation**: ImportUrlScreen declares selectedImageUrls at screen level, LaunchedEffect(uiState) initializes with first image when entering Editing state, both handleBack() and Save button pass selectedImageUrls.toList() to viewModel.saveRecipe()
 
 #### Nov 21, 2025: Import Navigation Fix for Home Screen Entry Point
 - **Decision**: Changed all import screen navigation from `popBackStack(RecipeIndex)` to `navigate(RecipeIndex) { popUpTo(Home) }` when saving imported recipes

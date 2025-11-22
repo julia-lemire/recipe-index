@@ -1,7 +1,7 @@
 # Recipe Index File Catalog
 
 > **Purpose**: Complete file tree, system relationships, and component descriptions
-> **Last Updated**: 2025-11-21
+> **Last Updated**: 2025-11-22
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -114,6 +114,7 @@ com.recipeindex.app/
 │   │   ├── GroceryListPickerDialog.kt
 │   │   ├── ImportDialog.kt
 │   │   ├── MealPlanPickerDialog.kt
+│   │   ├── RecipeImportPreview.kt
 │   │   ├── SubstitutionDialog.kt
 │   │   └── TagModificationDialog.kt
 │   │
@@ -315,9 +316,9 @@ com.recipeindex.app/
 - **AddEditRecipeScreen.kt** - Recipe add/edit form: Single screen with title, servings, times, ingredients, instructions, tags, notes, validation, auto-save on back
 - **RecipeDetailScreen.kt** - Recipe detail view: Swipeable image carousel with HorizontalPager (240dp) showing all images from mediaPaths with page indicator dots when 2+ images and AddAPhoto overlay button for adding photos, simplified photo management via file picker (ActivityResultContracts.GetContent), savePhotoToStorage() compression, "Add Photo" placeholder card when no photos, text labels (Servings, Prep:, Cook:, Total:, Portion:) replacing emoji icons, servings dropdown with auto-scaling, unit conversion toggle (SwapHoriz icon) in ingredients header for switching between both units or settings preference, cook mode (checkable ingredients/instructions with Select All/Deselect All buttons in section headers, timer, keep awake, Quick Note button for adding notes without leaving cook mode, tags hidden for focus), long-press ingredient for substitution lookup, tabbed instruction sections, favorite/edit/delete actions, Coil AsyncImage
 - **ImportSourceSelectionScreen.kt** - Import/create source selection: Tabbed interface with Import tab (URL/PDF/Photo/File cards) and Create tab (manual entry button), unified entry point for all recipe creation methods, File card launches OpenDocument file picker storing JSON in MainActivity.pendingImportJson with success feedback
-- **ImportUrlScreen.kt** - URL import flow: URL input → loading → RecipePreviewContent (WYSIWYG preview) → save, auto-save on back navigation, inline tag editing with auto-suggestions, per-field edit dialogs (title/metadata/ingredients/instructions), shows first 5 ingredients and first 3 instruction steps in preview, TagModificationDialog for reviewing standardization changes, Coil AsyncImage
-- **ImportPdfScreen.kt** - PDF import flow: File picker (ActivityResultContracts.GetContent) → loading → recipe preview/edit → save, auto-save on back navigation
-- **ImportPhotoScreen.kt** - Photo import flow: Camera/gallery pickers (GetMultipleContents for multiple photos) → photo preview grid → loading → recipe preview/edit with servingSize field → save, auto-save on back navigation
+- **ImportUrlScreen.kt** - URL import flow: URL input → loading → RecipeImportPreview (shared WYSIWYG component) → save, selectedImageUrls state lifted to screen level for handleBack() access, LaunchedEffect auto-selects first image on entering Editing state, TagModificationDialog for reviewing standardization changes, auto-save on back navigation
+- **ImportPdfScreen.kt** - PDF import flow: File picker (ActivityResultContracts.GetContent) → loading → RecipeImportPreview (shared component) → save, auto-save on back navigation, uses shared component for consistent preview experience
+- **ImportPhotoScreen.kt** - Photo import flow: Camera/gallery pickers (GetMultipleContents for multiple photos) → photo preview grid → loading → RecipeImportPreview (shared component) → save, auto-save on back navigation, uses shared component for consistent preview experience
 - **MealPlanningScreen.kt** - Meal planning list: Card-based list with search, duplicate/delete dialogs, shows all recipes and tags, enhanced recipe cards with servings/time/tags, action buttons (Edit, Generate List) inline with date range, full-screen recipe picker grid, auto-naming from dates, snackbar feedback for grocery list operations, FileUpload icon button in TopAppBar for file import with snackbar feedback
 - **AddEditMealPlanScreen.kt** - Meal plan add/edit form: Name field with inline calendar icon button, optional date range selection with Material3 DateRangePicker (supports single date or range with clear button), tabbed recipe picker (defaults to Existing tab with 2-column grid and search, Import tab with URL/PDF/Photo options), notes field, auto-save on back navigation, auto-naming from selected dates, overflow menu with "Add to Grocery List" always visible when callback provided (disabled when no recipes selected)
 - **GroceryListScreen.kt** - Grocery lists: Card-based list with progress indicators (checked/total), create/delete dialogs, search, FileUpload icon button in TopAppBar for file import with snackbar feedback
@@ -332,8 +333,9 @@ com.recipeindex.app/
 - **GroceryListPickerDialog.kt** - Reusable grocery list picker dialog: Select existing list or create new, used by RecipeListScreen/RecipeDetailScreen/MealPlanningScreen for "Add to Grocery List" actions
 - **ImportDialog.kt** - Import dialogs for share/import system: RecipeDuplicateDialog (Replace/Keep Both/Skip actions with side-by-side preview), MealPlanImportDialog (per-recipe duplicate selection with mutable state), GroceryListImportDialog (simple confirmation with item count), used by MainActivity intent handling and Settings import
 - **MealPlanPickerDialog.kt** - Reusable meal plan picker dialog: Select existing plan or create new, used by RecipeListScreen/RecipeDetailScreen for "Add to Meal Plan" actions from calendar icon
+- **RecipeImportPreview.kt** - Shared WYSIWYG recipe preview component: Used by all import screens (URL, PDF, Photo) for consistent preview experience, provides card-based preview for all recipe fields (title, metadata, ingredients, instructions, tags), per-field edit dialogs, image selection grid with checkmark overlays, inline tag editing with auto-suggestions from existing tags, isRecipeValid() helper function for save button enablement
 - **SubstitutionDialog.kt** - Ingredient substitution lookup dialog: Shows substitutes for ingredient from recipe (triggered by long-press), displays converted amounts based on quantity/unit from parsed ingredient string, substitutes ordered by suitability, shows dietary tags
-- **TagModificationDialog.kt** - Tag standardization review dialog: Shows original→standardized tag transformations during recipe import, allows users to edit/remove each tag before accepting with minus icon button, visual feedback for deleted tags (red background, strikethrough), restore button to undo deletions, prevents silent modifications (e.g., "vegan bowls"→"vegan"), used by ImportUrlScreen/ImportPdfScreen/ImportPhotoScreen
+- **TagModificationDialog.kt** - Tag standardization review dialog: Shows original→standardized tag transformations during recipe import, allows users to edit/remove each tag before accepting with minus icon button, visual feedback for deleted tags (red background, strikethrough), restore button to undo deletions, prevents silent modifications (e.g., "vegan bowls"→"vegan"), used by ImportUrlScreen
 
 ### UI - ViewModels
 - **RecipeViewModel.kt** - Recipe UI state: StateFlow for recipes/currentRecipe/isLoading/error, delegates all business logic to RecipeManager, event functions (loadRecipes, createRecipe, updateRecipe, deleteRecipe, toggleFavorite, searchRecipes)
