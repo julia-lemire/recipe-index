@@ -142,6 +142,9 @@ class SchemaOrgRecipeParser {
         val schemaOrgCuisines = parseJsonArrayToStrings(json["recipeCuisine"], "recipeCuisine")
         val keywords = parseJsonArrayToStrings(json["keywords"], "keywords")
 
+        // Extract serving size from nutrition field
+        val servingSize = parseServingSize(json["nutrition"])
+
         // Determine cuisine: prefer Schema.org, fallback to title extraction
         val titleCuisine = extractCuisineFromTitle(title)
         val cuisine = when {
@@ -191,6 +194,7 @@ class SchemaOrgRecipeParser {
             ingredients = ingredients,
             instructions = instructions,
             servings = parseServings(json["recipeYield"]),
+            servingSize = servingSize,
             prepTimeMinutes = parseIsoDuration(json["prepTime"]?.jsonPrimitive?.contentOrNull),
             cookTimeMinutes = parseIsoDuration(json["cookTime"]?.jsonPrimitive?.contentOrNull),
             totalTimeMinutes = parseIsoDuration(json["totalTime"]?.jsonPrimitive?.contentOrNull),
@@ -314,6 +318,24 @@ class SchemaOrgRecipeParser {
             }
             else -> null
         }
+    }
+
+    /**
+     * Parse serving size from nutrition field
+     * Schema.org NutritionInformation has servingSize field
+     * Example: "nutrition": { "@type": "NutritionInformation", "servingSize": "1 cup" }
+     */
+    private fun parseServingSize(nutrition: JsonElement?): String? {
+        if (nutrition !is JsonObject) return null
+
+        val servingSize = nutrition["servingSize"]?.jsonPrimitive?.contentOrNull
+        if (!servingSize.isNullOrBlank()) {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "[IMPORT] Found serving size from nutrition: $servingSize"
+            )
+        }
+        return servingSize?.takeIf { it.isNotBlank() }
     }
 
     /**
