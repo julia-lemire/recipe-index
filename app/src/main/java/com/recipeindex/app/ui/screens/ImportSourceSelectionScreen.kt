@@ -1,7 +1,5 @@
 package com.recipeindex.app.ui.screens
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -17,11 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.recipeindex.app.ui.MainActivity
-import com.recipeindex.app.utils.DebugConfig
-import kotlinx.coroutines.launch
 
 /**
  * Import Source Selection Screen - Choose how to import a recipe or create one manually
@@ -82,37 +76,6 @@ fun ImportSourceSelectionScreen(
  */
 @Composable
 private fun ImportTabContent(onSourceSelected: (ImportSource) -> Unit) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var importResult by remember { mutableStateOf<String?>(null) }
-
-    // File picker for import
-    val filePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        uri?.let {
-            scope.launch {
-                try {
-                    val json = context.contentResolver.openInputStream(it)
-                        ?.bufferedReader()
-                        ?.use { reader -> reader.readText() }
-
-                    if (json != null) {
-                        // Store in MainActivity for import dialog handling
-                        MainActivity.pendingImportJson = json
-                        importResult = "File loaded successfully. Import dialog will appear on Recipes screen."
-                        DebugConfig.debugLog(DebugConfig.Category.UI, "Import file loaded from ImportSourceSelection")
-                    } else {
-                        importResult = "Failed to read file"
-                    }
-                } catch (e: Exception) {
-                    DebugConfig.error(DebugConfig.Category.UI, "Import file error", e)
-                    importResult = "Error: ${e.message}"
-                }
-            }
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -158,34 +121,13 @@ private fun ImportTabContent(onSourceSelected: (ImportSource) -> Unit) {
             onClick = { onSourceSelected(ImportSource.PHOTO) }
         )
 
-        // File Import Option
+        // Text File Import Option
         ImportSourceCard(
             icon = Icons.Default.FileUpload,
-            title = "From File",
-            description = "Import shared recipes, meal plans, or grocery lists from JSON files",
-            onClick = {
-                filePicker.launch(arrayOf("application/json", "text/plain"))
-            }
+            title = "From Text File",
+            description = "Import from a text file using the recipe template (get it from Settings)",
+            onClick = { onSourceSelected(ImportSource.TEXT) }
         )
-
-        // Show import result feedback
-        importResult?.let { result ->
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = if (result.startsWith("Error") || result.startsWith("Failed")) {
-                        MaterialTheme.colorScheme.errorContainer
-                    } else {
-                        MaterialTheme.colorScheme.primaryContainer
-                    }
-                )
-            ) {
-                Text(
-                    text = result,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(12.dp)
-                )
-            }
-        }
     }
 }
 
@@ -300,5 +242,6 @@ private fun ImportSourceCard(
 enum class ImportSource {
     URL,
     PDF,
-    PHOTO
+    PHOTO,
+    TEXT
 }
