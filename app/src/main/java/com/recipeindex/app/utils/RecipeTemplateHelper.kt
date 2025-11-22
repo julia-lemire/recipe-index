@@ -17,12 +17,11 @@ object RecipeTemplateHelper {
      * Uses [brackets] to indicate fields that should be replaced.
      */
     val RECIPE_TEMPLATE = """
-[Recipe Title]
-
+Title: [Recipe Title]
 Servings: [number]
 Prep Time: [time, e.g. 15 minutes]
 Cook Time: [time, e.g. 30 minutes]
-Tags: [comma-separated tags, e.g. dinner, easy, healthy]
+Tags: [tag1, tag2, tag3]
 
 Ingredients:
 [amount] [ingredient]
@@ -30,9 +29,9 @@ Ingredients:
 [amount] [ingredient]
 
 Instructions:
-1. [First step]
-2. [Second step]
-3. [Third step]
+[Step 1]
+[Step 2]
+[Step 3]
 
 Notes:
 [Optional notes or tips]

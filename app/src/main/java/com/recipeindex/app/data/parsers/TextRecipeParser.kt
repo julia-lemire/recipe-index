@@ -145,6 +145,11 @@ object TextRecipeParser {
             val isBreadcrumb = line.contains(" > ")
 
             when {
+                // Title - explicit "Title:" header
+                normalized.contains(Regex("^title\\s*:")) && !sections.containsKey("title") -> {
+                    DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Found title at line $index: $line")
+                    sections["title"] = index
+                }
                 // Ingredients - must be standalone header, not in breadcrumbs or prose
                 normalized.contains(Regex("^ingredients?\\s*:?\\s*$")) &&
                 !sections.containsKey("ingredients") &&
@@ -206,10 +211,22 @@ object TextRecipeParser {
     }
 
     /**
-     * Extract title - usually first line or line before ingredients
+     * Extract title - from explicit "Title:" header, first line, or line before ingredients
      * Skips lines that look like dates, timestamps, URLs, breadcrumbs, or metadata
      */
     private fun extractTitle(sections: Map<String, Int>, lines: List<String>): String {
+        // Check for explicit "Title:" section first
+        val titleIndex = sections["title"]
+        if (titleIndex != null) {
+            val line = lines.getOrNull(titleIndex) ?: ""
+            // Remove "Title:" prefix and return the value
+            val title = line.replace(Regex("^title\\s*:\\s*", RegexOption.IGNORE_CASE), "").trim()
+            if (title.isNotBlank()) {
+                DebugConfig.debugLog(DebugConfig.Category.IMPORT, "Using explicit title: $title")
+                return title
+            }
+        }
+
         val ingredientsIndex = sections["ingredients"]
 
         // Filter out lines that shouldn't be titles
@@ -230,6 +247,8 @@ object TextRecipeParser {
             if (lower.startsWith("more ") && lower.contains("recipe")) return false
             // Skip lines that start with common website noise
             if (Regex("^(jump to|print|save|share|pin|rate|email)\\b").containsMatchIn(lower)) return false
+            // Skip section headers (Title:, Servings:, etc.)
+            if (Regex("^(title|servings?|prep\\s*time|cook\\s*time|tags?)\\s*:", RegexOption.IGNORE_CASE).containsMatchIn(line)) return false
             return true
         }
 
