@@ -5,7 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -26,7 +26,7 @@ import java.util.*
  * Home Screen - Landing page with quick actions and recipe highlights
  *
  * Layout:
- * - Quick action buttons (Import, Create, View All)
+ * - Quick action buttons (Import, View All)
  * - This week's meal plan
  * - Recent recipes (horizontal scroll)
  * - Favorite recipes (horizontal scroll)
@@ -102,7 +102,6 @@ fun HomeScreen(
                     item {
                         QuickActionsSection(
                             onImportClick = onNavigateToImport,
-                            onCreateClick = onNavigateToCreate,
                             onViewAllClick = onNavigateToRecipes
                         )
                     }
@@ -164,7 +163,6 @@ fun HomeScreen(
 @Composable
 private fun QuickActionsSection(
     onImportClick: () -> Unit,
-    onCreateClick: () -> Unit,
     onViewAllClick: () -> Unit
 ) {
     Column(
@@ -185,25 +183,12 @@ private fun QuickActionsSection(
                 modifier = Modifier.weight(1f)
             ) {
                 Icon(
-                    Icons.Default.Add,
+                    Icons.Default.Download,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(Modifier.width(4.dp))
                 Text("Import")
-            }
-
-            OutlinedButton(
-                onClick = onCreateClick,
-                modifier = Modifier.weight(1f)
-            ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(Modifier.width(4.dp))
-                Text("Create")
             }
 
             FilledTonalButton(
@@ -363,7 +348,7 @@ private fun EmptyStateSection(
                 textAlign = TextAlign.Center
             )
             Button(onClick = onImportClick) {
-                Icon(Icons.Default.Add, contentDescription = null)
+                Icon(Icons.Default.Download, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Import Recipe")
             }
