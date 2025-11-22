@@ -326,13 +326,37 @@ class SchemaOrgRecipeParser {
      * Example: "nutrition": { "@type": "NutritionInformation", "servingSize": "1 cup" }
      */
     private fun parseServingSize(nutrition: JsonElement?): String? {
-        if (nutrition !is JsonObject) return null
+        if (nutrition == null) {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "[IMPORT] No nutrition field found in Schema.org data"
+            )
+            return null
+        }
+
+        if (nutrition !is JsonObject) {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "[IMPORT] Nutrition field is not a JsonObject: ${nutrition.javaClass.simpleName}"
+            )
+            return null
+        }
+
+        DebugConfig.debugLog(
+            DebugConfig.Category.IMPORT,
+            "[IMPORT] Nutrition fields available: ${nutrition.keys.joinToString(", ")}"
+        )
 
         val servingSize = nutrition["servingSize"]?.jsonPrimitive?.contentOrNull
         if (!servingSize.isNullOrBlank()) {
             DebugConfig.debugLog(
                 DebugConfig.Category.IMPORT,
                 "[IMPORT] Found serving size from nutrition: $servingSize"
+            )
+        } else {
+            DebugConfig.debugLog(
+                DebugConfig.Category.IMPORT,
+                "[IMPORT] No servingSize field in nutrition data"
             )
         }
         return servingSize?.takeIf { it.isNotBlank() }
