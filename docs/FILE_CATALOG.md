@@ -128,6 +128,7 @@ com.recipeindex.app/
 │   │   ├── ImportPdfScreen.kt
 │   │   ├── ImportPhotoScreen.kt
 │   │   ├── ImportSourceSelectionScreen.kt
+│   │   ├── ImportTextScreen.kt
 │   │   ├── ImportUrlScreen.kt
 │   │   ├── MealPlanningScreen.kt
 │   │   ├── RecipeDetailScreen.kt
@@ -146,6 +147,7 @@ com.recipeindex.app/
 │   │   ├── HomeViewModel.kt
 │   │   ├── ImportPdfViewModel.kt
 │   │   ├── ImportPhotoViewModel.kt
+│   │   ├── ImportTextViewModel.kt
 │   │   ├── ImportViewModel.kt
 │   │   ├── MealPlanViewModel.kt
 │   │   ├── RecipeViewModel.kt
@@ -182,6 +184,7 @@ com.recipeindex.app/
     ├── ErrorHandler.kt
     ├── IngredientScaler.kt
     ├── IngredientUnitConverter.kt
+    ├── RecipeTemplateHelper.kt
     ├── ShareHelper.kt
     ├── ShareModels.kt
     ├── SubstitutionData.kt
@@ -218,12 +221,14 @@ com.recipeindex.app/
 
 ### Import Flow
 - MainActivity → HttpClient (Ktor), PdfRecipeParser, PhotoRecipeParser → ViewModelFactory
-- ImportSourceSelectionScreen → Navigation.kt (route to ImportUrl/ImportPdf/ImportPhoto)
+- ImportSourceSelectionScreen → Navigation.kt (route to ImportUrl/ImportPdf/ImportPhoto/ImportText)
 - ImportUrlScreen → ImportViewModel → SchemaOrgRecipeParser → RecipeManager
 - ImportPdfScreen → ImportPdfViewModel → PdfRecipeParser → TextRecipeParser → RecipeManager
 - ImportPhotoScreen → ImportPhotoViewModel → PhotoRecipeParser → TextRecipeParser → RecipeManager
+- ImportTextScreen → ImportTextViewModel → TextRecipeParser → RecipeManager
 - SchemaOrgRecipeParser → Jsoup (HTML parsing), kotlinx-serialization (JSON parsing)
 - PdfRecipeParser → PdfBox-Android (PDF text extraction)
+- RecipeTemplateHelper → shareTemplate() via Android share sheet (email, cloud storage)
 
 ### Share/Import Flow
 - MainActivity → ImportManager → RecipeManager, MealPlanManager, GroceryListManager
@@ -262,6 +267,7 @@ com.recipeindex.app/
 - ImportViewModel UI states: Input → Loading → Editing → Saved
 - ImportPdfViewModel UI states: SelectFile → Loading → Editing → Saved
 - ImportPhotoViewModel UI states: SelectPhoto → Loading → Editing → Saved
+- ImportTextViewModel UI states: SelectFile → Loading → Editing → Saved
 
 ---
 
@@ -303,11 +309,11 @@ com.recipeindex.app/
 - **Converters.kt** - Room type converters: List<String> ↔ delimited string, RecipeSource ↔ string, List<Substitute> ↔ JSON string (kotlinx.serialization), RecipeSourceType ↔ string
 
 ### Navigation
-- **NavGraph.kt** - Navigation routes sealed class: Home, RecipeIndex, Search, MealPlanning, GroceryLists, SubstitutionGuide, Settings (drawer screens), AddRecipe, EditRecipe, RecipeDetail, AddEditSubstitution, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto (detail/import screens)
+- **NavGraph.kt** - Navigation routes sealed class: Home, RecipeIndex, Search, MealPlanning, GroceryLists, SubstitutionGuide, Settings (drawer screens), AddRecipe, EditRecipe, RecipeDetail, AddEditSubstitution, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto, ImportText (detail/import screens)
 
 ### UI - MainActivity
 - **MainActivity.kt** - Orchestrator only: Setup dependencies (AppDatabase, RecipeManager, SubstitutionManager, HttpClient, parsers, ViewModelFactory), wire theme and navigation, NO business/navigation logic
-- **Navigation.kt** - All navigation logic: NavHost with routes for Home, RecipeIndex, Search, MealPlanning, GroceryLists, SubstitutionGuide, Settings (drawer), AddRecipe, EditRecipe, RecipeDetail, AddEditSubstitution, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto, uses LaunchedEffect for ViewModel data loading on detail/edit screens (prevents recomposition race conditions), DisposableEffect cleanup for shared ViewModel state, LaunchedEffect initializes substitution database with defaults, import screens use navigate(RecipeIndex) { popUpTo(Home) } for consistent post-save navigation from any entry point
+- **Navigation.kt** - All navigation logic: NavHost with routes for Home, RecipeIndex, Search, MealPlanning, GroceryLists, SubstitutionGuide, Settings (drawer), AddRecipe, EditRecipe, RecipeDetail, AddEditSubstitution, ImportSourceSelection, ImportUrl, ImportPdf, ImportPhoto, ImportText, uses LaunchedEffect for ViewModel data loading on detail/edit screens (prevents recomposition race conditions), DisposableEffect cleanup for shared ViewModel state, LaunchedEffect initializes substitution database with defaults, import screens use navigate(RecipeIndex) { popUpTo(Home) } for consistent post-save navigation from any entry point
 
 ### UI - Screens
 - **HomeScreen.kt** - Landing page with recipe highlights: Quick Actions at top (Import, Create, View All buttons), This Week's Meal Plan section (shows dates and recipe count or empty state), Recent Recipes carousel (horizontal LazyRow with last 5 by createdAt), Favorites carousel (horizontal LazyRow with starred recipes up to 5), empty state when no recipes exist, uses HomeViewModel for data, full navigation integration
@@ -315,15 +321,16 @@ com.recipeindex.app/
 - **SearchScreen.kt** - Global recipe search: Dedicated search screen accessible from navigation drawer, always-visible search bar at top, displays results as clickable cards with recipe details (title, description, cook time, servings), empty state and loading indicators, navigates to RecipeDetailScreen on card click
 - **AddEditRecipeScreen.kt** - Recipe add/edit form: Single screen with title, servings, times, ingredients, instructions, tags, notes, validation, auto-save on back
 - **RecipeDetailScreen.kt** - Recipe detail view: Swipeable image carousel with HorizontalPager (240dp) showing all images from mediaPaths with page indicator dots when 2+ images and AddAPhoto overlay button for adding photos, simplified photo management via file picker (ActivityResultContracts.GetContent), savePhotoToStorage() compression, "Add Photo" placeholder card when no photos, text labels (Servings, Prep:, Cook:, Total:, Portion:) replacing emoji icons, servings dropdown with auto-scaling, unit conversion toggle (SwapHoriz icon) in ingredients header for switching between both units or settings preference, cook mode (checkable ingredients/instructions with Select All/Deselect All buttons in section headers, timer, keep awake, Quick Note button for adding notes without leaving cook mode, tags hidden for focus), long-press ingredient for substitution lookup, tabbed instruction sections, favorite/edit/delete actions, Coil AsyncImage
-- **ImportSourceSelectionScreen.kt** - Import/create source selection: Tabbed interface with Import tab (URL/PDF/Photo/File cards) and Create tab (manual entry button), unified entry point for all recipe creation methods, File card launches OpenDocument file picker storing JSON in MainActivity.pendingImportJson with success feedback
+- **ImportSourceSelectionScreen.kt** - Import/create source selection: Tabbed interface with Import tab (URL/PDF/Photo/Text File cards) and Create tab (manual entry button), unified entry point for all recipe creation methods, Text File card navigates to ImportTextScreen for template-based recipe import
 - **ImportUrlScreen.kt** - URL import flow: URL input → loading → RecipeImportPreview (shared WYSIWYG component) → save, selectedImageUrls state lifted to screen level for handleBack() access, LaunchedEffect auto-selects first image on entering Editing state, TagModificationDialog for reviewing standardization changes, auto-save on back navigation
 - **ImportPdfScreen.kt** - PDF import flow: File picker (ActivityResultContracts.GetContent) → loading → RecipeImportPreview (shared component) → save, auto-save on back navigation, uses shared component for consistent preview experience
 - **ImportPhotoScreen.kt** - Photo import flow: Camera/gallery pickers (GetMultipleContents for multiple photos) → photo preview grid → loading → RecipeImportPreview (shared component) → save, auto-save on back navigation, uses shared component for consistent preview experience
+- **ImportTextScreen.kt** - Text file import flow: File picker (OpenDocument for text/plain) → loading → RecipeImportPreview (shared component) → save, auto-save on back navigation, for importing recipes from text files created using the recipe template (get template from Settings)
 - **MealPlanningScreen.kt** - Meal planning list: Card-based list with search, duplicate/delete dialogs, shows all recipes and tags, enhanced recipe cards with servings/time/tags, action buttons (Edit, Generate List) inline with date range, full-screen recipe picker grid, auto-naming from dates, snackbar feedback for grocery list operations, FileUpload icon button in TopAppBar for file import with snackbar feedback
 - **AddEditMealPlanScreen.kt** - Meal plan add/edit form: Name field with inline calendar icon button, optional date range selection with Material3 DateRangePicker (supports single date or range with clear button), tabbed recipe picker (defaults to Existing tab with 2-column grid and search, Import tab with URL/PDF/Photo options), notes field, auto-save on back navigation, auto-naming from selected dates, overflow menu with "Add to Grocery List" always visible when callback provided (disabled when no recipes selected)
 - **GroceryListScreen.kt** - Grocery lists: Card-based list with progress indicators (checked/total), create/delete dialogs, search, FileUpload icon button in TopAppBar for file import with snackbar feedback
 - **GroceryListDetailScreen.kt** - Grocery list detail: Quick-entry text field at top, item checkboxes, item detail dialog showing source recipes, icon-over-text bottom actions (toggle Select All/Deselect, Clear, Recipes, Meal Plans), improved quantity formatting with common fractions (1/4, 1/2, 3/4) for small amounts and max 1 decimal place
-- **SettingsScreen.kt** - Settings UI: Granular unit preferences (liquid volume, dry volume, weight) with IMPERIAL/METRIC/BOTH radio buttons, temperature unit, display preferences, recipe defaults
+- **SettingsScreen.kt** - Settings UI: Granular unit preferences (liquid volume, dry volume, weight) with IMPERIAL/METRIC/BOTH radio buttons, temperature unit, display preferences, recipe defaults, Import/Export section with "Get Recipe Template" button for sharing template via email/cloud storage
 - **SubstitutionGuideScreen.kt** - Substitution guide browsing: Search field, quantity/unit input for conversions, category filter chips, dietary filter chips (vegan/gluten-free/etc.), expandable cards with substitutes ordered by suitability, long-press card to edit, FAB to add new
 - **AddEditSubstitutionScreen.kt** - Substitution add/edit form: Ingredient name, category dropdown, substitutes list (each with name, conversion ratio, conversion note, notes, suitability slider 1-10, dietary tags), add/remove substitutes, auto-save on back, validation
 
@@ -343,8 +350,9 @@ com.recipeindex.app/
 - **ImportViewModel.kt** - URL import UI state: StateFlow<UiState> (Input → Loading → Editing(recipe, errorMessage, tagModifications, imageUrls) → Saved), fetchRecipeFromUrl() with tag standardization tracking, applyTagModifications(), clearTagModifications(), getAllExistingTags() for auto-suggestion, updateRecipe() preserving state fields, saveRecipe() with media download, reset()
 - **ImportPdfViewModel.kt** - PDF import UI state: StateFlow<UiState> (SelectFile → Loading → Editing → Saved), fetchRecipeFromPdf(Uri), updateRecipe(), saveRecipe(), reset()
 - **ImportPhotoViewModel.kt** - Photo import UI state: StateFlow<UiState> (SelectPhoto → Loading → Editing → Saved), fetchRecipeFromPhoto(Uri), fetchRecipeFromPhotos(List<Uri>), updateRecipe(), saveRecipe(), reset()
+- **ImportTextViewModel.kt** - Text file import UI state: StateFlow<UiState> (SelectFile → Loading → Editing → Saved), parseTextContent(String) uses TextRecipeParser directly, updateRecipe(), saveRecipe(), reset()
 - **SubstitutionViewModel.kt** - Substitution UI state: StateFlow for searchQuery/selectedCategory/selectedDietaryTag/substitutions/categories, reactive filtering using Flow operators (combine, flatMapLatest, map), getSubstitutionByIngredient(), observeSubstitutionById(), createOrUpdateSubstitution(), deleteSubstitution(), calculateConvertedAmount(), formatAmount(), initializeDefaultSubstitutions(), delegates CRUD to SubstitutionManager
-- **ViewModelFactory.kt** - ViewModel dependency injection: Creates RecipeViewModel, HomeViewModel, MealPlanViewModel, GroceryListViewModel, ImportViewModel, ImportPdfViewModel, ImportPhotoViewModel, SettingsViewModel, SubstitutionViewModel with manager and parser dependencies
+- **ViewModelFactory.kt** - ViewModel dependency injection: Creates RecipeViewModel, HomeViewModel, MealPlanViewModel, GroceryListViewModel, ImportViewModel, ImportPdfViewModel, ImportPhotoViewModel, ImportTextViewModel, SettingsViewModel, SubstitutionViewModel with manager and parser dependencies
 
 ### UI - Theme
 - **Color.kt** - Hearth color palette: Terracotta, Clay, SageGreen, Cream neutrals, cooking mode high-contrast colors
@@ -382,6 +390,7 @@ com.recipeindex.app/
 - **ErrorHandler.kt** - Error handling utility: User-friendly error messages (network, validation, state errors), handleResult() for Result<T> processing, executeSafely() and executeWithRetry() for suspending operations
 - **IngredientScaler.kt** - Ingredient quantity parsing and scaling: scaleIngredient() parses fractions (1/2), mixed numbers (1 1/2), decimals, ranges (2-3), scales by factor, formats output preferring common fractions (1/4, 1/2, 3/4), preserves units
 - **IngredientUnitConverter.kt** - Ingredient unit formatting based on user preferences: formatIngredient() detects liquid vs weight units, applies liquidVolumePreference and weightPreference conversions, supports BOTH mode showing "1 cup (237 ml)" inline, uses UnitConverter for conversions
+- **RecipeTemplateHelper.kt** - Recipe template for manual text file import: RECIPE_TEMPLATE constant with sample recipe format, getTemplateWithInstructions() adds usage guide, shareTemplate(context) launches Android share sheet for emailing/saving template, works with TextRecipeParser section detection
 - **ShareHelper.kt** - Share utility for app-to-app and text sharing: shareRecipe()/shareMealPlan()/shareGroceryList() launch Android share sheet with JSON (app-to-app) and text fallback, encodePhoto() with base64 encoding (max 1920px, 10MB limit), decodePhoto() for import, importFromJson() with duplicate detection, generateIncrementedTitle() for "Keep Both" action
 - **ShareModels.kt** - Share data models: SharePackage (container for all share types with version/type/content/photos map), ShareRecipe/ShareMealPlan/ShareGroceryList (serializable versions of entities), ShareType enum (RECIPE/MEAL_PLAN/GROCERY_LIST), ImportResult sealed class (Success/DuplicateDetected/Error), DuplicateAction enum (REPLACE/KEEP_BOTH/SKIP)
 - **TagStandardizer.kt** - Tag normalization utility: Converts tag variations to standard forms (e.g., "italian food" → "italian"), removes noise words ("recipe", "food"), filters junk tags/phrases ("how to make...", "Weight Watchers"), consolidates holidays to "special occasion", consolidates ingredient types (chicken thigh → chicken), filters >4 word tags, maps common patterns, deduplicates, standardize() returns cleaned tags, standardizeWithTracking() returns TagModification objects showing original→standardized transformations with wasModified flag, used by TextRecipeParser and ImportViewModel during import

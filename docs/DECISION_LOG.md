@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 22, 2025: Recipe Text Template Import Feature
+- **Decision**: Added text file import option with shareable recipe template for manual recipe entry when OCR/PDF import fails
+- **Rationale**: Users with old recipes in poor image quality cannot rely on OCR; needed a way to draft recipes on a computer in a text editor and import them via the app
+- **Implementation**: RecipeTemplateHelper.kt provides plain text template compatible with TextRecipeParser, Settings "Get Recipe Template" button shares via email/cloud, ImportTextScreen.kt for file picker → TextRecipeParser → RecipeImportPreview flow, "From Text File" card in ImportSourceSelectionScreen
+
 #### Nov 22, 2025: Shared RecipeImportPreview Component
 - **Decision**: Created shared RecipeImportPreview component in ui/components/ used by all three import screens (URL, PDF, Photo) for consistent WYSIWYG preview experience
 - **Rationale**: Each import screen had duplicate preview code (~300 lines each) with inconsistent behavior; URL screen had image selection, PDF/Photo screens didn't; bug where pre-selected images weren't being saved required fixing in multiple places
