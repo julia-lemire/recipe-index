@@ -1,7 +1,7 @@
 # Recipe Index Test Scenarios
 
 > **Purpose**: Test coverage and scenarios to implement for automated testing
-> **Last Updated**: 2025-11-21
+> **Last Updated**: 2025-11-22
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -195,6 +195,22 @@
 - [ ] ServingSize extraction handles OCR fractions ("Serving Size: 1 /2 cup" → "½ cup")
 - [ ] ServingSize extraction handles unitless fractions ("Serving Size: 1/4" without unit)
 - [ ] ServingSize extraction filters multiplier buttons ("1x 2x 3x" stripped from result)
+
+#### Shared RecipeImportPreview Component
+- [ ] RecipeImportPreview displays all recipe fields in card-based WYSIWYG preview (planned)
+- [ ] RecipeImportPreview per-field edit dialogs open on edit button click (planned)
+- [ ] RecipeImportPreview image selection grid shows checkmark overlay for selected images (planned)
+- [ ] RecipeImportPreview inline tag editing with auto-suggestions works (planned)
+- [ ] RecipeImportPreview isRecipeValid() returns true when title/ingredients/instructions present (planned)
+- [ ] RecipeImportPreview isRecipeValid() returns false when title blank (planned)
+- [ ] RecipeImportPreview isRecipeValid() returns false when ingredients empty (planned)
+- [ ] RecipeImportPreview isRecipeValid() returns false when instructions empty (planned)
+- [ ] ImportUrlScreen selectedImageUrls state lifted to screen level (planned)
+- [ ] ImportUrlScreen LaunchedEffect initializes with first image on entering Editing state (planned)
+- [ ] ImportUrlScreen handleBack() passes selectedImageUrls to saveRecipe (planned)
+- [ ] ImportUrlScreen Save button passes selectedImageUrls to saveRecipe (planned)
+- [ ] ImportPdfScreen uses shared RecipeImportPreview component (planned)
+- [ ] ImportPhotoScreen uses shared RecipeImportPreview component (planned)
 
 #### Photo Management in Recipe Detail
 - [ ] RecipeDetailScreen shows "Add Photo" placeholder when no photos exist

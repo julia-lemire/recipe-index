@@ -1,7 +1,7 @@
 # Recipe Index Project Status
 
 > **Purpose**: Current status, core principles, completed features, and backlog
-> **Last Updated**: 2025-11-21
+> **Last Updated**: 2025-11-22
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -323,6 +323,20 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 ---
 
 ## Recent Updates (Latest Session)
+
+### Shared RecipeImportPreview Component
+- ✅ **Shared Preview Component**: Created RecipeImportPreview.kt in ui/components/ used by all three import screens
+  - WYSIWYG preview cards for all recipe fields (title, metadata, ingredients, instructions, tags)
+  - Per-field edit dialogs for modifying imported data
+  - Image selection grid with checkmark overlays for URL imports
+  - Inline tag editing with auto-suggestions from existing tags
+  - isRecipeValid() helper function for consistent save button enablement
+  - ~800 lines of duplicate code removed across import screens
+- ✅ **Image Selection Bug Fix**: Fixed pre-selected images not being saved on back navigation
+  - Lifted selectedImageUrls state from child composable to ImportUrlScreen level
+  - Added LaunchedEffect to auto-initialize with first image when entering Editing state
+  - Both handleBack() and Save button now properly pass selectedImageUrls.toList()
+  - Previously: 0 images saved when only using pre-selected first image
 
 ### PDF Parsing Improvements for Long Webpage Prints
 - ✅ **Standalone Ingredients Header Detection**: Changed section detection from word-boundary match to require standalone header (`^ingredients?\s*:?\s*$`)

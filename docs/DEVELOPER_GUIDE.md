@@ -1,7 +1,7 @@
 # Recipe Index Developer Guide
 
 > **Purpose**: Quick lookup ("I need to...") and architecture patterns (HOW to implement)
-> **Last Updated**: 2025-11-21
+> **Last Updated**: 2025-11-22
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -359,6 +359,34 @@ Dialog logs help diagnose issues with multiple dialogs appearing or edits not be
 - Wrap in Card with elevation for visual separation from content
 
 **Example**: GroceryListDetailScreen bottom actions use icon-over-text for Select All toggle, Clear, Recipes, and Meal Plans buttons, providing large touch targets with clear labels
+
+### Shared Import Preview Pattern
+**Use when**: Multiple import screens need consistent preview/edit UI for imported data
+**Structure**:
+- Create shared component in `ui/components/` (e.g., RecipeImportPreview.kt)
+- Component accepts data model, change callback, and optional feature flags (imageUrls, existingTags)
+- Lift selection state (e.g., selectedImageUrls) to parent screen level for handleBack() access
+- Use LaunchedEffect to initialize selection state when entering edit mode
+- Provide isValid() helper function for save button enablement
+- Parent screen handles navigation, dialogs, snackbars; shared component handles preview/edit UI
+
+**State Management**:
+```kotlin
+// In parent screen (ImportUrlScreen.kt)
+var selectedImageUrls by remember { mutableStateOf<Set<String>>(emptySet()) }
+
+// Initialize when entering Editing state
+LaunchedEffect(uiState) {
+    if (uiState is UiState.Editing && selectedImageUrls.isEmpty()) {
+        selectedImageUrls = editingState.imageUrls.take(1).toSet()
+    }
+}
+
+// Both handleBack() and Save button use same state
+viewModel.saveRecipe(state.recipe, selectedImageUrls.toList())
+```
+
+**Example**: RecipeImportPreview.kt provides WYSIWYG preview for URL/PDF/Photo import screens, removing ~800 lines of duplicate code while ensuring consistent behavior (image selection, tag editing, field validation).
 
 ### Text/PDF Parsing Pattern
 **Use when**: Extracting structured recipe data from unstructured text (PDFs, OCR results)
