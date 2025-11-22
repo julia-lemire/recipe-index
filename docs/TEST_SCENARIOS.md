@@ -111,6 +111,8 @@
 - [x] Search recipes passes query to DAO (RecipeManagerTest.kt:searchRecipes passes query to DAO)
 - [x] Scale recipe updates servings (RecipeManagerTest.kt:scaleRecipe updates servings)
 - [x] Scale recipe down preserves structure (RecipeManagerTest.kt:scaleRecipe down preserves recipe structure)
+- [ ] Edit recipe preserves existing mediaPaths (planned - AddEditRecipeScreen)
+- [ ] Edit recipe with tag changes does not lose photos (planned - AddEditRecipeScreen)
 
 ### Recipe Import
 
@@ -208,6 +210,9 @@
 - [ ] RecipeImportPreview isRecipeValid() returns false when title blank (planned)
 - [ ] RecipeImportPreview isRecipeValid() returns false when ingredients empty (planned)
 - [ ] RecipeImportPreview isRecipeValid() returns false when instructions empty (planned)
+- [ ] RecipeImportPreview uses imePadding() for keyboard-aware scrolling (planned)
+- [ ] RecipeImportPreview has 100dp Spacer at bottom for scroll buffer (planned)
+- [ ] RecipeImportPreview tag suggestions visible when keyboard is open (planned)
 - [ ] ImportUrlScreen selectedImageUrls state lifted to screen level (planned)
 - [ ] ImportUrlScreen LaunchedEffect initializes with first image on entering Editing state (planned)
 - [ ] ImportUrlScreen handleBack() passes selectedImageUrls to saveRecipe (planned)
@@ -441,6 +446,10 @@
 - [ ] RecipeDetailScreen Quick Note dialog saves null when notes cleared (planned)
 - [ ] RecipeDetailScreen tags hidden when cook mode is active (planned)
 - [ ] RecipeDetailScreen tags visible when cook mode is not active (planned)
+- [ ] RecipeDetailScreen info Row 1 displays servings dropdown and portion size (planned)
+- [ ] RecipeDetailScreen info Row 2 displays prep/cook/total times (planned)
+- [ ] RecipeDetailScreen action buttons use TextButton (no borders) (planned)
+- [ ] RecipeDetailScreen action buttons maintain icon-over-text layout (planned)
 
 #### ImportSourceSelectionScreen
 - [ ] ImportSourceSelectionScreen displays Import and Create tabs (planned)
