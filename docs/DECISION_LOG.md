@@ -46,6 +46,16 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 22, 2025: Serving Size Extraction from Schema.org Nutrition Field
+- **Decision**: Added parseServingSize() to SchemaOrgRecipeParser to extract servingSize from Schema.org nutrition field during URL imports
+- **Rationale**: URL imports were not capturing portion/serving size information even when available in the nutrition data (e.g., "1 cup", "1/4 recipe")
+- **Implementation**: parseServingSize() extracts servingSize from nutrition JsonObject, added to ParsedRecipeData which flows through to Recipe entity, debug logging when found
+
+#### Nov 22, 2025: Numbered Instruction Step Detection with Period Delimiter
+- **Decision**: Updated joinInstructionLines() regex from `^\d+\s` to `^\d+[.):\s]` to detect numbered steps with various delimiter formats
+- **Rationale**: Text file imports with instructions like "1.Combine", "2.Heat" were being incorrectly joined into single step because regex only matched "1 " (digit + space) not "1." (digit + period)
+- **Implementation**: Regex now matches digit followed by period, parenthesis, colon, or whitespace, properly separating numbered instruction steps during text/PDF/photo import
+
 #### Nov 22, 2025: Photo Preservation on Recipe Edit
 - **Decision**: Fixed AddEditRecipeScreen to preserve mediaPaths field when creating updated Recipe object during edit operations
 - **Rationale**: Photos were disappearing after editing recipes (e.g., removing a tag) because mediaPaths was not being included in the Recipe constructor when saving updates
