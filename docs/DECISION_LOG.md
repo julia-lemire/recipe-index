@@ -46,6 +46,26 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Nov 22, 2025: Photo Preservation on Recipe Edit
+- **Decision**: Fixed AddEditRecipeScreen to preserve mediaPaths field when creating updated Recipe object during edit operations
+- **Rationale**: Photos were disappearing after editing recipes (e.g., removing a tag) because mediaPaths was not being included in the Recipe constructor when saving updates
+- **Implementation**: Added `mediaPaths = recipe?.mediaPaths ?: emptyList()` to the Recipe constructor in AddEditRecipeScreen, ensuring existing photos persist through edit operations
+
+#### Nov 22, 2025: Borderless Action Buttons in Recipe Detail
+- **Decision**: Changed RecipeDetailScreen action buttons (Grocery, Meal Plan, Share, Favorite) from OutlinedButton to TextButton for cleaner visual appearance
+- **Rationale**: OutlinedButton borders created visual clutter in the action row; TextButton provides same functionality with less visual weight
+- **Implementation**: Replaced OutlinedButton with TextButton for all action buttons in the bottom Row, using contentPadding for consistent touch targets, icon-over-text Column layout preserved
+
+#### Nov 22, 2025: Recipe Info Layout Reorganization
+- **Decision**: Split RecipeDetailScreen info display into two rows: Row 1 shows Servings (with dropdown) and Portion size, Row 2 shows Prep/Cook/Total times
+- **Rationale**: Single row with all info was too squished and hard to read on mobile; logical grouping (serving info vs time info) improves scanability
+- **Implementation**: Column with two Rows in info section, Row 1 contains servings dropdown and portion text with bullet separator, Row 2 contains times with bullet separators, vertical spacing of 4.dp between rows
+
+#### Nov 22, 2025: Tag Suggestion Visibility with Keyboard
+- **Decision**: Added imePadding() modifier and 100dp Spacer at bottom of RecipeImportPreview to ensure tag suggestions remain visible when keyboard is open
+- **Rationale**: Users couldn't see tag suggestions during import because keyboard would cover the suggestion area without any scroll adjustment
+- **Implementation**: Added imePadding() to the main Column modifier chain in RecipeImportPreview, added Spacer(modifier = Modifier.height(100.dp)) at end of Column content to provide scroll buffer above keyboard
+
 #### Nov 22, 2025: HomeScreen Quick Actions Simplification
 - **Decision**: Removed Create button from Quick Actions section and changed Import button icon from Add (+) to Download
 - **Rationale**: Download icon better represents import action semantically; Create button was redundant since manual entry is accessible via import flow
