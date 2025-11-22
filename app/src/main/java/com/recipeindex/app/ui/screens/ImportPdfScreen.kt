@@ -17,7 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.ui.components.RecipeImportPreview
 import com.recipeindex.app.ui.components.isRecipeValid
+import com.recipeindex.app.ui.viewmodels.BaseFileImportViewModel
 import com.recipeindex.app.ui.viewmodels.ImportPdfViewModel
+import com.recipeindex.app.utils.RecipeValidation
 
 /**
  * Import PDF Screen - Select PDF file and preview/edit imported recipe
@@ -37,24 +39,12 @@ fun ImportPdfScreen(
 
     // Show error messages via Snackbar
     LaunchedEffect(uiState) {
-        when (val state = uiState) {
-            is ImportPdfViewModel.UiState.SelectFile -> {
-                state.errorMessage?.let { error ->
-                    snackbarHostState.showSnackbar(
-                        message = error,
-                        duration = SnackbarDuration.Long
-                    )
-                }
-            }
-            is ImportPdfViewModel.UiState.Editing -> {
-                state.errorMessage?.let { error ->
-                    snackbarHostState.showSnackbar(
-                        message = error,
-                        duration = SnackbarDuration.Long
-                    )
-                }
-            }
-            else -> { /* No error to show */ }
+        val errorMessage = (uiState as? BaseFileImportViewModel.BaseUiState)?.errorMessage
+        errorMessage?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                duration = SnackbarDuration.Long
+            )
         }
     }
 
@@ -67,28 +57,18 @@ fun ImportPdfScreen(
 
     // Auto-save when navigating back (if recipe was successfully parsed)
     fun handleBack() {
-        when (val state = uiState) {
-            is ImportPdfViewModel.UiState.Editing -> {
-                // Validate before saving
-                when {
-                    state.recipe.title.isBlank() -> {
-                        viewModel.showError("Title is required")
-                    }
-                    state.recipe.ingredients.isEmpty() -> {
-                        viewModel.showError("At least one ingredient is required")
-                    }
-                    state.recipe.instructions.isEmpty() -> {
-                        viewModel.showError("At least one instruction step is required")
-                    }
-                    else -> {
-                        viewModel.saveRecipe(state.recipe)
-                        onSaveComplete()
-                    }
-                }
+        val state = uiState
+        if (state is BaseFileImportViewModel.EditingState) {
+            // Validate before saving using centralized validation
+            val error = RecipeValidation.getValidationError(state.recipe)
+            if (error != null) {
+                viewModel.showError(error)
+            } else {
+                viewModel.saveRecipe(state.recipe)
+                onSaveComplete()
             }
-            else -> {
-                onNavigateBack()
-            }
+        } else {
+            onNavigateBack()
         }
     }
 
@@ -134,7 +114,7 @@ fun ImportPdfScreen(
                 },
                 actions = {
                     // Show discard button when editing
-                    if (uiState is ImportPdfViewModel.UiState.Editing) {
+                    if (uiState is BaseFileImportViewModel.EditingState) {
                         IconButton(onClick = { showDiscardDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
@@ -148,7 +128,7 @@ fun ImportPdfScreen(
         }
     ) { paddingValues ->
         when (val state = uiState) {
-            is ImportPdfViewModel.UiState.SelectFile -> {
+            is ImportPdfViewModel.SelectFile -> {
                 SelectPdfContent(
                     modifier = Modifier
                         .fillMaxSize()
@@ -160,7 +140,7 @@ fun ImportPdfScreen(
                 )
             }
 
-            is ImportPdfViewModel.UiState.Loading -> {
+            is BaseFileImportViewModel.LoadingState -> {
                 LoadingContent(
                     modifier = Modifier
                         .fillMaxSize()
@@ -169,7 +149,7 @@ fun ImportPdfScreen(
                 )
             }
 
-            is ImportPdfViewModel.UiState.Editing -> {
+            is BaseFileImportViewModel.EditingState -> {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -208,7 +188,7 @@ fun ImportPdfScreen(
                 }
             }
 
-            is ImportPdfViewModel.UiState.Saved -> {
+            is BaseFileImportViewModel.SavedState -> {
                 LaunchedEffect(Unit) {
                     onSaveComplete()
                 }

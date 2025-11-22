@@ -28,7 +28,9 @@ import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.recipeindex.app.ui.components.RecipeImportPreview
 import com.recipeindex.app.ui.components.isRecipeValid
+import com.recipeindex.app.ui.viewmodels.BaseFileImportViewModel
 import com.recipeindex.app.ui.viewmodels.ImportPhotoViewModel
+import com.recipeindex.app.utils.RecipeValidation
 import java.io.File
 
 /**
@@ -52,24 +54,12 @@ fun ImportPhotoScreen(
 
     // Show error messages via Snackbar
     LaunchedEffect(uiState) {
-        when (val state = uiState) {
-            is ImportPhotoViewModel.UiState.SelectPhoto -> {
-                state.errorMessage?.let { error ->
-                    snackbarHostState.showSnackbar(
-                        message = error,
-                        duration = SnackbarDuration.Long
-                    )
-                }
-            }
-            is ImportPhotoViewModel.UiState.Editing -> {
-                state.errorMessage?.let { error ->
-                    snackbarHostState.showSnackbar(
-                        message = error,
-                        duration = SnackbarDuration.Long
-                    )
-                }
-            }
-            else -> { /* No error to show */ }
+        val errorMessage = (uiState as? BaseFileImportViewModel.BaseUiState)?.errorMessage
+        errorMessage?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                duration = SnackbarDuration.Long
+            )
         }
     }
 
@@ -94,27 +84,18 @@ fun ImportPhotoScreen(
 
     // Auto-save when navigating back
     fun handleBack() {
-        when (val state = uiState) {
-            is ImportPhotoViewModel.UiState.Editing -> {
-                when {
-                    state.recipe.title.isBlank() -> {
-                        viewModel.showError("Title is required")
-                    }
-                    state.recipe.ingredients.isEmpty() -> {
-                        viewModel.showError("At least one ingredient is required")
-                    }
-                    state.recipe.instructions.isEmpty() -> {
-                        viewModel.showError("At least one instruction step is required")
-                    }
-                    else -> {
-                        viewModel.saveRecipe(state.recipe)
-                        onSaveComplete()
-                    }
-                }
+        val state = uiState
+        if (state is BaseFileImportViewModel.EditingState) {
+            // Validate before saving using centralized validation
+            val error = RecipeValidation.getValidationError(state.recipe)
+            if (error != null) {
+                viewModel.showError(error)
+            } else {
+                viewModel.saveRecipe(state.recipe)
+                onSaveComplete()
             }
-            else -> {
-                onNavigateBack()
-            }
+        } else {
+            onNavigateBack()
         }
     }
 
@@ -160,7 +141,7 @@ fun ImportPhotoScreen(
                 },
                 actions = {
                     // Show discard button when editing
-                    if (uiState is ImportPhotoViewModel.UiState.Editing) {
+                    if (uiState is BaseFileImportViewModel.EditingState) {
                         IconButton(onClick = { showDiscardDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
@@ -174,7 +155,7 @@ fun ImportPhotoScreen(
         }
     ) { paddingValues ->
         when (val state = uiState) {
-            is ImportPhotoViewModel.UiState.SelectPhoto -> {
+            is ImportPhotoViewModel.SelectPhoto -> {
                 SelectPhotoContent(
                     modifier = Modifier
                         .fillMaxSize()
@@ -201,7 +182,7 @@ fun ImportPhotoScreen(
                 )
             }
 
-            is ImportPhotoViewModel.UiState.Loading -> {
+            is BaseFileImportViewModel.LoadingState -> {
                 LoadingContent(
                     modifier = Modifier
                         .fillMaxSize()
@@ -210,7 +191,7 @@ fun ImportPhotoScreen(
                 )
             }
 
-            is ImportPhotoViewModel.UiState.Editing -> {
+            is BaseFileImportViewModel.EditingState -> {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -249,7 +230,7 @@ fun ImportPhotoScreen(
                 }
             }
 
-            is ImportPhotoViewModel.UiState.Saved -> {
+            is BaseFileImportViewModel.SavedState -> {
                 LaunchedEffect(Unit) {
                     onSaveComplete()
                 }

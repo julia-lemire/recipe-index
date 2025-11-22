@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.recipeindex.app.data.entities.Recipe
+import com.recipeindex.app.utils.RecipeValidation
 
 /**
  * Shared Recipe Import Preview Component
@@ -624,12 +625,9 @@ fun RecipeImportPreview(
 
 /**
  * Check if recipe is valid for saving
+ * Delegates to centralized RecipeValidation
  */
-fun isRecipeValid(recipe: Recipe): Boolean {
-    return recipe.title.isNotBlank() &&
-           recipe.ingredients.isNotEmpty() &&
-           recipe.instructions.isNotEmpty()
-}
+fun isRecipeValid(recipe: Recipe): Boolean = RecipeValidation.isValid(recipe)
 
 /**
  * Helper enum for edit dialog

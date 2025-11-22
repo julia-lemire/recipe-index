@@ -17,6 +17,7 @@ import com.recipeindex.app.ui.components.TagModificationDialog
 import com.recipeindex.app.ui.components.isRecipeValid
 import com.recipeindex.app.ui.viewmodels.ImportViewModel
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.RecipeValidation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -115,22 +116,14 @@ fun ImportUrlScreen(
     fun handleBack() {
         when (val state = uiState) {
             is ImportViewModel.UiState.Editing -> {
-                // Validate before saving
-                when {
-                    state.recipe.title.isBlank() -> {
-                        viewModel.showError("Title is required")
-                    }
-                    state.recipe.ingredients.isEmpty() -> {
-                        viewModel.showError("At least one ingredient is required")
-                    }
-                    state.recipe.instructions.isEmpty() -> {
-                        viewModel.showError("At least one instruction step is required")
-                    }
-                    else -> {
-                        // Pass selected images when saving
-                        viewModel.saveRecipe(state.recipe, selectedImageUrls.toList())
-                        onSaveComplete()
-                    }
+                // Validate before saving using centralized validation
+                val error = RecipeValidation.getValidationError(state.recipe)
+                if (error != null) {
+                    viewModel.showError(error)
+                } else {
+                    // Pass selected images when saving
+                    viewModel.saveRecipe(state.recipe, selectedImageUrls.toList())
+                    onSaveComplete()
                 }
             }
             else -> {

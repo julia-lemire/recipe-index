@@ -5,6 +5,9 @@ import com.recipeindex.app.data.dao.RecipeLogDao
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.data.entities.RecipeLog
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.RecipeValidation
+import com.recipeindex.app.utils.resultOf
+import com.recipeindex.app.utils.resultOfValidated
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -57,42 +60,28 @@ class RecipeManager(
     /**
      * Create new recipe with validation
      */
-    suspend fun createRecipe(recipe: Recipe): Result<Long> {
-        return try {
-            validateRecipe(recipe)
-
-            val updatedRecipe = recipe.copy(
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
-            )
-
-            val recipeId = recipeDao.insertRecipe(updatedRecipe)
-            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "createRecipe: $recipeId")
-            Result.success(recipeId)
-        } catch (e: Exception) {
-            DebugConfig.error(DebugConfig.Category.MANAGER, "createRecipe failed", e)
-            Result.failure(e)
-        }
+    suspend fun createRecipe(recipe: Recipe): Result<Long> = resultOfValidated(
+        successLog = "createRecipe: ${recipe.title}",
+        errorLog = "createRecipe failed",
+        validate = { RecipeValidation.validateOrThrow(recipe) }
+    ) {
+        val updatedRecipe = recipe.copy(
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis()
+        )
+        recipeDao.insertRecipe(updatedRecipe)
     }
 
     /**
      * Update existing recipe
      */
-    suspend fun updateRecipe(recipe: Recipe): Result<Unit> {
-        return try {
-            validateRecipe(recipe)
-
-            val updatedRecipe = recipe.copy(
-                updatedAt = System.currentTimeMillis()
-            )
-
-            recipeDao.updateRecipe(updatedRecipe)
-            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "updateRecipe: ${recipe.id}")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            DebugConfig.error(DebugConfig.Category.MANAGER, "updateRecipe failed", e)
-            Result.failure(e)
-        }
+    suspend fun updateRecipe(recipe: Recipe): Result<Unit> = resultOfValidated(
+        successLog = "updateRecipe: ${recipe.id}",
+        errorLog = "updateRecipe failed",
+        validate = { RecipeValidation.validateOrThrow(recipe) }
+    ) {
+        val updatedRecipe = recipe.copy(updatedAt = System.currentTimeMillis())
+        recipeDao.updateRecipe(updatedRecipe)
     }
 
     /**
@@ -101,52 +90,44 @@ class RecipeManager(
      * Removes the recipe from all meal plans that reference it to maintain
      * referential integrity
      */
-    suspend fun deleteRecipe(recipeId: Long): Result<Unit> {
-        return try {
-            // First, remove this recipe from all meal plans that reference it
-            val allMealPlans = mealPlanDao.getAll().first()
-            val affectedPlans = allMealPlans.filter { recipeId in it.recipeIds }
+    suspend fun deleteRecipe(recipeId: Long): Result<Unit> = resultOf(
+        successLog = "deleteRecipe: $recipeId completed",
+        errorLog = "deleteRecipe failed"
+    ) {
+        // First, remove this recipe from all meal plans that reference it
+        val allMealPlans = mealPlanDao.getAll().first()
+        val affectedPlans = allMealPlans.filter { recipeId in it.recipeIds }
 
+        DebugConfig.debugLog(
+            DebugConfig.Category.MANAGER,
+            "deleteRecipe: $recipeId found in ${affectedPlans.size} meal plans"
+        )
+
+        // Update each affected meal plan to remove the recipe ID
+        affectedPlans.forEach { plan ->
+            val updatedPlan = plan.copy(
+                recipeIds = plan.recipeIds.filter { it != recipeId },
+                updatedAt = System.currentTimeMillis()
+            )
+            mealPlanDao.update(updatedPlan)
             DebugConfig.debugLog(
                 DebugConfig.Category.MANAGER,
-                "deleteRecipe: $recipeId found in ${affectedPlans.size} meal plans"
+                "Removed recipe $recipeId from meal plan '${plan.name}' (${plan.id})"
             )
-
-            // Update each affected meal plan to remove the recipe ID
-            affectedPlans.forEach { plan ->
-                val updatedPlan = plan.copy(
-                    recipeIds = plan.recipeIds.filter { it != recipeId },
-                    updatedAt = System.currentTimeMillis()
-                )
-                mealPlanDao.update(updatedPlan)
-                DebugConfig.debugLog(
-                    DebugConfig.Category.MANAGER,
-                    "Removed recipe $recipeId from meal plan '${plan.name}' (${plan.id})"
-                )
-            }
-
-            // Now delete the recipe
-            recipeDao.deleteRecipeById(recipeId)
-            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "deleteRecipe: $recipeId completed")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            DebugConfig.error(DebugConfig.Category.MANAGER, "deleteRecipe failed", e)
-            Result.failure(e)
         }
+
+        // Now delete the recipe
+        recipeDao.deleteRecipeById(recipeId)
     }
 
     /**
      * Toggle favorite status
      */
-    suspend fun toggleFavorite(recipeId: Long, isFavorite: Boolean): Result<Unit> {
-        return try {
-            recipeDao.updateFavoriteStatus(recipeId, isFavorite)
-            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "toggleFavorite: $recipeId = $isFavorite")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            DebugConfig.error(DebugConfig.Category.MANAGER, "toggleFavorite failed", e)
-            Result.failure(e)
-        }
+    suspend fun toggleFavorite(recipeId: Long, isFavorite: Boolean): Result<Unit> = resultOf(
+        successLog = "toggleFavorite: $recipeId = $isFavorite",
+        errorLog = "toggleFavorite failed"
+    ) {
+        recipeDao.updateFavoriteStatus(recipeId, isFavorite)
     }
 
     /**
@@ -159,16 +140,6 @@ class RecipeManager(
         // For now, just update servings
 
         return recipe.copy(servings = newServings)
-    }
-
-    /**
-     * Validate recipe before save
-     */
-    private fun validateRecipe(recipe: Recipe) {
-        require(recipe.title.isNotBlank()) { "Recipe title cannot be empty" }
-        require(recipe.ingredients.isNotEmpty()) { "Recipe must have at least one ingredient" }
-        require(recipe.instructions.isNotEmpty()) { "Recipe must have at least one instruction" }
-        require(recipe.servings > 0) { "Servings must be greater than 0" }
     }
 
     // Recipe Log Methods
@@ -197,48 +168,36 @@ class RecipeManager(
     /**
      * Mark recipe as made (create log entry)
      */
-    suspend fun markRecipeAsMade(recipeId: Long, notes: String? = null, rating: Int? = null): Result<Long> {
-        return try {
-            val log = RecipeLog(
-                recipeId = recipeId,
-                timestamp = System.currentTimeMillis(),
-                notes = notes,
-                rating = rating
-            )
-            val logId = recipeLogDao.insertLog(log)
-            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "markRecipeAsMade: recipeId=$recipeId, logId=$logId")
-            Result.success(logId)
-        } catch (e: Exception) {
-            DebugConfig.error(DebugConfig.Category.MANAGER, "markRecipeAsMade failed", e)
-            Result.failure(e)
-        }
+    suspend fun markRecipeAsMade(recipeId: Long, notes: String? = null, rating: Int? = null): Result<Long> = resultOf(
+        successLog = "markRecipeAsMade: recipeId=$recipeId",
+        errorLog = "markRecipeAsMade failed"
+    ) {
+        val log = RecipeLog(
+            recipeId = recipeId,
+            timestamp = System.currentTimeMillis(),
+            notes = notes,
+            rating = rating
+        )
+        recipeLogDao.insertLog(log)
     }
 
     /**
      * Update an existing log entry
      */
-    suspend fun updateLog(log: RecipeLog): Result<Unit> {
-        return try {
-            recipeLogDao.updateLog(log)
-            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "updateLog: ${log.id}")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            DebugConfig.error(DebugConfig.Category.MANAGER, "updateLog failed", e)
-            Result.failure(e)
-        }
+    suspend fun updateLog(log: RecipeLog): Result<Unit> = resultOf(
+        successLog = "updateLog: ${log.id}",
+        errorLog = "updateLog failed"
+    ) {
+        recipeLogDao.updateLog(log)
     }
 
     /**
      * Delete a log entry
      */
-    suspend fun deleteLog(logId: Long): Result<Unit> {
-        return try {
-            recipeLogDao.deleteLogById(logId)
-            DebugConfig.debugLog(DebugConfig.Category.MANAGER, "deleteLog: $logId")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            DebugConfig.error(DebugConfig.Category.MANAGER, "deleteLog failed", e)
-            Result.failure(e)
-        }
+    suspend fun deleteLog(logId: Long): Result<Unit> = resultOf(
+        successLog = "deleteLog: $logId",
+        errorLog = "deleteLog failed"
+    ) {
+        recipeLogDao.deleteLogById(logId)
     }
 }
