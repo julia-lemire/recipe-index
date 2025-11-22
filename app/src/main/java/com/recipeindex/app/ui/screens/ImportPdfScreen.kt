@@ -19,6 +19,7 @@ import com.recipeindex.app.ui.components.RecipeImportPreview
 import com.recipeindex.app.ui.components.isRecipeValid
 import com.recipeindex.app.ui.viewmodels.BaseFileImportViewModel
 import com.recipeindex.app.ui.viewmodels.ImportPdfViewModel
+import com.recipeindex.app.utils.RecipeValidation
 
 /**
  * Import PDF Screen - Select PDF file and preview/edit imported recipe
@@ -58,21 +59,13 @@ fun ImportPdfScreen(
     fun handleBack() {
         val state = uiState
         if (state is BaseFileImportViewModel.EditingState) {
-            // Validate before saving
-            when {
-                state.recipe.title.isBlank() -> {
-                    viewModel.showError("Title is required")
-                }
-                state.recipe.ingredients.isEmpty() -> {
-                    viewModel.showError("At least one ingredient is required")
-                }
-                state.recipe.instructions.isEmpty() -> {
-                    viewModel.showError("At least one instruction step is required")
-                }
-                else -> {
-                    viewModel.saveRecipe(state.recipe)
-                    onSaveComplete()
-                }
+            // Validate before saving using centralized validation
+            val error = RecipeValidation.getValidationError(state.recipe)
+            if (error != null) {
+                viewModel.showError(error)
+            } else {
+                viewModel.saveRecipe(state.recipe)
+                onSaveComplete()
             }
         } else {
             onNavigateBack()

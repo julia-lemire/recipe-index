@@ -5,6 +5,7 @@ import com.recipeindex.app.data.dao.RecipeLogDao
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.data.entities.RecipeLog
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.RecipeValidation
 import com.recipeindex.app.utils.resultOf
 import com.recipeindex.app.utils.resultOfValidated
 import kotlinx.coroutines.flow.Flow
@@ -62,7 +63,7 @@ class RecipeManager(
     suspend fun createRecipe(recipe: Recipe): Result<Long> = resultOfValidated(
         successLog = "createRecipe: ${recipe.title}",
         errorLog = "createRecipe failed",
-        validate = { validateRecipe(recipe) }
+        validate = { RecipeValidation.validateOrThrow(recipe) }
     ) {
         val updatedRecipe = recipe.copy(
             createdAt = System.currentTimeMillis(),
@@ -77,7 +78,7 @@ class RecipeManager(
     suspend fun updateRecipe(recipe: Recipe): Result<Unit> = resultOfValidated(
         successLog = "updateRecipe: ${recipe.id}",
         errorLog = "updateRecipe failed",
-        validate = { validateRecipe(recipe) }
+        validate = { RecipeValidation.validateOrThrow(recipe) }
     ) {
         val updatedRecipe = recipe.copy(updatedAt = System.currentTimeMillis())
         recipeDao.updateRecipe(updatedRecipe)
@@ -139,16 +140,6 @@ class RecipeManager(
         // For now, just update servings
 
         return recipe.copy(servings = newServings)
-    }
-
-    /**
-     * Validate recipe before save
-     */
-    private fun validateRecipe(recipe: Recipe) {
-        require(recipe.title.isNotBlank()) { "Recipe title cannot be empty" }
-        require(recipe.ingredients.isNotEmpty()) { "Recipe must have at least one ingredient" }
-        require(recipe.instructions.isNotEmpty()) { "Recipe must have at least one instruction" }
-        require(recipe.servings > 0) { "Servings must be greater than 0" }
     }
 
     // Recipe Log Methods
