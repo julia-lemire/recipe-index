@@ -52,6 +52,9 @@ class ViewModelFactory(
             modelClass.isAssignableFrom(ImportPhotoViewModel::class.java) -> {
                 ImportPhotoViewModel(photoRecipeParser, recipeManager) as T
             }
+            modelClass.isAssignableFrom(ImportTextViewModel::class.java) -> {
+                ImportTextViewModel(recipeManager) as T
+            }
             modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
                 SettingsViewModel(settingsManager) as T
             }

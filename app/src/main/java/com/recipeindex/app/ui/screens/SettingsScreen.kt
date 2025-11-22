@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
@@ -20,6 +20,7 @@ import com.recipeindex.app.data.UnitSystem
 import com.recipeindex.app.ui.MainActivity
 import com.recipeindex.app.ui.viewmodels.SettingsViewModel
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.RecipeTemplateHelper
 import kotlinx.coroutines.launch
 
 /**
@@ -381,6 +382,25 @@ fun SettingsScreen(
                                 modifier = Modifier.padding(12.dp)
                             )
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Create recipes manually using a text template you can edit on your computer",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    OutlinedButton(
+                        onClick = {
+                            RecipeTemplateHelper.shareTemplate(context)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Description, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Get Recipe Template")
                     }
                 }
             }

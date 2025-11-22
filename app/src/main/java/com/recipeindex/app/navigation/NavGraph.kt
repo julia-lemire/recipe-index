@@ -42,6 +42,7 @@ sealed class Screen(
     object ImportUrl : Screen("import_url", "Import from URL", Icons.Default.List)
     object ImportPdf : Screen("import_pdf", "Import from PDF", Icons.Default.List)
     object ImportPhoto : Screen("import_photo", "Import from Photo", Icons.Default.List)
+    object ImportText : Screen("import_text", "Import from Text", Icons.Default.List)
 
     // Meal planning screens (not in drawer)
     object AddMealPlan : Screen("add_meal_plan", "Add Meal Plan", Icons.Default.DateRange)

@@ -20,6 +20,7 @@ import com.recipeindex.app.ui.screens.*
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.ui.viewmodels.ImportPdfViewModel
 import com.recipeindex.app.ui.viewmodels.ImportPhotoViewModel
+import com.recipeindex.app.ui.viewmodels.ImportTextViewModel
 import com.recipeindex.app.ui.viewmodels.ImportViewModel
 import com.recipeindex.app.ui.viewmodels.MealPlanViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
@@ -542,6 +543,9 @@ fun RecipeIndexNavigation(
                         ImportSource.PHOTO -> {
                             navController.navigate(Screen.ImportPhoto.route)
                         }
+                        ImportSource.TEXT -> {
+                            navController.navigate(Screen.ImportText.route)
+                        }
                     }
                 },
                 onCreateManually = {
@@ -612,6 +616,30 @@ fun RecipeIndexNavigation(
                         "Photo recipe imported, navigating to recipe list"
                     )
                     photoImportViewModel.reset()
+                    // Navigate to recipe list, clearing import screens from stack
+                    navController.navigate(Screen.RecipeIndex.route) {
+                        popUpTo(Screen.Home.route) { inclusive = false }
+                    }
+                }
+            )
+        }
+
+        // Import from Text File
+        composable(Screen.ImportText.route) {
+            val textImportViewModel: ImportTextViewModel = viewModel(factory = viewModelFactory)
+
+            ImportTextScreen(
+                viewModel = textImportViewModel,
+                onNavigateBack = {
+                    textImportViewModel.reset()
+                    navController.popBackStack()
+                },
+                onSaveComplete = {
+                    DebugConfig.debugLog(
+                        DebugConfig.Category.NAVIGATION,
+                        "Text recipe imported, navigating to recipe list"
+                    )
+                    textImportViewModel.reset()
                     // Navigate to recipe list, clearing import screens from stack
                     navController.navigate(Screen.RecipeIndex.route) {
                         popUpTo(Screen.Home.route) { inclusive = false }
