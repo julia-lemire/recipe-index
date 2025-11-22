@@ -604,7 +604,8 @@ object TextRecipeParser {
 
     /**
      * Join continuation lines for numbered instructions.
-     * Lines starting with a digit are new steps; other lines continue the previous step.
+     * Lines starting with a digit followed by delimiter (., ), :, or space) are new steps;
+     * other lines continue the previous step.
      */
     private fun joinInstructionLines(lines: List<String>): List<String> {
         if (lines.isEmpty()) return emptyList()
@@ -612,8 +613,9 @@ object TextRecipeParser {
         val result = mutableListOf<StringBuilder>()
 
         for (line in lines) {
-            // Check if this line starts a new instruction (begins with digit)
-            val startsNewInstruction = Regex("^\\d+\\s").containsMatchIn(line)
+            // Check if this line starts a new instruction
+            // Matches: "1.", "1)", "1:", "1 ", "12.", etc.
+            val startsNewInstruction = Regex("^\\d+[.):\\s]").containsMatchIn(line)
 
             if (startsNewInstruction || result.isEmpty()) {
                 // Start new instruction
