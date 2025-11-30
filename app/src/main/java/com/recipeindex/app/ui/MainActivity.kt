@@ -15,6 +15,7 @@ import com.recipeindex.app.data.AppDatabase
 import com.recipeindex.app.data.managers.GroceryListManager
 import com.recipeindex.app.data.managers.ImportManager
 import com.recipeindex.app.data.managers.MealPlanManager
+import com.recipeindex.app.data.managers.PantryStapleManager
 import com.recipeindex.app.data.managers.RecipeManager
 import com.recipeindex.app.data.managers.SettingsManager
 import com.recipeindex.app.data.managers.SubstitutionManager
@@ -60,14 +61,21 @@ class MainActivity : ComponentActivity() {
         val database = AppDatabase.getDatabase(applicationContext)
         val recipeManager = RecipeManager(database.recipeDao(), database.recipeLogDao(), database.mealPlanDao())
         val mealPlanManager = MealPlanManager(database.mealPlanDao(), database.recipeDao())
+        val pantryStapleManager = PantryStapleManager(database.pantryStapleConfigDao())
         val groceryListManager = GroceryListManager(
             database.groceryListDao(),
             database.groceryItemDao(),
             database.recipeDao(),
-            database.mealPlanDao()
+            database.mealPlanDao(),
+            pantryStapleManager
         )
         val settingsManager = SettingsManager(applicationContext)
         val substitutionManager = SubstitutionManager(database.substitutionDao())
+
+        // Initialize pantry staples defaults on first run
+        kotlinx.coroutines.GlobalScope.launch {
+            pantryStapleManager.initializeDefaults()
+        }
         val localImportManager = ImportManager(
             applicationContext,
             recipeManager,
@@ -100,6 +108,7 @@ class MainActivity : ComponentActivity() {
             groceryListManager,
             settingsManager,
             substitutionManager,
+            pantryStapleManager,
             urlRecipeParser,
             pdfRecipeParser,
             photoRecipeParser,

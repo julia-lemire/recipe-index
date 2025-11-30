@@ -6,7 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -57,6 +59,13 @@ fun GroceryListDetailScreen(
     var showRecipePicker by remember { mutableStateOf(false) }
     var showMealPlanPicker by remember { mutableStateOf(false) }
     var showClearCheckedDialog by remember { mutableStateOf(false) }
+
+    // Maintain scroll position when items are reordered
+    val listState = rememberLazyListState()
+
+    // Track the first visible item index to maintain scroll position
+    val firstVisibleItemIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
+    val firstVisibleItemScrollOffset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
 
     // Handle system back button
     BackHandler {
@@ -170,6 +179,7 @@ fun GroceryListDetailScreen(
                 }
             } else {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
@@ -178,6 +188,7 @@ fun GroceryListDetailScreen(
                 ) {
                     items(items, key = { it.id }) { item ->
                         GroceryItemRow(
+                            modifier = Modifier.animateItemPlacement(),
                             item = item,
                             onClick = {
                                 // Short click: toggle checkbox
@@ -424,12 +435,13 @@ fun GroceryListDetailScreen(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun GroceryItemRow(
+    modifier: Modifier = Modifier,
     item: GroceryItem,
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .combinedClickable(
                 onClick = onClick,

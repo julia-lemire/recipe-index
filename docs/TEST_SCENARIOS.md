@@ -386,6 +386,40 @@
 - [ ] getItemCount returns correct count (planned - DAO integration test)
 - [ ] getCheckedCount returns correct checked count (planned - DAO integration test)
 
+### Grocery Lists - Pantry Staples Filtering
+- [ ] Filter salt below threshold (≤2 tbsp) from grocery list (planned)
+- [ ] Show salt when quantity exceeds threshold (>2 tbsp) (planned)
+- [ ] Filter common spices (paprika, cumin, etc.) below 1/4 cup threshold (planned)
+- [ ] Show spices when quantity exceeds 1/4 cup (planned)
+- [ ] Filter oils below 1 cup threshold (planned)
+- [ ] Filter flour below 3 cups threshold (planned)
+- [ ] Filter garlic below 8 cloves threshold (planned)
+- [ ] Show garlic when quantity exceeds 8 cloves (planned)
+- [ ] Filter eggs below 2 eggs threshold (planned)
+- [ ] Show eggs when quantity exceeds 2 eggs (planned)
+- [ ] Always filter water regardless of quantity (alwaysFilter flag) (planned)
+- [ ] Unit normalization: compare 2 cups vs 473 ml correctly (planned)
+- [ ] Unit normalization: compare 4 tbsp vs 1/4 cup correctly (planned)
+- [ ] Unit normalization: compare 1 lb vs 453g correctly (planned)
+- [ ] Show items without units (quantity unknown) (planned)
+- [ ] Show items not in pantry staples config (planned)
+- [ ] Disabled pantry staple config doesn't filter (planned)
+- [ ] Custom user-added pantry staple filters correctly (planned)
+- [ ] PantryStapleManager initializes 100+ defaults on first run (planned)
+- [ ] PantryStapleManager reset to defaults clears custom configs (planned)
+
+### Grocery Lists - Pantry Staples UI
+- [ ] PantryStaplesScreen displays all configurations grouped by category (planned - UI test)
+- [ ] Category filter shows only selected category items (planned - UI test)
+- [ ] Edit dialog allows changing threshold quantity (planned - UI test)
+- [ ] Edit dialog allows changing threshold unit from dropdown (planned - UI test)
+- [ ] Add new custom pantry staple saves to database (planned - UI test)
+- [ ] Delete pantry staple removes from list (planned - UI test)
+- [ ] Toggle enabled/disabled updates filter behavior (planned - UI test)
+- [ ] Reset to defaults confirmation dialog prevents accidental reset (planned - UI test)
+- [ ] Alternative names field allows comma-separated matching (planned - UI test)
+- [ ] Navigation from Settings > Manage Pantry Staples opens screen (planned - UI test)
+
 ### Database
 
 #### TypeConverters

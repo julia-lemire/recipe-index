@@ -8,6 +8,7 @@ import androidx.room.TypeConverters
 import com.recipeindex.app.data.dao.GroceryItemDao
 import com.recipeindex.app.data.dao.GroceryListDao
 import com.recipeindex.app.data.dao.MealPlanDao
+import com.recipeindex.app.data.dao.PantryStapleConfigDao
 import com.recipeindex.app.data.dao.RecipeDao
 import com.recipeindex.app.data.dao.RecipeLogDao
 import com.recipeindex.app.data.dao.SubstitutionDao
@@ -15,18 +16,19 @@ import com.recipeindex.app.data.entities.GroceryItem
 import com.recipeindex.app.data.entities.GroceryList
 import com.recipeindex.app.data.entities.IngredientSubstitution
 import com.recipeindex.app.data.entities.MealPlan
+import com.recipeindex.app.data.entities.PantryStapleConfig
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.data.entities.RecipeLog
 
 /**
  * AppDatabase - Single source of truth for offline-first storage
  *
- * Room database with Recipe, MealPlan, GroceryList, GroceryItem, IngredientSubstitution, and RecipeLog tables
+ * Room database with Recipe, MealPlan, GroceryList, GroceryItem, IngredientSubstitution, RecipeLog, and PantryStapleConfig tables
  * No cloud sync - fully local with Samsung Quick Share for sharing
  */
 @Database(
-    entities = [Recipe::class, MealPlan::class, GroceryList::class, GroceryItem::class, IngredientSubstitution::class, RecipeLog::class],
-    version = 9,
+    entities = [Recipe::class, MealPlan::class, GroceryList::class, GroceryItem::class, IngredientSubstitution::class, RecipeLog::class, PantryStapleConfig::class],
+    version = 10,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -43,6 +45,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun substitutionDao(): SubstitutionDao
 
     abstract fun recipeLogDao(): RecipeLogDao
+
+    abstract fun pantryStapleConfigDao(): PantryStapleConfigDao
 
     companion object {
         @Volatile

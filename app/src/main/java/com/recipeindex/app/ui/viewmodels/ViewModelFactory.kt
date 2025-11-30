@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.recipeindex.app.data.managers.GroceryListManager
 import com.recipeindex.app.data.managers.MealPlanManager
+import com.recipeindex.app.data.managers.PantryStapleManager
 import com.recipeindex.app.data.managers.RecipeManager
 import com.recipeindex.app.data.managers.SettingsManager
 import com.recipeindex.app.data.managers.SubstitutionManager
@@ -24,6 +25,7 @@ class ViewModelFactory(
     private val groceryListManager: GroceryListManager,
     private val settingsManager: SettingsManager,
     private val substitutionManager: SubstitutionManager,
+    private val pantryStapleManager: PantryStapleManager,
     private val urlRecipeParser: RecipeParser,
     private val pdfRecipeParser: PdfRecipeParser,
     private val photoRecipeParser: PhotoRecipeParser,
@@ -63,6 +65,9 @@ class ViewModelFactory(
             }
             modelClass.isAssignableFrom(HomeViewModel::class.java) -> {
                 HomeViewModel(recipeManager, mealPlanManager) as T
+            }
+            modelClass.isAssignableFrom(PantryStapleViewModel::class.java) -> {
+                PantryStapleViewModel(pantryStapleManager) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }

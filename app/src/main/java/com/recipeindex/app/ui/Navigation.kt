@@ -23,6 +23,7 @@ import com.recipeindex.app.ui.viewmodels.ImportPhotoViewModel
 import com.recipeindex.app.ui.viewmodels.ImportTextViewModel
 import com.recipeindex.app.ui.viewmodels.ImportViewModel
 import com.recipeindex.app.ui.viewmodels.MealPlanViewModel
+import com.recipeindex.app.ui.viewmodels.PantryStapleViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.ui.viewmodels.SettingsViewModel
 import com.recipeindex.app.ui.viewmodels.SubstitutionViewModel
@@ -47,6 +48,7 @@ fun RecipeIndexNavigation(
     val importViewModel: ImportViewModel = viewModel(factory = viewModelFactory)
     val settingsViewModel: SettingsViewModel = viewModel(factory = viewModelFactory)
     val substitutionViewModel: SubstitutionViewModel = viewModel(factory = viewModelFactory)
+    val pantryStapleViewModel: PantryStapleViewModel = viewModel(factory = viewModelFactory)
     val homeViewModel: com.recipeindex.app.ui.viewmodels.HomeViewModel = viewModel(factory = viewModelFactory)
 
     // Initialize substitution database with default data on first run
@@ -462,7 +464,20 @@ fun RecipeIndexNavigation(
         composable(Screen.Settings.route) {
             SettingsScreen(
                 viewModel = settingsViewModel,
-                onMenuClick = onMenuClick
+                onMenuClick = onMenuClick,
+                onNavigateToPantryStaples = {
+                    navController.navigate(Screen.PantryStaples.route)
+                }
+            )
+        }
+
+        // Pantry Staples (from Settings)
+        composable(Screen.PantryStaples.route) {
+            PantryStaplesScreen(
+                viewModel = pantryStapleViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
             )
         }
 

@@ -1,7 +1,7 @@
 # Recipe Index Decision Log
 
 > **Purpose**: Architectural decision records (WHAT/WHY/WHEN decisions were made)
-> **Last Updated**: 2025-11-22
+> **Last Updated**: 2025-11-30
 
 **See Also:**
 - [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) - Quick lookup ("I need to...") and architecture patterns (HOW to implement)
@@ -45,6 +45,16 @@
 
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
+
+#### Nov 30, 2025: Pantry Staples Filtering System with User-Configurable Thresholds
+- **Decision**: Implemented configurable pantry staples filtering that removes common items (spices, oils, aromatics, etc.) from grocery lists when quantities are below user-defined thresholds but shows them WITH quantity when exceeding thresholds
+- **Rationale**: Users don't need to see "1 tsp salt" on grocery lists since they already have it, but DO need to see "2 cups salt" for unusual recipes requiring large quantities; provides smart, context-aware filtering based on actual recipe needs
+- **Implementation**: PantryStapleConfig entity with threshold quantity/unit fields, PantryStapleManager with 100+ default configurations, GroceryListManager.filterPantryStaples() normalizes quantities to common unit (ml) for accurate comparison across different unit types, PantryStaplesScreen provides full CRUD UI for customizing thresholds, accessible from Settings
+
+#### Nov 30, 2025: Grocery List Scroll Position Maintenance on Check
+- **Decision**: Added LazyListState and animateItemPlacement() modifier to GroceryListDetailScreen to prevent unwanted scrolling when checking off items
+- **Rationale**: When users checked items in long lists, the view would jump to follow the checked item moving to the bottom, requiring constant scrolling back up to continue shopping
+- **Implementation**: rememberLazyListState() maintains scroll position, Modifier.animateItemPlacement() smoothly animates checked items moving to bottom without jumping scroll position, users can now efficiently work through list top-to-bottom
 
 #### Nov 22, 2025: Serving Size Extraction from Schema.org Nutrition Field
 - **Decision**: Added parseServingSize() to SchemaOrgRecipeParser to extract servingSize from Schema.org nutrition field during URL imports

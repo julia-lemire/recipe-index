@@ -1,7 +1,7 @@
 # Recipe Index Project Status
 
 > **Purpose**: Current status, core principles, completed features, and backlog
-> **Last Updated**: 2025-11-22
+> **Last Updated**: 2025-11-30
 
 **See Also:**
 - [DECISION_LOG.md](./DECISION_LOG.md) - Architectural decision records (WHAT/WHY/WHEN decisions were made)
@@ -178,7 +178,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ GroceryListManager with intelligent consolidation (removes ignored modifiers like diced/chopped/shredded/sliced, sums quantities for matching name+unit pairs, tracks source recipes)
 - ✅ GroceryListViewModel with StateFlow (search, create, update, delete lists and items)
 - ✅ GroceryListScreen with card-based list view (progress indicators showing checked/total items, create/delete dialogs, search)
-- ✅ GroceryListDetailScreen with quick-entry text field at top (like Out of Milk app), item checkboxes, item detail dialog showing source recipes, bottom actions for clear checked/add recipes/add meal plans
+- ✅ GroceryListDetailScreen with quick-entry text field at top (like Out of Milk app), item checkboxes, item detail dialog showing source recipes, bottom actions for clear checked/add recipes/add meal plans, smooth scroll position maintenance when checking items with animateItemPlacement
 - ✅ GroceryListPickerDialog component (reusable for selecting existing list or creating new)
 - ✅ Recipe-to-list integration ("Add to Grocery List" button on recipe cards)
 - ✅ Meal plan-to-list integration ("Generate List" button on meal plan cards)
@@ -186,6 +186,8 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ Canned/packaged items parsing ("9 oz can of tomatoes" → qty:1, unit:"can", name:"tomatoes", notes:"9 oz")
 - ✅ Item interaction: click to toggle checkbox, long-press for detail dialog
 - ✅ Units dropdown in detail dialog (none, cup, tbsp, tsp, oz, lb, g, kg, ml, L, can, pack, bottle, jar)
+- ✅ Pantry staples filtering system: PantryStapleConfig entity with user-configurable thresholds, filters common pantry items (spices, oils, vinegars, baking staples, aromatics, condiments, dairy) from grocery lists when quantity below threshold, shows items WITH quantity when exceeding threshold (e.g., "salt" hidden if ≤2 tbsp, shown as "1 cup salt" if >2 tbsp), 100+ default configurations covering all common pantry items, PantryStapleManager with smart unit normalization for accurate threshold comparison (converts cups/tbsp/tsp/oz/ml to common unit for comparison)
+- ✅ Pantry staples UI: PantryStaplesScreen with full CRUD operations (add/edit/delete items, edit threshold quantities and units, toggle enabled/disabled, category filtering, reset to defaults), accessible from Settings screen, PantryStapleViewModel for state management, comprehensive edit dialog with dropdown selectors for units and categories
 
 ### User Settings (Phase 5)
 - ✅ AppSettings data class with UnitSystem and TemperatureUnit enums

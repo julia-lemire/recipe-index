@@ -61,6 +61,9 @@ sealed class Screen(
         fun createRouteNew() = "add_edit_substitution/-1"
     }
 
+    // Settings screens (Settings is in drawer, PantryStaples is not)
+    object PantryStaples : Screen("pantry_staples", "Pantry Staples", Icons.Default.Settings)
+
     companion object {
         val drawerScreens = listOf(Home, RecipeIndex, Search, MealPlanning, GroceryLists, SubstitutionGuide, Settings)
     }

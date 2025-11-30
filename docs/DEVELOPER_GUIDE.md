@@ -81,6 +81,9 @@
 - **Manager**: `data/ContentManagers/GroceryListManager.kt`
 - **Entity**: `data/entities/GroceryList.kt`
 - **Screen**: `ui/screens/GroceryListScreen.kt`
+- **Pantry Filtering**: `data/managers/PantryStapleManager.kt` (configurable threshold-based filtering for common pantry items)
+- **Pantry Config**: `data/entities/PantryStapleConfig.kt` (threshold quantity/unit, category, always filter flag)
+- **Pantry Settings**: `ui/screens/PantryStaplesScreen.kt` (full CRUD UI for managing filter thresholds, accessible from Settings)
 
 ### Work with Ingredient Substitutions
 - **Manager**: `data/managers/SubstitutionManager.kt`

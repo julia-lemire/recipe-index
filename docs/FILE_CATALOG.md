@@ -70,7 +70,9 @@ com.recipeindex.app/
 │   │   ├── GroceryItemDao.kt
 │   │   ├── GroceryListDao.kt
 │   │   ├── MealPlanDao.kt
+│   │   ├── PantryStapleConfigDao.kt
 │   │   ├── RecipeDao.kt
+│   │   ├── RecipeLogDao.kt
 │   │   └── SubstitutionDao.kt
 │   │
 │   ├── entities/
@@ -78,12 +80,15 @@ com.recipeindex.app/
 │   │   ├── GroceryList.kt
 │   │   ├── IngredientSubstitution.kt
 │   │   ├── MealPlan.kt
-│   │   └── Recipe.kt
+│   │   ├── PantryStapleConfig.kt
+│   │   ├── Recipe.kt
+│   │   └── RecipeLog.kt
 │   │
 │   ├── managers/
 │   │   ├── GroceryListManager.kt
 │   │   ├── ImportManager.kt
 │   │   ├── MealPlanManager.kt
+│   │   ├── PantryStapleManager.kt
 │   │   ├── RecipeManager.kt
 │   │   ├── SettingsManager.kt
 │   │   └── SubstitutionManager.kt
@@ -131,6 +136,7 @@ com.recipeindex.app/
 │   │   ├── ImportTextScreen.kt
 │   │   ├── ImportUrlScreen.kt
 │   │   ├── MealPlanningScreen.kt
+│   │   ├── PantryStaplesScreen.kt
 │   │   ├── RecipeDetailScreen.kt
 │   │   ├── RecipeListScreen.kt
 │   │   ├── SearchScreen.kt
@@ -150,6 +156,7 @@ com.recipeindex.app/
 │   │   ├── ImportTextViewModel.kt
 │   │   ├── ImportViewModel.kt
 │   │   ├── MealPlanViewModel.kt
+│   │   ├── PantryStapleViewModel.kt
 │   │   ├── RecipeViewModel.kt
 │   │   ├── SettingsViewModel.kt
 │   │   ├── SubstitutionViewModel.kt

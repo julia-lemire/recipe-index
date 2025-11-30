@@ -30,7 +30,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
-    onMenuClick: () -> Unit = {}
+    onMenuClick: () -> Unit = {},
+    onNavigateToPantryStaples: () -> Unit = {}
 ) {
     DebugConfig.debugLog(DebugConfig.Category.UI, "SettingsScreen composed")
 
@@ -401,6 +402,34 @@ fun SettingsScreen(
                         Icon(Icons.Default.Description, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text("Get Recipe Template")
+                    }
+                }
+            }
+
+            Divider()
+
+            // Grocery List Section
+            SettingsSection(title = "Grocery Lists") {
+                Text(
+                    text = "Configure grocery list behavior",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = onNavigateToPantryStaples,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.FilterList, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Manage Pantry Staples Filter", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            "Configure which items are filtered from grocery lists",
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }
