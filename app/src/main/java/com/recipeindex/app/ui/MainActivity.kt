@@ -29,6 +29,8 @@ import com.recipeindex.app.utils.DebugConfig
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.plugins.logging.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 /**
  * MainActivity - Orchestrator only, no business logic

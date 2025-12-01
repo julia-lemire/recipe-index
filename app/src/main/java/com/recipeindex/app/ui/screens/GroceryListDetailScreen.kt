@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
  * - Click item to see details (source recipes, edit, delete)
  * - Bottom actions: Clear Checked, Add from Recipes, Add from Meal Plans
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun GroceryListDetailScreen(
     listId: Long,
