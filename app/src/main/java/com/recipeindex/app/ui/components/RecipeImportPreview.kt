@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -394,6 +395,14 @@ fun RecipeImportPreview(
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (tagInput.isNotBlank() && !recipe.tags.contains(tagInput.trim())) {
+                                    onRecipeChange(recipe.copy(tags = recipe.tags + tagInput.trim()))
+                                    tagInput = ""
+                                }
+                            }
+                        ),
                         trailingIcon = {
                             if (tagInput.isNotBlank()) {
                                 IconButton(onClick = {

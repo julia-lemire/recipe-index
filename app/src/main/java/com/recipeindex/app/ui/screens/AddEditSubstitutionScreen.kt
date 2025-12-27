@@ -3,6 +3,7 @@ package com.recipeindex.app.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -386,6 +387,14 @@ private fun SubstituteItem(
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            if (tagInput.isNotBlank() && tagInput !in dietaryTags) {
+                                dietaryTags = dietaryTags + tagInput.trim().lowercase()
+                                tagInput = ""
+                            }
+                        }
+                    ),
                     trailingIcon = {
                         if (tagInput.isNotBlank()) {
                             IconButton(

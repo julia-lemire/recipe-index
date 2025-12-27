@@ -10,7 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import com.recipeindex.app.data.entities.MealPlan
 
 /**
@@ -138,7 +141,17 @@ fun MealPlanPickerDialog(
                         onValueChange = { newPlanName = it },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("e.g., Week of Nov 18") }
+                        placeholder = { Text("e.g., Week of Nov 18") },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (newPlanName.isNotBlank()) {
+                                    onCreateNew(newPlanName)
+                                    showCreateDialog = false
+                                    newPlanName = ""
+                                }
+                            }
+                        )
                     )
                 }
             },

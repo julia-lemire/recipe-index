@@ -10,7 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import com.recipeindex.app.data.entities.PantryStapleConfig
 import com.recipeindex.app.ui.viewmodels.PantryStapleViewModel
 import com.recipeindex.app.utils.DebugConfig
@@ -515,7 +518,27 @@ private fun PantryStapleEditDialog(
                     label = { Text("Alternative Names (optional)") },
                     placeholder = { Text("e.g., sea salt, kosher salt") },
                     modifier = Modifier.fillMaxWidth(),
-                    supportingText = { Text("Comma-separated list of alternative names to match") }
+                    supportingText = { Text("Comma-separated list of alternative names to match") },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            if (itemName.isNotBlank() && (alwaysFilter || thresholdQuantity.toDoubleOrNull() != null)) {
+                                val qty = thresholdQuantity.toDoubleOrNull() ?: 0.0
+                                val newConfig = PantryStapleConfig(
+                                    id = config?.id ?: 0L,
+                                    itemName = itemName.trim(),
+                                    thresholdQuantity = qty,
+                                    thresholdUnit = thresholdUnit,
+                                    category = category,
+                                    alwaysFilter = alwaysFilter,
+                                    enabled = config?.enabled ?: true,
+                                    isCustom = config?.isCustom ?: true,
+                                    alternativeNames = alternativeNames.ifBlank { null }
+                                )
+                                onSave(newConfig)
+                            }
+                        }
+                    )
                 )
             }
         },

@@ -3,6 +3,7 @@ package com.recipeindex.app.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -279,6 +280,15 @@ fun AddEditRecipeScreen(
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            val newTag = tagInput.trim()
+                            if (newTag.isNotBlank() && !tags.contains(newTag)) {
+                                tags = tags + newTag
+                            }
+                            tagInput = ""
+                        }
                     ),
                     trailingIcon = {
                         if (tagInput.isNotBlank()) {
