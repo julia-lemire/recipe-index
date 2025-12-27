@@ -81,6 +81,9 @@ fun RecipeIndexNavigation(
                 onNavigateToRecipes = {
                     navController.navigate(Screen.RecipeIndex.route)
                 },
+                onNavigateToGroceryLists = {
+                    navController.navigate(Screen.GroceryLists.route)
+                },
                 onNavigateToRecipeDetail = { recipeId ->
                     navController.navigate(Screen.RecipeDetail.createRoute(recipeId))
                 },

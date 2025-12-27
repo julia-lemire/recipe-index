@@ -16,8 +16,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import com.recipeindex.app.data.entities.GroceryItem
 import com.recipeindex.app.data.entities.GroceryList
 import com.recipeindex.app.data.entities.MealPlan
@@ -123,7 +126,16 @@ fun GroceryListDetailScreen(
                         onValueChange = { manualEntryText = it },
                         placeholder = { Text("Add item...") },
                         modifier = Modifier.weight(1f),
-                        singleLine = true
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (manualEntryText.isNotBlank()) {
+                                    groceryListViewModel.addManualItem(listId, manualEntryText)
+                                    manualEntryText = ""
+                                }
+                            }
+                        )
                     )
                     IconButton(
                         onClick = {
