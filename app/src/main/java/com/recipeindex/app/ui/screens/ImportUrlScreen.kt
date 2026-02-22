@@ -11,7 +11,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import com.recipeindex.app.ui.components.RecipeImportPreview
 import com.recipeindex.app.ui.components.TagModificationDialog
 import com.recipeindex.app.ui.components.isRecipeValid
@@ -333,7 +336,15 @@ private fun InputUrlContent(
             modifier = Modifier.fillMaxWidth(),
             singleLine = false,
             maxLines = 3,
-            isError = errorMessage != null
+            isError = errorMessage != null,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    if (url.isNotBlank()) {
+                        onFetchClick()
+                    }
+                }
+            )
         )
 
         if (errorMessage != null) {

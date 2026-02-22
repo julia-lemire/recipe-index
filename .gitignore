@@ -9,3 +9,7 @@
 .gradle/file-system.probe
 .idea/deploymentTargetSelector.xml
 
+# macOS system files
+.DS_Store
+**/.DS_Store
+

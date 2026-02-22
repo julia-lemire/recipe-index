@@ -567,14 +567,14 @@ class GroceryListManager(
         thresholdQty: Double,
         thresholdUnit: String
     ): Boolean {
-        // No quantity means we can't compare, so include the item
+        // No quantity means this is a small/negligible amount - filter it out
         if (itemQty == null || itemQty <= 0) {
-            return true
+            return false
         }
 
-        // No unit means we can't compare properly, so include the item
+        // No unit means we can't compare properly - assume small amount and filter it out
         if (itemUnit == null) {
-            return true
+            return false
         }
 
         // Normalize both quantities to a common unit for comparison

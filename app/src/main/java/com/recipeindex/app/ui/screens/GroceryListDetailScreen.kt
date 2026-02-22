@@ -16,8 +16,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import com.recipeindex.app.data.entities.GroceryItem
 import com.recipeindex.app.data.entities.GroceryList
 import com.recipeindex.app.data.entities.MealPlan
@@ -34,7 +37,7 @@ import kotlinx.coroutines.launch
  * - Text field at top for quick manual entry (like Out of Milk app)
  * - List of items with checkboxes
  * - Click item to see details (source recipes, edit, delete)
- * - Bottom actions: Clear Checked, Add from Recipes, Add from Meal Plans
+ * - Bottom actions: Delete Checked, Add from Recipes, Add from Meal Plans
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -123,7 +126,16 @@ fun GroceryListDetailScreen(
                         onValueChange = { manualEntryText = it },
                         placeholder = { Text("Add item...") },
                         modifier = Modifier.weight(1f),
-                        singleLine = true
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (manualEntryText.isNotBlank()) {
+                                    groceryListViewModel.addManualItem(listId, manualEntryText)
+                                    manualEntryText = ""
+                                }
+                            }
+                        )
                     )
                     IconButton(
                         onClick = {
@@ -256,7 +268,7 @@ fun GroceryListDetailScreen(
                         )
                     }
 
-                    // Clear checked items
+                    // Delete checked items
                     val checkedItemsCount = items.count { it.isChecked }
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -269,7 +281,7 @@ fun GroceryListDetailScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear Checked",
+                            contentDescription = "Delete Checked",
                             tint = if (checkedItemsCount > 0) {
                                 MaterialTheme.colorScheme.primary
                             } else {
@@ -279,7 +291,7 @@ fun GroceryListDetailScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Clear ($checkedItemsCount)",
+                            text = "Delete ($checkedItemsCount)",
                             style = MaterialTheme.typography.labelSmall,
                             color = if (checkedItemsCount > 0) {
                                 MaterialTheme.colorScheme.onSurface
@@ -406,12 +418,12 @@ fun GroceryListDetailScreen(
         )
     }
 
-    // Clear checked confirmation dialog
+    // Delete checked confirmation dialog
     if (showClearCheckedDialog) {
         val checkedItemsCount = items.count { it.isChecked }
         AlertDialog(
             onDismissRequest = { showClearCheckedDialog = false },
-            title = { Text("Clear Checked Items") },
+            title = { Text("Delete Checked Items") },
             text = { Text("Are you sure you want to remove $checkedItemsCount checked items?") },
             confirmButton = {
                 TextButton(
@@ -420,7 +432,7 @@ fun GroceryListDetailScreen(
                         showClearCheckedDialog = false
                     }
                 ) {
-                    Text("Clear")
+                    Text("Delete")
                 }
             },
             dismissButton = {

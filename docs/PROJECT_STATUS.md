@@ -326,6 +326,18 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 
 ## Recent Updates (Latest Session)
 
+### Grocery List Improvements
+- ✅ **Pantry Filtering Bug Fix**: Fixed quantityExceedsThreshold() logic in GroceryListManager.kt (lines 570-578)
+  - Changed return value from `true` to `false` when item has null quantity or null unit
+  - Properly filters pantry staples with missing/small quantities instead of incorrectly including them
+  - Prevents spices and common items without explicit quantities from appearing on grocery lists
+  - Items WITH quantities exceeding thresholds still correctly appear (e.g., "1 cup salt" shows when >2 tbsp threshold)
+- ✅ **Clearer Action Language**: Changed "Clear" to "Delete" throughout GroceryListDetailScreen.kt
+  - Updated all UI text: button labels, dialog titles, content descriptions, comments
+  - "Clear" sounded ambiguous like "deselect" rather than indicating permanent deletion
+  - "Delete" provides clear intent that action is destructive and removes checked items from list
+  - Affects: Delete button text, Delete Checked dialog title, icon content descriptions
+
 ### Shared RecipeImportPreview Component
 - ✅ **Shared Preview Component**: Created RecipeImportPreview.kt in ui/components/ used by all three import screens
   - WYSIWYG preview cards for all recipe fields (title, metadata, ingredients, instructions, tags)

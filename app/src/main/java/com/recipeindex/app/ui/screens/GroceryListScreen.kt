@@ -14,7 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import com.recipeindex.app.data.entities.GroceryList
 import com.recipeindex.app.ui.MainActivity
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
@@ -243,7 +246,16 @@ fun GroceryListScreen(
                         onValueChange = { newListName = it },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("e.g., Weekly Shopping") }
+                        placeholder = { Text("e.g., Weekly Shopping") },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (newListName.isNotBlank()) {
+                                    groceryListViewModel.createList(newListName)
+                                    showCreateDialog = false
+                                }
+                            }
+                        )
                     )
                 }
             },

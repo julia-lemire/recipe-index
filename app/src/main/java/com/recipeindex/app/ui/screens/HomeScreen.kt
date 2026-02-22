@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -39,6 +40,7 @@ fun HomeScreen(
     onNavigateToImport: () -> Unit = {},
     onNavigateToCreate: () -> Unit = {},
     onNavigateToRecipes: () -> Unit = {},
+    onNavigateToGroceryLists: () -> Unit = {},
     onNavigateToRecipeDetail: (Long) -> Unit = {},
     onNavigateToMealPlanDetail: (Long) -> Unit = {},
     onToggleFavorite: (Long, Boolean) -> Unit = { _, _ -> },
@@ -102,7 +104,8 @@ fun HomeScreen(
                     item {
                         QuickActionsSection(
                             onImportClick = onNavigateToImport,
-                            onViewAllClick = onNavigateToRecipes
+                            onViewAllClick = onNavigateToRecipes,
+                            onGroceryListClick = onNavigateToGroceryLists
                         )
                     }
 
@@ -163,7 +166,8 @@ fun HomeScreen(
 @Composable
 private fun QuickActionsSection(
     onImportClick: () -> Unit,
-    onViewAllClick: () -> Unit
+    onViewAllClick: () -> Unit,
+    onGroceryListClick: () -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -197,6 +201,20 @@ private fun QuickActionsSection(
             ) {
                 Text("View All")
             }
+        }
+
+        // Grocery List quick access
+        FilledTonalButton(
+            onClick = onGroceryListClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                Icons.Default.ShoppingCart,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("Grocery Lists")
         }
     }
 }

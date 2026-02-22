@@ -46,6 +46,16 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Dec 27, 2025: Grocery List Delete Button Clarity
+- **Decision**: Changed all instances of "Clear" to "Delete" in GroceryListDetailScreen for checked item removal actions
+- **Rationale**: "Clear" was ambiguous sounding like "deselect" rather than indicating permanent deletion, causing user confusion about whether items would be removed or just unchecked
+- **Implementation**: Updated button text (line 294), dialog title (line 426), confirm button (line 435), icon content descriptions (line 284), and comments (lines 40, 271) to use "Delete" for explicit destructive action intent
+
+#### Dec 27, 2025: Pantry Staples Filtering Logic Fix
+- **Decision**: Fixed quantityExceedsThreshold() in GroceryListManager.kt to return `false` instead of `true` when items have null quantity or null unit
+- **Rationale**: Bug caused pantry staples with missing quantities/units (common for spices like "salt", "paprika") to be incorrectly included in grocery lists when they should be filtered out, defeating the purpose of threshold-based filtering
+- **Implementation**: Changed return values at lines 571-572 and 576-577 from `true` to `false`, updated comments to explain that null quantity/unit items are assumed to be small amounts and should be filtered, preserves logic that shows items WITH quantities when exceeding thresholds
+
 #### Nov 30, 2025: Pantry Staples Filtering System with User-Configurable Thresholds
 - **Decision**: Implemented configurable pantry staples filtering that removes common items (spices, oils, aromatics, etc.) from grocery lists when quantities are below user-defined thresholds but shows them WITH quantity when exceeding thresholds
 - **Rationale**: Users don't need to see "1 tsp salt" on grocery lists since they already have it, but DO need to see "2 cups salt" for unusual recipes requiring large quantities; provides smart, context-aware filtering based on actual recipe needs

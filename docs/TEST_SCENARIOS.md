@@ -401,7 +401,8 @@
 - [ ] Unit normalization: compare 2 cups vs 473 ml correctly (planned)
 - [ ] Unit normalization: compare 4 tbsp vs 1/4 cup correctly (planned)
 - [ ] Unit normalization: compare 1 lb vs 453g correctly (planned)
-- [ ] Show items without units (quantity unknown) (planned)
+- [ ] Filter items without quantities (null quantity returns false from quantityExceedsThreshold) (planned - GroceryListManagerTest)
+- [ ] Filter items without units (null unit returns false from quantityExceedsThreshold) (planned - GroceryListManagerTest)
 - [ ] Show items not in pantry staples config (planned)
 - [ ] Disabled pantry staple config doesn't filter (planned)
 - [ ] Custom user-added pantry staple filters correctly (planned)
@@ -597,6 +598,12 @@
 - [ ] BackHandler shows error via Snackbar and prevents navigation when validation fails (planned - UI test)
 - [ ] Import screens show network errors via Snackbar (planned - UI test)
 - [ ] Import screens show parsing errors via Snackbar (planned - UI test)
+
+### Grocery Lists - UI Clarity
+- [ ] GroceryListDetailScreen displays "Delete" instead of "Clear" for checked item removal (planned - UI test)
+- [ ] Dialog title shows "Delete Checked Items" for clarity (planned - UI test)
+- [ ] Confirm button in dialog shows "Delete" not "Clear" (planned - UI test)
+- [ ] Icon content descriptions use "Delete Checked" not "Clear Checked" (planned - UI test)
 
 ---
 

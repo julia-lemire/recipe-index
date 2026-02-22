@@ -19,7 +19,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.ui.MainActivity
@@ -346,7 +349,17 @@ fun MealPlanningScreen(
                         value = duplicateName,
                         onValueChange = { duplicateName = it },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (duplicateName.isNotBlank()) {
+                                    mealPlanViewModel.duplicateMealPlan(planToDuplicate!!, duplicateName)
+                                    showDuplicateDialog = false
+                                    planToDuplicate = null
+                                }
+                            }
+                        )
                     )
                 }
             },
