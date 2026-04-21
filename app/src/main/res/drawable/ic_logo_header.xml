@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
+    android:width="38dp"
+    android:height="38dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
@@ -25,23 +25,6 @@
         android:pathData="M25,82 L52,82 L52,77 L27,77 Z"
         android:fillColor="#A07840"/>
 
-    <!-- Cover texture lines -->
-    <path
-        android:pathData="M30,38 L48,39.5"
-        android:strokeColor="#38FFFFFF"
-        android:strokeWidth="1.5"
-        android:strokeLineCap="round"/>
-    <path
-        android:pathData="M30,46 L48,47.5"
-        android:strokeColor="#38FFFFFF"
-        android:strokeWidth="1.5"
-        android:strokeLineCap="round"/>
-    <path
-        android:pathData="M30,54 L46,55"
-        android:strokeColor="#38FFFFFF"
-        android:strokeWidth="1.5"
-        android:strokeLineCap="round"/>
-
     <!-- SPINE: sage green binding strip -->
     <path
         android:pathData="M52,26 L57,24 L57,84 L52,82 Z"
@@ -52,25 +35,10 @@
         android:pathData="M57,24 L85,22 C89,22 92,25 92,30 L92,74 C92,79 89,82 85,82 L57,84 Z"
         android:fillColor="#EDE8DC"/>
 
-    <!-- RIGHT: inner pages middle layer -->
-    <path
-        android:pathData="M57,24 L83,22.5 L83,81.5 L57,84 Z"
-        android:fillColor="#EDE8DC"/>
-
     <!-- RIGHT: inner pages front layer -->
     <path
         android:pathData="M57,24.5 L80,23 L80,81 L57,83.5 Z"
         android:fillColor="#F5F0E8"/>
-
-    <!-- Page edge lines -->
-    <path
-        android:pathData="M80,23 L83,22.5"
-        android:strokeColor="#D8D0C0"
-        android:strokeWidth="0.8"/>
-    <path
-        android:pathData="M80,81 L83,81.5"
-        android:strokeColor="#D8D0C0"
-        android:strokeWidth="0.8"/>
 
     <!-- Page text lines -->
     <path

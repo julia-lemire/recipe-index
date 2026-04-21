@@ -364,55 +364,42 @@ fun RecipeDetailScreen(
                 }
             }
 
-            // Action buttons row
+            // Action buttons row - icon-only circles
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                TextButton(
+                FilledTonalIconButton(
                     onClick = onAddToGroceryList,
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    modifier = Modifier.size(48.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(24.dp))
-                        Text("Grocery", style = MaterialTheme.typography.labelSmall)
-                    }
+                    Icon(Icons.Default.ShoppingCart, contentDescription = "Add to grocery list", modifier = Modifier.size(22.dp))
                 }
-                TextButton(
+                FilledTonalIconButton(
                     onClick = onAddToMealPlan,
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    modifier = Modifier.size(48.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(24.dp))
-                        Text("Meal Plan", style = MaterialTheme.typography.labelSmall)
-                    }
+                    Icon(Icons.Default.CalendarMonth, contentDescription = "Add to meal plan", modifier = Modifier.size(22.dp))
                 }
-                TextButton(
-                    onClick = {
-                        ShareHelper.shareRecipe(context, recipe, recipe.photoPath)
-                    },
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                FilledTonalIconButton(
+                    onClick = { ShareHelper.shareRecipe(context, recipe, recipe.photoPath) },
+                    modifier = Modifier.size(48.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(24.dp))
-                        Text("Share", style = MaterialTheme.typography.labelSmall)
-                    }
+                    Icon(Icons.Default.Share, contentDescription = "Share recipe", modifier = Modifier.size(22.dp))
                 }
-                TextButton(
+                FilledTonalIconButton(
                     onClick = { onToggleFavorite(!recipe.isFavorite) },
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = if (recipe.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    modifier = Modifier.size(48.dp),
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = if (recipe.isFavorite) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = if (recipe.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(
-                            if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text("Favorite", style = MaterialTheme.typography.labelSmall)
-                    }
+                    Icon(
+                        if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = if (recipe.isFavorite) "Remove from favorites" else "Add to favorites",
+                        modifier = Modifier.size(22.dp)
+                    )
                 }
             }
 

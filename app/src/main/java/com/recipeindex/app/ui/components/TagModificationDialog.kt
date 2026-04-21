@@ -1,16 +1,20 @@
 package com.recipeindex.app.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.utils.DebugConfig
@@ -100,15 +104,16 @@ fun TagModificationDialog(
                             colors = CardDefaults.cardColors(
                                 containerColor = when {
                                     isMarkedForDeletion -> MaterialTheme.colorScheme.errorContainer
-                                    mod.wasModified -> MaterialTheme.colorScheme.secondaryContainer
+                                    mod.wasModified -> MaterialTheme.colorScheme.tertiaryContainer
                                     else -> MaterialTheme.colorScheme.surfaceVariant
                                 }
-                            )
+                            ),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp)
+                                    .padding(12.dp)
                             ) {
                                 if (isEditing) {
                                     // Edit mode
@@ -147,11 +152,13 @@ fun TagModificationDialog(
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                        verticalAlignment = Alignment.Top
                                     ) {
-                                        Column(modifier = Modifier.weight(1f)) {
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
                                             if (isMarkedForDeletion) {
-                                                // Marked for deletion
                                                 Text(
                                                     text = mod.original,
                                                     style = MaterialTheme.typography.bodyMedium,
@@ -164,53 +171,63 @@ fun TagModificationDialog(
                                                     color = MaterialTheme.colorScheme.error
                                                 )
                                             } else if (mod.wasModified) {
-                                                // Show original → standardized
+                                                // BEFORE line
                                                 Row(
                                                     verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                                 ) {
+                                                    Text(
+                                                        text = "BEFORE",
+                                                        style = MaterialTheme.typography.labelMedium,
+                                                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.6f)
+                                                    )
                                                     Text(
                                                         text = mod.original,
                                                         style = MaterialTheme.typography.bodyMedium,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.6f),
                                                         textDecoration = TextDecoration.LineThrough
                                                     )
-                                                    Icon(
-                                                        Icons.Default.ArrowForward,
-                                                        contentDescription = "changed to",
-                                                        modifier = Modifier.size(16.dp),
-                                                        tint = MaterialTheme.colorScheme.primary
+                                                }
+                                                // AFTER line
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "AFTER",
+                                                        style = MaterialTheme.typography.labelMedium,
+                                                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.6f)
                                                     )
                                                     Text(
                                                         text = currentTag,
                                                         style = MaterialTheme.typography.bodyMedium,
-                                                        color = MaterialTheme.colorScheme.primary
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = MaterialTheme.colorScheme.onTertiaryContainer
                                                     )
                                                 }
                                                 if (mod.original != mod.standardized) {
-                                                    Spacer(modifier = Modifier.height(4.dp))
                                                     Text(
                                                         text = getRejectionReason(mod.original, mod.standardized),
                                                         style = MaterialTheme.typography.bodySmall,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.5f)
                                                     )
                                                 }
                                             } else {
                                                 // No change
                                                 Text(
                                                     text = currentTag,
-                                                    style = MaterialTheme.typography.bodyMedium
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                                 Text(
                                                     text = "No changes needed",
                                                     style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                                                 )
                                             }
                                         }
 
                                         if (isMarkedForDeletion) {
-                                            // Show restore button
                                             TextButton(
                                                 onClick = {
                                                     editedTags = editedTags.toMutableList().apply {
@@ -221,32 +238,52 @@ fun TagModificationDialog(
                                                 Text("Restore")
                                             }
                                         } else {
-                                            // Show delete and edit buttons
-                                            Row {
-                                                IconButton(
-                                                    onClick = {
-                                                        editedTags = editedTags.toMutableList().apply {
-                                                            this[index] = ""
-                                                        }
-                                                    }
+                                            // Edit + Remove icons stacked vertically
+                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(32.dp)
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                                                    contentAlignment = Alignment.Center
                                                 ) {
-                                                    Icon(
-                                                        Icons.Default.Remove,
-                                                        contentDescription = "Remove tag",
-                                                        tint = MaterialTheme.colorScheme.error
-                                                    )
+                                                    IconButton(
+                                                        onClick = {
+                                                            editingIndex = index
+                                                            editText = currentTag
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Edit,
+                                                            contentDescription = "Edit tag",
+                                                            modifier = Modifier.size(16.dp),
+                                                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                                                        )
+                                                    }
                                                 }
-                                                IconButton(
-                                                    onClick = {
-                                                        editingIndex = index
-                                                        editText = currentTag
-                                                    }
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(32.dp)
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                        .background(MaterialTheme.colorScheme.errorContainer),
+                                                    contentAlignment = Alignment.Center
                                                 ) {
-                                                    Icon(
-                                                        Icons.Default.Edit,
-                                                        contentDescription = "Edit tag",
-                                                        tint = MaterialTheme.colorScheme.primary
-                                                    )
+                                                    IconButton(
+                                                        onClick = {
+                                                            editedTags = editedTags.toMutableList().apply {
+                                                                this[index] = ""
+                                                            }
+                                                        },
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Close,
+                                                            contentDescription = "Remove tag",
+                                                            modifier = Modifier.size(16.dp),
+                                                            tint = MaterialTheme.colorScheme.error
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
@@ -262,19 +299,24 @@ fun TagModificationDialog(
                 // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = {
-                        DebugConfig.debugLog(
-                            DebugConfig.Category.UI,
-                            "[TAG_DIALOG] Cancel button clicked"
+                    IconButton(
+                        onClick = {
+                            DebugConfig.debugLog(
+                                DebugConfig.Category.UI,
+                                "[TAG_DIALOG] Cancel button clicked"
+                            )
+                            onDismiss()
+                        }
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Cancel",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        onDismiss()
-                    }) {
-                        Text("Cancel")
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
                             val finalTags = editedTags.filter { it.isNotBlank() }
@@ -283,9 +325,16 @@ fun TagModificationDialog(
                                 "[TAG_DIALOG] Accept clicked with ${finalTags.size} tags: $finalTags"
                             )
                             onAccept(finalTags)
-                        }
+                        },
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Text("Accept Changes")
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Accept all changes")
                     }
                 }
             }

@@ -23,7 +23,7 @@ import com.recipeindex.app.data.parsers.PdfRecipeParser
 import com.recipeindex.app.data.parsers.PhotoRecipeParser
 import com.recipeindex.app.data.parsers.UrlRecipeParser
 import com.recipeindex.app.ui.components.AppNavigationDrawer
-import com.recipeindex.app.ui.theme.HearthTheme
+import com.recipeindex.app.ui.theme.RecipeIndexTheme
 import com.recipeindex.app.ui.viewmodels.ViewModelFactory
 import com.recipeindex.app.utils.DebugConfig
 import io.ktor.client.*
@@ -126,7 +126,7 @@ class MainActivity : ComponentActivity() {
                 "Window size class: ${windowSizeClass.widthSizeClass}"
             )
 
-            HearthTheme {
+            RecipeIndexTheme {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
