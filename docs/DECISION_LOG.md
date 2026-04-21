@@ -46,6 +46,11 @@
 > **Organization**: Newest entries first (reverse chronological order)
 > **Keep it concise**: 1 sentence per field (Decision/Rationale/Implementation)
 
+#### Apr 20, 2026: Sage & Linen v2 Design System
+- **Decision**: Replaced Hearth v1 terracotta palette with Sage & Linen v2 (sage green primary, warm gold accent, forest ink text, `#F0F0EC` background, white card surfaces); renamed `HearthTheme` → `RecipeIndexTheme`.
+- **Rationale**: Hearth colours felt too warm/rustic; Sage & Linen gives a cleaner, more contemporary kitchen-journal aesthetic while staying within Material 3 role semantics.
+- **Implementation**: Color.kt rewritten with full token set, HearthTheme.kt / Type.kt updated, launcher icon converted to cookbook VectorDrawable, `ic_logo_header.xml` added; HomeScreen TopAppBar and QuickActions rewritten to icon-only pill buttons; RecipeDetailScreen action strip converted to icon-only `FilledTonalIconButton`; TagModificationDialog changed to two-line BEFORE/AFTER layout.
+
 #### Dec 27, 2025: Grocery List Delete Button Clarity
 - **Decision**: Changed all instances of "Clear" to "Delete" in GroceryListDetailScreen for checked item removal actions
 - **Rationale**: "Clear" was ambiguous sounding like "deselect" rather than indicating permanent deletion, causing user confusion about whether items would be removed or just unchecked

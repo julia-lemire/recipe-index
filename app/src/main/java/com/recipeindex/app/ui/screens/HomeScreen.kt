@@ -1,12 +1,17 @@
 package com.recipeindex.app.ui.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -14,8 +19,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.recipeindex.app.R
 import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.ui.viewmodels.HomeViewModel
@@ -23,15 +34,6 @@ import com.recipeindex.app.utils.DebugConfig
 import java.text.SimpleDateFormat
 import java.util.*
 
-/**
- * Home Screen - Landing page with quick actions and recipe highlights
- *
- * Layout:
- * - Quick action buttons (Import, View All)
- * - This week's meal plan
- * - Recent recipes (horizontal scroll)
- * - Favorite recipes (horizontal scroll)
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -41,6 +43,7 @@ fun HomeScreen(
     onNavigateToCreate: () -> Unit = {},
     onNavigateToRecipes: () -> Unit = {},
     onNavigateToGroceryLists: () -> Unit = {},
+    onNavigateToMealPlan: () -> Unit = {},
     onNavigateToRecipeDetail: (Long) -> Unit = {},
     onNavigateToMealPlanDetail: (Long) -> Unit = {},
     onToggleFavorite: (Long, Boolean) -> Unit = { _, _ -> },
@@ -55,11 +58,34 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Home") },
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = "Recipe Index",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onMenuClick) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 12.dp)
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.tertiaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_logo_header),
+                            contentDescription = "Recipe Index",
+                            modifier = Modifier.size(28.dp),
+                            tint = Color.Unspecified
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { /* TODO: navigate to search */ }) {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
                     }
                 }
             )
@@ -96,30 +122,26 @@ fun HomeScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp),
                     contentPadding = PaddingValues(vertical = 24.dp)
                 ) {
-                    // Quick Actions
                     item {
                         QuickActionsSection(
                             onImportClick = onNavigateToImport,
                             onViewAllClick = onNavigateToRecipes,
-                            onGroceryListClick = onNavigateToGroceryLists
+                            onGroceryListClick = onNavigateToGroceryLists,
+                            onMealPlanClick = onNavigateToMealPlan
                         )
                     }
 
-                    // This Week's Meal Plan
                     item {
                         ThisWeekMealPlanSection(
                             mealPlan = state.thisWeeksMealPlan,
-                            onMealPlanClick = { plan ->
-                                onNavigateToMealPlanDetail(plan.id)
-                            }
+                            onMealPlanClick = { plan -> onNavigateToMealPlanDetail(plan.id) }
                         )
                     }
 
-                    // Recent Recipes
                     if (state.recentRecipes.isNotEmpty()) {
                         item {
                             RecipeCarouselSection(
@@ -135,7 +157,6 @@ fun HomeScreen(
                         }
                     }
 
-                    // Favorite Recipes
                     if (state.favoriteRecipes.isNotEmpty()) {
                         item {
                             RecipeCarouselSection(
@@ -151,7 +172,6 @@ fun HomeScreen(
                         }
                     }
 
-                    // Empty state if no recipes
                     if (state.recentRecipes.isEmpty() && state.favoriteRecipes.isEmpty()) {
                         item {
                             EmptyStateSection(onImportClick = onNavigateToImport)
@@ -167,55 +187,95 @@ fun HomeScreen(
 private fun QuickActionsSection(
     onImportClick: () -> Unit,
     onViewAllClick: () -> Unit,
-    onGroceryListClick: () -> Unit
+    onGroceryListClick: () -> Unit,
+    onMealPlanClick: () -> Unit
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = "Quick Actions",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = "Quick actions",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
         )
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedButton(
+            QuickActionButton(
+                icon = Icons.Default.Download,
+                label = "Import",
                 onClick = onImportClick,
+                containerColor = MaterialTheme.colorScheme.surface,
+                iconColor = MaterialTheme.colorScheme.secondary,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 modifier = Modifier.weight(1f)
-            ) {
-                Icon(
-                    Icons.Default.Download,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(Modifier.width(4.dp))
-                Text("Import")
-            }
-
-            FilledTonalButton(
-                onClick = onViewAllClick,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("View All")
-            }
-        }
-
-        // Grocery List quick access
-        FilledTonalButton(
-            onClick = onGroceryListClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(
-                Icons.Default.ShoppingCart,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
             )
-            Spacer(Modifier.width(8.dp))
-            Text("Grocery Lists")
+            QuickActionButton(
+                icon = Icons.Default.MenuBook,
+                label = "Recipes",
+                onClick = onViewAllClick,
+                containerColor = MaterialTheme.colorScheme.primary,
+                iconColor = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.weight(1f)
+            )
+            QuickActionButton(
+                icon = Icons.Default.ShoppingCart,
+                label = "Grocery",
+                onClick = onGroceryListClick,
+                containerColor = MaterialTheme.colorScheme.primary,
+                iconColor = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.weight(1f)
+            )
+            QuickActionButton(
+                icon = Icons.Default.CalendarMonth,
+                label = "Meal plan",
+                onClick = onMealPlanClick,
+                containerColor = MaterialTheme.colorScheme.tertiary,
+                iconColor = MaterialTheme.colorScheme.onTertiary,
+                modifier = Modifier.weight(1f)
+            )
         }
+    }
+}
+
+@Composable
+private fun QuickActionButton(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    containerColor: Color,
+    iconColor: Color,
+    modifier: Modifier = Modifier,
+    border: BorderStroke? = null
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Surface(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            color = containerColor,
+            border = border
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    modifier = Modifier.size(22.dp),
+                    tint = iconColor
+                )
+            }
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -224,13 +284,12 @@ private fun ThisWeekMealPlanSection(
     mealPlan: MealPlan?,
     onMealPlanClick: (MealPlan) -> Unit
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = "This Week's Meal Plan",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = "This week",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         if (mealPlan != null) {
@@ -238,34 +297,35 @@ private fun ThisWeekMealPlanSection(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onMealPlanClick(mealPlan) },
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                ),
+                shape = RoundedCornerShape(15.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    if (mealPlan.startDate != null && mealPlan.endDate != null) {
+                        val monthDay = SimpleDateFormat("MMM d", Locale.getDefault())
+                        val dayOnly = SimpleDateFormat("d", Locale.getDefault())
+                        val startStr = monthDay.format(Date(mealPlan.startDate)).uppercase()
+                        val endStr = dayOnly.format(Date(mealPlan.endDate))
+                        Text(
+                            text = "$startStr – $endStr",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
                     Text(
                         text = mealPlan.name.ifBlank { "Meal Plan" },
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
-
-                    if (mealPlan.startDate != null && mealPlan.endDate != null) {
-                        val dateFormat = SimpleDateFormat("MMM d", Locale.getDefault())
-                        val startStr = dateFormat.format(Date(mealPlan.startDate))
-                        val endStr = dateFormat.format(Date(mealPlan.endDate))
-                        Text(
-                            text = "$startStr - $endStr",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
-                    }
-
                     Text(
-                        text = "${mealPlan.recipeIds.size} recipes",
+                        text = "${mealPlan.recipeIds.size} recipes planned",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
                     )
                 }
             }
@@ -274,7 +334,8 @@ private fun ThisWeekMealPlanSection(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                ),
+                shape = RoundedCornerShape(15.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -307,18 +368,14 @@ private fun RecipeCarouselSection(
     onShareRecipe: (Recipe) -> Unit,
     onDeleteRecipe: (Long) -> Unit
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
         )
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(recipes) { recipe ->
                 Box(modifier = Modifier.width(280.dp)) {
                     RecipeCard(
@@ -337,14 +394,13 @@ private fun RecipeCarouselSection(
 }
 
 @Composable
-private fun EmptyStateSection(
-    onImportClick: () -> Unit
-) {
+private fun EmptyStateSection(onImportClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        ),
+        shape = RoundedCornerShape(17.dp)
     ) {
         Column(
             modifier = Modifier

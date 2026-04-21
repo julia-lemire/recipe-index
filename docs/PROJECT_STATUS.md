@@ -54,7 +54,7 @@
 ## 1. Project Overview
 
 **Current Phase:** Advanced Features (Phase 5) - IN PROGRESS
-**Current Focus:** UX improvements (card compaction, icon buttons, context menus), intelligent parsing (canned items), meal plan auto-naming from dates, settings infrastructure
+**Current Focus:** Sage & Linen v2 design system rollout (theme, typography, icons, screen-by-screen UI polish)
 
 Recipe Index: Offline-first Android app for home cooks to store, organize, and plan meals with recipes from URLs/PDFs/photos.
 
@@ -99,7 +99,7 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - NEVER use BottomNavigation - use TopAppBar or NavigationDrawer
 - Material 3 spacing constants (4dp/8dp/16dp/24dp/32dp)
 - Detail screens use WindowInsets(0,0,0,0)
-- Hearth design system - terracotta/clay tones, dark cards for browsing, light for cooking
+- Sage & Linen v2 design system — sage green primary, warm gold accent, forest ink text, grey `#F0F0EC` background, white cards; documented in docs/DESIGN_SYSTEM.md
 
 ### Technical
 - Android native (Kotlin), Jetpack Compose, offline-first
@@ -117,14 +117,14 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 ### Planning & Documentation
 - ✅ Product brief (PRODUCT_BRIEF.md)
 - ✅ Design principles (../ANDROID_DESIGN_PRINCIPLES.md)
-- ✅ Hearth design system (DESIGN_SYSTEM.md)
+- ✅ Sage & Linen v2 design system (DESIGN_SYSTEM.md) — replaced Hearth v1
 - ✅ 5-document system (docs/)
 - ✅ Git workflow
 
 ### Foundation
 - ✅ Android project setup with Compose dependencies
 - ✅ DebugConfig utility with category-based logging
-- ✅ Hearth theme implementation (Color.kt, Type.kt, HearthTheme.kt)
+- ✅ Sage & Linen v2 theme implementation (Color.kt, Type.kt, HearthTheme.kt → RecipeIndexTheme)
 - ✅ Responsive navigation drawer (modal for phone, permanent for tablet)
 - ✅ Navigation structure with Screen sealed class
 - ✅ MainActivity as orchestrator pattern (setup dependencies, wire components only)

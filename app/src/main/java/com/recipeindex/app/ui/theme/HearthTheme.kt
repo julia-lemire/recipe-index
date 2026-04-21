@@ -11,67 +11,74 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-/**
- * Hearth Design System Theme
- *
- * Warm terracotta/clay color palette for home cooking aesthetic
- * Dark cards for browsing, light backgrounds for cooking mode
- */
-
 private val LightColorScheme = lightColorScheme(
-    primary = Terracotta,
-    onPrimary = Clay,
-    primaryContainer = TerracottaLight,
-    onPrimaryContainer = Clay,
+    primary = Sage,
+    onPrimary = White,
+    primaryContainer = SagePale,
+    onPrimaryContainer = Ink,
 
-    secondary = SageGreen,
-    onSecondary = Cream,
-    secondaryContainer = SageGreenLight,
-    onSecondaryContainer = Clay,
+    secondary = Accent,
+    onSecondary = White,
+    secondaryContainer = AccentPale,
+    onSecondaryContainer = Ink,
 
-    tertiary = ClayLight,
-    onTertiary = Cream,
+    tertiary = SageDark,
+    onTertiary = White,
+    tertiaryContainer = SageBackground,
+    onTertiaryContainer = Ink,
 
-    background = Cream,
-    onBackground = Clay,
+    background = Background,
+    onBackground = Ink,
 
-    surface = Cream,
-    onSurface = Clay,
-    surfaceVariant = WarmGray,
-    onSurfaceVariant = Clay,
+    surface = White,
+    onSurface = Ink,
+    surfaceVariant = SurfaceAlt,
+    onSurfaceVariant = InkMid,
 
-    error = Color(0xFFB3261E),
-    onError = Cream
+    outline = Border,
+    outlineVariant = BorderStrong,
+
+    error = Danger,
+    onError = White,
+    errorContainer = DangerSurface,
+    onErrorContainer = Ink,
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Terracotta,
-    onPrimary = DarkBrown,
-    primaryContainer = TerracottaDark,
-    onPrimaryContainer = Cream,
+    primary = Sage,
+    onPrimary = Ink,
+    primaryContainer = SageDark,
+    onPrimaryContainer = White,
 
-    secondary = SageGreen,
-    onSecondary = DarkBrown,
-    secondaryContainer = SageGreenLight,
-    onSecondaryContainer = Cream,
+    secondary = Accent,
+    onSecondary = Ink,
+    secondaryContainer = AccentPale,
+    onSecondaryContainer = Ink,
 
-    tertiary = ClayLight,
-    onTertiary = Cream,
+    tertiary = SagePale,
+    onTertiary = Ink,
+    tertiaryContainer = SageDark,
+    onTertiaryContainer = White,
 
-    background = DarkBrown,
-    onBackground = Cream,
+    background = Ink,
+    onBackground = White,
 
-    surface = Clay,
-    onSurface = Cream,
-    surfaceVariant = ClayLight,
-    onSurfaceVariant = Cream,
+    surface = InkMid,
+    onSurface = White,
+    surfaceVariant = Color(0xFF3A4A3E),
+    onSurfaceVariant = SagePale,
 
-    error = Color(0xFFF2B8B5),
-    onError = DarkBrown
+    outline = Color(0xFF4A5A4E),
+    outlineVariant = Color(0xFF3A4A3E),
+
+    error = Color(0xFFCF6679),
+    onError = Ink,
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = White,
 )
 
 @Composable
-fun HearthTheme(
+fun RecipeIndexTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
@@ -87,7 +94,7 @@ fun HearthTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = HearthTypography,
+        typography = RecipeIndexTypography,
         content = content
     )
 }
