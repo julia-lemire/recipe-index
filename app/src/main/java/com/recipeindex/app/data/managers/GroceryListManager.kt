@@ -1,15 +1,18 @@
 package com.recipeindex.app.data.managers
 
+import com.recipeindex.app.data.UnitSystem
 import com.recipeindex.app.data.dao.GroceryItemDao
 import com.recipeindex.app.data.dao.GroceryListDao
 import com.recipeindex.app.data.dao.RecipeDao
 import com.recipeindex.app.data.entities.GroceryItem
 import com.recipeindex.app.data.entities.GroceryList
 import com.recipeindex.app.utils.DebugConfig
+import com.recipeindex.app.utils.IngredientUnitConverter
 import com.recipeindex.app.utils.resultOf
 import com.recipeindex.app.utils.resultOfValidated
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlin.math.ceil
 
 /**
  * GroceryListManager - Business logic for grocery list operations
@@ -22,7 +25,8 @@ class GroceryListManager(
     private val groceryItemDao: GroceryItemDao,
     private val recipeDao: RecipeDao,
     private val mealPlanDao: com.recipeindex.app.data.dao.MealPlanDao,
-    private val pantryStapleManager: PantryStapleManager
+    private val pantryStapleManager: PantryStapleManager,
+    private val settingsManager: SettingsManager
 ) {
 
     /**
@@ -335,7 +339,15 @@ class GroceryListManager(
     }
 
     /**
-     * Parse ingredient string into structured data
+     * Parse ingredient string into structured data for a grocery list.
+     *
+     * Processing order:
+     * 1. Apply user's unit-conversion preference (oz→g, cups→ml, etc.)
+     * 2. Strip parenthetical prep notes  "(cut into strips)"
+     * 3. Strip comma-separated prep notes ", trimmed"
+     * 4. Remove preparation-only words (skinless, diced, sliced, …)
+     * 5. Extract quantity, validate unit against known units, rest = name
+     * 6. Round fractional counts up to 1 for countable items (½ onion → 1)
      */
     private fun parseIngredient(ingredientStr: String, recipeId: Long?): ParsedIngredient {
         DebugConfig.debugLog(
@@ -343,29 +355,66 @@ class GroceryListManager(
             "parseIngredient: Input='$ingredientStr' recipeId=$recipeId"
         )
 
-        var remaining = ingredientStr.trim()
+        val settings = settingsManager.settings.value
 
-        // Remove modifiers we want to ignore: diced, chopped, shredded, sliced
-        val ignoredModifiers = listOf("diced", "chopped", "shredded", "sliced", "cubed")
-        ignoredModifiers.forEach { modifier ->
-            remaining = remaining.replace(Regex("\\b$modifier\\b", RegexOption.IGNORE_CASE), "")
-        }
+        // Step 1: Apply unit conversion based on user preferences
+        var remaining = IngredientUnitConverter.formatIngredient(
+            ingredientStr.trim(),
+            liquidPreference = settings.liquidVolumePreference,
+            weightPreference = settings.weightPreference
+        )
+
+        // Step 2: Strip parenthetical content (prep notes, alternates, brand notes)
+        remaining = remaining.replace(Regex("\\s*\\([^)]*\\)"), "").trim()
+
+        // Step 3: Strip comma-separated prep clauses (e.g. ", cut into strips")
+        remaining = remaining.replace(Regex(",.*$"), "").trim()
+
+        // Step 4: Remove preparation and size modifier words
+        val prepModifiers = setOf(
+            "diced", "chopped", "shredded", "sliced", "cubed", "minced", "peeled",
+            "trimmed", "skinless", "boneless", "deveined", "halved", "quartered",
+            "thawed", "frozen", "softened", "melted", "beaten", "divided",
+            "cut", "into", "strips", "chunks", "pieces", "rings",
+            "small", "medium", "large", "fresh", "dry", "dried"
+        )
+        remaining = remaining.split(Regex("\\s+"))
+            .filter { word -> word.lowercase() !in prepModifiers }
+            .joinToString(" ")
+            .trim()
 
         DebugConfig.debugLog(
             DebugConfig.Category.MANAGER,
-            "parseIngredient: After modifier removal='$remaining'"
+            "parseIngredient: After cleaning='$remaining'"
         )
 
-        // Check for canned/packaged items pattern: "9 oz can of tomatoes" or "14.5 oz can tomatoes"
-        val cannedItemPattern = Regex("^([\\d./]+)\\s+(oz|g|ml|lb)\\s+(can|jar|bottle|pack|package)s?\\s+(?:of\\s+)?(.+)", RegexOption.IGNORE_CASE)
-        val cannedMatch = cannedItemPattern.find(remaining)
+        // Units that are valid grocery-list units (non-unit tokens treated as part of name)
+        val knownUnits = setOf(
+            "cup", "cups", "tbsp", "tablespoon", "tablespoons",
+            "tsp", "teaspoon", "teaspoons",
+            "oz", "ounce", "ounces", "fl", "floz",
+            "lb", "lbs", "pound", "pounds",
+            "g", "gram", "grams", "kg", "kilogram", "kilograms",
+            "ml", "milliliter", "milliliters", "l", "liter", "liters",
+            "can", "cans", "jar", "jars", "bottle", "bottles",
+            "pack", "package", "packages", "bunch", "bunches",
+            "sprig", "sprigs", "clove", "cloves", "slice", "slices",
+            "head", "heads", "stalk", "stalks", "ear", "ears",
+            "sheet", "sheets", "fillet", "fillets", "piece", "pieces",
+            "bag", "bags", "box", "boxes", "container", "containers"
+        )
 
+        // Check for canned/packaged items: "9 oz can of tomatoes"
+        val cannedItemPattern = Regex(
+            "^([\\d./]+)\\s+(oz|g|ml|lb)\\s+(can|jar|bottle|pack|package)s?\\s+(?:of\\s+)?(.+)",
+            RegexOption.IGNORE_CASE
+        )
+        val cannedMatch = cannedItemPattern.find(remaining)
         if (cannedMatch != null) {
             val sizeQuantity = cannedMatch.groupValues[1]
             val sizeUnit = cannedMatch.groupValues[2]
             val containerType = cannedMatch.groupValues[3].lowercase()
             val itemName = cannedMatch.groupValues[4].trim()
-
             val result = ParsedIngredient(
                 name = itemName,
                 quantity = 1.0,
@@ -375,40 +424,52 @@ class GroceryListManager(
             )
             DebugConfig.debugLog(
                 DebugConfig.Category.MANAGER,
-                "parseIngredient: Canned item detected -> name='${result.name}' qty=${result.quantity} unit='${result.unit}' notes='${result.notes}'"
+                "parseIngredient: Canned -> name='${result.name}' qty=${result.quantity} unit='${result.unit}'"
             )
             return result
         }
 
-        // Extract quantity and unit
-        val quantityPattern = Regex("^([\\d./]+)\\s*([a-zA-Z]+)?\\s+(.*)")
-        val match = quantityPattern.find(remaining)
+        // Extract quantity (handles integers, decimals, fractions, dash-mixed-numbers)
+        // Pattern: optional mixed-number like "1-1/3" or "1 1/2", then unit candidate, then name
+        val qtyPattern = Regex(
+            "^(\\d+[-\\s]\\d+/\\d+|\\d+/\\d+|\\d+\\.\\d+|\\d+)\\s*([a-zA-Z]+)?\\s*(.*)",
+            RegexOption.IGNORE_CASE
+        )
+        val match = qtyPattern.find(remaining)
 
         val result = if (match != null) {
-            val quantityStr = match.groupValues[1]
-            val unit = match.groupValues[2].takeIf { it.isNotBlank() }
-            val name = match.groupValues[3].trim()
+            val quantityStr = match.groupValues[1].trim()
+            val unitCandidate = match.groupValues[2].trim().lowercase()
+            val nameAfterUnit = match.groupValues[3].trim()
 
-            // Parse quantity (handle fractions like 1/2)
-            val quantity = if (quantityStr.contains('/')) {
-                val parts = quantityStr.split('/')
-                if (parts.size == 2) {
-                    parts[0].toDoubleOrNull()?.div(parts[1].toDoubleOrNull() ?: 1.0) ?: 0.0
-                } else {
-                    quantityStr.toDoubleOrNull() ?: 0.0
-                }
+            val quantity = parseMixedQuantity(quantityStr)
+
+            // Only treat the candidate as a unit if it's in the known-units list
+            val (unit, name) = if (unitCandidate.isNotBlank() && unitCandidate in knownUnits) {
+                Pair(match.groupValues[2].trim(), nameAfterUnit.ifBlank { unitCandidate })
             } else {
-                quantityStr.toDoubleOrNull() ?: 0.0
+                // Not a known unit — prepend it back onto the name
+                val fullName = listOf(match.groupValues[2], nameAfterUnit)
+                    .filter { it.isNotBlank() }
+                    .joinToString(" ")
+                Pair(null, fullName.ifBlank { remaining })
             }
 
-            ParsedIngredient(
+            var parsed = ParsedIngredient(
                 name = name.trim(),
-                quantity = if (quantity > 0) quantity else null,
+                quantity = if ((quantity ?: 0.0) > 0) quantity else null,
                 unit = unit,
                 recipeId = recipeId
             )
+
+            // Round up fractional quantities for countable (unit-less) items
+            // e.g. 1/2 onion → 1 onion; 0.5 avocado → 1 avocado
+            if (parsed.unit == null && (parsed.quantity ?: 1.0) in 0.001..0.999) {
+                parsed = parsed.copy(quantity = ceil(parsed.quantity!!).coerceAtLeast(1.0))
+            }
+
+            parsed
         } else {
-            // No quantity found, treat whole string as name
             ParsedIngredient(
                 name = remaining.trim(),
                 quantity = null,
@@ -422,6 +483,33 @@ class GroceryListManager(
             "parseIngredient: Result -> name='${result.name}' qty=${result.quantity} unit='${result.unit}'"
         )
         return result
+    }
+
+    /**
+     * Parse a quantity string that may be a whole number, decimal, simple fraction,
+     * or mixed number separated by space or dash (e.g. "1-1/3", "1 1/2", "2/3", "1.5").
+     */
+    private fun parseMixedQuantity(quantityStr: String): Double? {
+        val s = quantityStr.trim()
+
+        // Dash or space mixed number: "1-1/3" or "1 1/2"
+        val mixedDash = Regex("^(\\d+)[-\\s](\\d+)/(\\d+)$")
+        mixedDash.find(s)?.let { m ->
+            val whole = m.groupValues[1].toDoubleOrNull() ?: return null
+            val num   = m.groupValues[2].toDoubleOrNull() ?: return null
+            val den   = m.groupValues[3].toDoubleOrNull()?.takeIf { it != 0.0 } ?: return null
+            return whole + num / den
+        }
+
+        // Simple fraction: "1/2"
+        val fraction = Regex("^(\\d+)/(\\d+)$")
+        fraction.find(s)?.let { m ->
+            val num = m.groupValues[1].toDoubleOrNull() ?: return null
+            val den = m.groupValues[2].toDoubleOrNull()?.takeIf { it != 0.0 } ?: return null
+            return num / den
+        }
+
+        return s.toDoubleOrNull()
     }
 
     /**

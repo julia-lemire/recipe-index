@@ -64,14 +64,15 @@ class MainActivity : ComponentActivity() {
         val recipeManager = RecipeManager(database.recipeDao(), database.recipeLogDao(), database.mealPlanDao())
         val mealPlanManager = MealPlanManager(database.mealPlanDao(), database.recipeDao())
         val pantryStapleManager = PantryStapleManager(database.pantryStapleConfigDao())
+        val settingsManager = SettingsManager(applicationContext)
         val groceryListManager = GroceryListManager(
             database.groceryListDao(),
             database.groceryItemDao(),
             database.recipeDao(),
             database.mealPlanDao(),
-            pantryStapleManager
+            pantryStapleManager,
+            settingsManager
         )
-        val settingsManager = SettingsManager(applicationContext)
         val substitutionManager = SubstitutionManager(database.substitutionDao())
 
         // Initialize pantry staples defaults on first run
