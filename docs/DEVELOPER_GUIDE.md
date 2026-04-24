@@ -408,4 +408,37 @@ viewModel.saveRecipe(state.recipe, selectedImageUrls.toList())
 
 **Example**: "3 Transfer to pan..." + "everything halfway." → joined as one instruction step. "U 16 0z radishes" → "16 oz radishes" after OCR cleaning. "Skinnytaste > Main Ingredient" correctly skipped as breadcrumb.
 
+
+### Primary Tab Bar Pattern
+**Use when**: Three or fewer primary screens need fast switching; drawer nav is too many taps
+**Structure**:
+- Create a shared TabRow component in `ui/components/PrimaryTabBar.kt`
+- Primary screens accept `onTabSelect: (Screen) -> Unit = {}` as a trailing parameter (defaulting to no-op)
+- Embed PrimaryTabBar inside a Column wrapping the screen's TopAppBar (i.e. inside the `topBar` lambda of Scaffold)
+- In Navigation.kt, wire onTabSelect with: `popUpTo(Screen.Home.route) { saveState = true }; launchSingleTop = true; restoreState = true`
+- Keep the drawer for secondary/infrequent pages (Home, Settings, etc.)
+- Never use BottomNavigation (screen space rule in ANDROID_DESIGN_PRINCIPLES.md)
+
+**Example**: RecipeListScreen, MealPlanningScreen, GroceryListScreen each embed PrimaryTabBar below their TopAppBar; tabs use saveState/restoreState so switching tabs preserves scroll position and the back button returns to Home
+
+### Two-Step Dialog Pattern
+**Use when**: Creating an entity requires collecting two categories of data in sequence, where the first informs the second
+**Structure**:
+- Use a private `enum class Step` to model the steps
+- Track `var step by remember { mutableStateOf(Step.FIRST) }`
+- Use `when(step)` in the `text` slot and `confirmButton`/`dismissButton` slots of AlertDialog
+- Auto-derive data for step 2 from step 1 choices using LaunchedEffect; let user override
+- "Back" in step 2 returns to step 1; "Cancel" in step 1 dismisses
+
+**Example**: CreateMealPlanDialog — step 1 shows a date range picker, step 2 shows a name field pre-filled via DateFormatting.autoNameFromDateRange(); name tracks whether user has manually edited it to avoid overwriting on re-entry
+
+### Shared Formatting Utilities
+**Use when**: Date/time formatting or other pure functions are needed in more than one file
+**Structure**:
+- Place in `utils/` as a Kotlin `object` (not a class)
+- Keep functions pure — no dependencies on Context or ViewModel
+- Import the object by name at each call site; do not re-implement locally
+
+**Example**: `DateFormatting` object in `utils/DateFormatting.kt` provides formatDate, formatDateShort, formatDateRange, autoNameFromDateRange, formatTimeAgo; replaces 6+ private duplicate functions that had been copy-pasted across screens
+
 ---
