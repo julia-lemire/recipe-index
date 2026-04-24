@@ -50,6 +50,17 @@ class GroceryListViewModel(
 
     init {
         loadLists()
+        ensureDefaultList()
+    }
+
+    private fun ensureDefaultList() {
+        viewModelScope.launch {
+            groceryListManager.getAllLists().first().let { lists ->
+                if (lists.none { it.name == "Weekly Groceries" }) {
+                    groceryListManager.createList("Weekly Groceries")
+                }
+            }
+        }
     }
 
     /**

@@ -746,4 +746,29 @@
 - **Rationale**: Enables runtime configuration changes, better testability, user customization
 - **Implementation**: AppSettings class for global prefs, category-specific Settings where needed
 
+#### Apr 24, 2026: Top Tab Bar for Primary Navigation
+- **Decision**: Added PrimaryTabBar (TabRow) to RecipeListScreen, MealPlanningScreen, GroceryListScreen; removed those three from drawerScreens; kept drawer for Home, Search, SubstitutionGuide, Settings.
+- **Rationale**: Drawer required too many taps for primary screens; top tabs are faster and match user preference (no bottom nav).
+- **Implementation**: PrimaryTabBar.kt in ui/components/; primary screens gain onTabSelect: (Screen) -> Unit; Navigation.kt uses popUpTo(Home) with saveState + restoreState.
+
+#### Apr 24, 2026: Date-First Meal Plan Creation Flow
+- **Decision**: CreateMealPlanDialog presents a date range picker first, auto-names from the range ("Week of Apr 21"), then lets the user edit; "Skip dates" bypasses to name entry.
+- **Rationale**: Users previously had to invent a name before seeing dates; date range makes naming obvious.
+- **Implementation**: Two-step composable; MealPlanPickerDialog.onCreateNew widened to (name, startDate, endDate); all call sites updated.
+
+#### Apr 24, 2026: Default "Weekly Groceries" Grocery List
+- **Decision**: GroceryListViewModel.init creates "Weekly Groceries" on first launch if none exists; no per-week automation.
+- **Rationale**: Users need a list ready to use immediately without setup; one persistent default list covers common weekly shopping.
+- **Implementation**: ensureDefaultList() in GroceryListViewModel.init; idempotent via name check.
+
+#### Apr 24, 2026: Shared DateFormatting and ImportSourceCard
+- **Decision**: Extracted DateFormatting (utils/) and ImportSourceCard (ui/components/) to eliminate 6+ private duplicates across screens.
+- **Rationale**: Audit found identical code copy-pasted into every screen that needed dates or import-source cards.
+- **Implementation**: All callers migrated; private duplicates removed from AddEditMealPlanScreen and ImportSourceSelectionScreen.
+
+#### Apr 24, 2026: Grocery List Ingredient Cleaning Pipeline
+- **Decision**: GroceryListManager.parseIngredient runs 6 steps: unit conversion, strip parenthetical notes, strip comma clauses, remove prep adjectives, validate unit tokens, round fractional counts up to 1.
+- **Rationale**: Grocery items showed raw prep notes ("cut into strips") and ignored unit-conversion settings that worked in the recipe viewer.
+- **Implementation**: GroceryListManager takes SettingsManager as 6th constructor arg; MainActivity init order adjusted.
+
 ---

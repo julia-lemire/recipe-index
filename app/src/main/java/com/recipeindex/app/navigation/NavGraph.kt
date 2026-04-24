@@ -65,6 +65,6 @@ sealed class Screen(
     object PantryStaples : Screen("pantry_staples", "Pantry Staples", Icons.Default.Settings)
 
     companion object {
-        val drawerScreens = listOf(Home, RecipeIndex, Search, MealPlanning, GroceryLists, SubstitutionGuide, Settings)
+        val drawerScreens = listOf(Home, Search, SubstitutionGuide, Settings)
     }
 }

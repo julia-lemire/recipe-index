@@ -532,4 +532,27 @@ Recipe Index: Offline-first Android app for home cooks to store, organize, and p
 - ✅ **Build Errors**: Fixed `Icons.Default.Star` references to use `Icons.Default.Favorite`
 - ✅ **Flow Handling**: Fixed `getAllExistingTags()` to properly collect from Flow using `.first()`
 
+
+### Navigation & UX Improvements (Apr 24, 2026)
+- ✅ **Top Tab Bar**: Added PrimaryTabBar (Material 3 TabRow) to Recipes, Meal Plans, Grocery Lists screens
+  - Hamburger drawer retained for secondary pages (Home, Search, Substitution Guide, Settings)
+  - Tabs use saveState/restoreState for proper back stack and scroll position preservation
+- ✅ **Date-First Meal Plan Creation**: CreateMealPlanDialog shows date picker before name
+  - Auto-names from date range ("Week of Apr 21" for 7-day plans)
+  - "Skip dates" link bypasses to name-only entry
+  - MealPlanPickerDialog onCreateNew signature updated at all call sites
+- ✅ **Default Weekly Groceries List**: GroceryListViewModel creates "Weekly Groceries" on first launch
+- ✅ **Home in Drawer**: Home screen accessible via drawer for back-navigation fallback
+
+### Code Consolidation (Apr 24, 2026)
+- ✅ **DateFormatting Utility**: Extracted shared date formatting to utils/DateFormatting.kt
+  - Removed 6+ private duplicate functions across screens
+  - formatDate, formatDateShort, formatDateRange, autoNameFromDateRange, formatTimeAgo
+- ✅ **ImportSourceCard Component**: Extracted to ui/components/ImportSourceCard.kt
+  - Removed private duplicates from AddEditMealPlanScreen and ImportSourceSelectionScreen
+- ✅ **Grocery List Ingredient Cleaning**: GroceryListManager.parseIngredient 6-step pipeline
+  - Unit conversion respects Settings (metric weight/volume)
+  - Strips parenthetical and comma-separated prep notes
+  - Rounds fractional count-only quantities up to 1
+
 ---

@@ -38,7 +38,9 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.recipeindex.app.data.RecipeViewMode
 import com.recipeindex.app.data.entities.Recipe
+import com.recipeindex.app.navigation.Screen
 import com.recipeindex.app.ui.components.GroceryListPickerDialog
+import com.recipeindex.app.ui.components.PrimaryTabBar
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
 import com.recipeindex.app.ui.viewmodels.SettingsViewModel
@@ -63,7 +65,8 @@ fun RecipeListScreen(
     onAddRecipe: () -> Unit,
     onImportRecipe: () -> Unit = {},
     onRecipeClick: (Long) -> Unit,
-    onMenuClick: () -> Unit = {}
+    onMenuClick: () -> Unit = {},
+    onTabSelect: (Screen) -> Unit = {}
 ) {
     DebugConfig.debugLog(DebugConfig.Category.UI, "RecipeListScreen composed")
 
@@ -111,6 +114,7 @@ fun RecipeListScreen(
 
     Scaffold(
         topBar = {
+            Column {
             TopAppBar(
                 title = { Text("Recipe Index") },
                 navigationIcon = {
@@ -164,6 +168,8 @@ fun RecipeListScreen(
                     )
                 }
             )
+            PrimaryTabBar(currentRoute = Screen.RecipeIndex.route, onTabSelect = onTabSelect)
+            } // Column
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -349,13 +355,12 @@ fun RecipeListScreen(
                 showMealPlanPicker = false
                 recipeForMealPlan = null
             },
-            onCreateNew = { planName ->
-                // Create a new meal plan with just this recipe
+            onCreateNew = { name, startDate, endDate ->
                 val newPlan = com.recipeindex.app.data.entities.MealPlan(
-                    name = planName,
+                    name = name,
                     recipeIds = listOf(recipeForMealPlan!!.id),
-                    startDate = null,
-                    endDate = null
+                    startDate = startDate,
+                    endDate = endDate
                 )
                 mealPlanViewModel.createMealPlan(newPlan) { _ ->
                     showMealPlanPicker = false

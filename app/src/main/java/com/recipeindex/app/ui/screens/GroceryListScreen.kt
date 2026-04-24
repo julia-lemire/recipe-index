@@ -20,6 +20,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import com.recipeindex.app.data.entities.GroceryList
 import com.recipeindex.app.ui.MainActivity
+import com.recipeindex.app.navigation.Screen
+import com.recipeindex.app.ui.components.PrimaryTabBar
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.utils.DebugConfig
 import com.recipeindex.app.utils.ShareHelper
@@ -38,7 +40,8 @@ import java.util.*
 fun GroceryListScreen(
     groceryListViewModel: GroceryListViewModel,
     onViewList: (Long) -> Unit,
-    onMenuClick: () -> Unit = {}
+    onMenuClick: () -> Unit = {},
+    onTabSelect: (Screen) -> Unit = {}
 ) {
     DebugConfig.debugLog(DebugConfig.Category.UI, "GroceryListScreen composed")
 
@@ -116,6 +119,7 @@ fun GroceryListScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
+            Column {
             TopAppBar(
                 title = { Text("Grocery Lists") },
                 navigationIcon = {
@@ -151,6 +155,8 @@ fun GroceryListScreen(
                     )
                 }
             )
+            PrimaryTabBar(currentRoute = Screen.GroceryLists.route, onTabSelect = onTabSelect)
+            } // Column
         },
         floatingActionButton = {
             FloatingActionButton(

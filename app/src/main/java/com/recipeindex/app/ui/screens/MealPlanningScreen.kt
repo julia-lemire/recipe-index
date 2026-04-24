@@ -26,7 +26,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.ui.MainActivity
+import com.recipeindex.app.navigation.Screen
 import com.recipeindex.app.ui.components.GroceryListPickerDialog
+import com.recipeindex.app.ui.components.PrimaryTabBar
 import com.recipeindex.app.ui.viewmodels.GroceryListViewModel
 import com.recipeindex.app.ui.viewmodels.MealPlanViewModel
 import com.recipeindex.app.ui.viewmodels.RecipeViewModel
@@ -50,7 +52,8 @@ fun MealPlanningScreen(
     groceryListViewModel: GroceryListViewModel,
     onAddMealPlan: () -> Unit,
     onEditMealPlan: (Long) -> Unit,
-    onMenuClick: () -> Unit = {}
+    onMenuClick: () -> Unit = {},
+    onTabSelect: (Screen) -> Unit = {}
 ) {
     DebugConfig.debugLog(DebugConfig.Category.UI, "MealPlanningScreen composed")
 
@@ -135,6 +138,7 @@ fun MealPlanningScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
+            Column {
             TopAppBar(
                 title = { Text("Meal Planning") },
                 navigationIcon = {
@@ -170,6 +174,8 @@ fun MealPlanningScreen(
                     )
                 }
             )
+            PrimaryTabBar(currentRoute = Screen.MealPlanning.route, onTabSelect = onTabSelect)
+            } // Column
         },
         floatingActionButton = {
             FloatingActionButton(
