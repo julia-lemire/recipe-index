@@ -118,7 +118,10 @@ com.recipeindex.app/
 │   │   ├── DatePickerDialog.kt
 │   │   ├── GroceryListPickerDialog.kt
 │   │   ├── ImportDialog.kt
+│   │   ├── CreateMealPlanDialog.kt
+│   │   ├── ImportSourceCard.kt
 │   │   ├── MealPlanPickerDialog.kt
+│   │   ├── PrimaryTabBar.kt
 │   │   ├── RecipeImportPreview.kt
 │   │   ├── SubstitutionDialog.kt
 │   │   └── TagModificationDialog.kt
@@ -187,6 +190,7 @@ com.recipeindex.app/
     │   └── ui/
     │       ├── FilterChipRow.kt
     │       └── SortMenu.kt
+    ├── DateFormatting.kt
     ├── DebugConfig.kt
     ├── ErrorHandler.kt
     ├── IngredientScaler.kt
@@ -346,7 +350,10 @@ com.recipeindex.app/
 - **DatePickerDialog.kt** - Reusable Material3 date picker dialog: AppDatePickerDialog component for selecting dates across the app, replaces placeholder "Set Today" dialogs, used by AddEditMealPlanScreen
 - **GroceryListPickerDialog.kt** - Reusable grocery list picker dialog: Select existing list or create new, used by RecipeListScreen/RecipeDetailScreen/MealPlanningScreen for "Add to Grocery List" actions
 - **ImportDialog.kt** - Import dialogs for share/import system: RecipeDuplicateDialog (Replace/Keep Both/Skip actions with side-by-side preview), MealPlanImportDialog (per-recipe duplicate selection with mutable state), GroceryListImportDialog (simple confirmation with item count), used by MainActivity intent handling and Settings import
-- **MealPlanPickerDialog.kt** - Reusable meal plan picker dialog: Select existing plan or create new, used by RecipeListScreen/RecipeDetailScreen for "Add to Meal Plan" actions from calendar icon
+- **CreateMealPlanDialog.kt** - Two-step meal plan creation: step 1 date range picker, step 2 name field auto-filled from date range via DateFormatting.autoNameFromDateRange(); embedded inside MealPlanPickerDialog
+- **ImportSourceCard.kt** - Shared card composable for import source options (icon, title, description, enabled state with "Coming soon" label); replaces private duplicates in AddEditMealPlanScreen and ImportSourceSelectionScreen
+- **MealPlanPickerDialog.kt** - Reusable meal plan picker: select existing plan or create new (via CreateMealPlanDialog); onCreateNew receives (name, startDate, endDate)
+- **PrimaryTabBar.kt** - Top tab bar for the three primary screens (Recipes, Meal Plans, Grocery); embedded in each screen's topBar Column below TopAppBar; onTabSelect navigates with saveState/restoreState
 - **RecipeImportPreview.kt** - Shared WYSIWYG recipe preview component: Used by all import screens (URL, PDF, Photo, Text) for consistent preview experience, provides card-based preview for all recipe fields (title, metadata, ingredients, instructions, tags), per-field edit dialogs, image selection grid with checkmark overlays, inline tag editing with auto-suggestions from existing tags, imePadding() for keyboard-aware scrolling with 100dp Spacer at bottom ensuring tag suggestions remain visible above keyboard, isRecipeValid() helper function for save button enablement
 - **SubstitutionDialog.kt** - Ingredient substitution lookup dialog: Shows substitutes for ingredient from recipe (triggered by long-press), displays converted amounts based on quantity/unit from parsed ingredient string, substitutes ordered by suitability, shows dietary tags
 - **TagModificationDialog.kt** - Tag standardization review dialog: Shows original→standardized tag transformations during recipe import, allows users to edit/remove each tag before accepting with minus icon button, visual feedback for deleted tags (red background, strikethrough), restore button to undo deletions, prevents silent modifications (e.g., "vegan bowls"→"vegan"), used by ImportUrlScreen
@@ -393,6 +400,7 @@ com.recipeindex.app/
 - **SortMenu.kt** - Sort dropdown menu: IconButton with Sort icon, DropdownMenu with sort options, shows checkmark for active sort, shows direction arrow (up/down) for active sort, "Clear Sort" option when sort active, clicking active sort toggles direction, clicking inactive sort selects it
 
 ### Utils - Core
+- **DateFormatting.kt** - Shared date formatting utility (object): formatDate ("Nov dd, yyyy"), formatDateShort ("Nov d"), formatDateRange ("Nov 18-22"), autoNameFromDateRange ("Week of Nov 18"), formatTimeAgo ("2 days ago"); replaces 6+ private duplicates
 - **DebugConfig.kt** - Centralized logging: Category-based filtering (NAVIGATION, DATABASE, IMPORT, UI, MANAGER, SETTINGS, GENERAL), replaces android.util.Log
 - **ErrorHandler.kt** - Error handling utility: User-friendly error messages (network, validation, state errors), handleResult() for Result<T> processing, executeSafely() and executeWithRetry() for suspending operations
 - **IngredientScaler.kt** - Ingredient quantity parsing and scaling: scaleIngredient() parses fractions (1/2), mixed numbers (1 1/2), decimals, ranges (2-3), scales by factor, formats output preferring common fractions (1/4, 1/2, 3/4), preserves units
