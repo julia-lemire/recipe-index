@@ -10,30 +10,32 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import com.recipeindex.app.data.entities.MealPlan
+import com.recipeindex.app.utils.DateFormatting
 
 /**
- * Reusable meal plan picker dialog
- *
- * Allows user to:
- * - Select an existing meal plan to add recipe to
- * - Create a new meal plan with the recipe
- *
- * Used when adding recipes to meal plans from recipe cards or detail screen
+ * Meal plan picker — select an existing plan or create a new one (date-first flow).
+ * onCreateNew receives (name, startDate, endDate).
  */
 @Composable
 fun MealPlanPickerDialog(
     availablePlans: List<MealPlan>,
     onDismiss: () -> Unit,
     onPlanSelected: (Long) -> Unit,
-    onCreateNew: (String) -> Unit
+    onCreateNew: (name: String, startDate: Long?, endDate: Long?) -> Unit
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
-    var newPlanName by remember { mutableStateOf("") }
+
+    if (showCreateDialog) {
+        CreateMealPlanDialog(
+            onConfirm = { name, start, end ->
+                onCreateNew(name, start, end)
+                showCreateDialog = false
+            },
+            onDismiss = { showCreateDialog = false }
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -49,9 +51,8 @@ fun MealPlanPickerDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-                // Create new plan button
                 OutlinedButton(
                     onClick = { showCreateDialog = true },
                     modifier = Modifier.fillMaxWidth()
@@ -62,13 +63,12 @@ fun MealPlanPickerDialog(
                 }
 
                 if (availablePlans.isNotEmpty()) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-                    // Existing plans
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 300.dp),
+                            .heightIn(max = 280.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         items(availablePlans, key = { it.id }) { plan ->
@@ -79,31 +79,27 @@ fun MealPlanPickerDialog(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            Icons.Default.CalendarMonth,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.primary
+                                    Icon(
+                                        Icons.Default.CalendarMonth,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Column {
+                                        Text(
+                                            text = plan.name,
+                                            style = MaterialTheme.typography.bodyLarge
                                         )
-                                        Column {
+                                        val dateLabel = DateFormatting.formatDateRange(plan.startDate, plan.endDate)
+                                        if (dateLabel.isNotBlank()) {
                                             Text(
-                                                text = plan.name,
-                                                style = MaterialTheme.typography.bodyLarge
+                                                text = dateLabel,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
-                                            plan.startDate?.let {
-                                                Text(
-                                                    text = formatDate(it),
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
                                         }
                                     }
                                 }
@@ -120,67 +116,9 @@ fun MealPlanPickerDialog(
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
         }
     )
-
-    // Create new plan dialog
-    if (showCreateDialog) {
-        AlertDialog(
-            onDismissRequest = { showCreateDialog = false },
-            title = { Text("Create Meal Plan") },
-            text = {
-                Column {
-                    Text("Enter name for the new plan:")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = newPlanName,
-                        onValueChange = { newPlanName = it },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("e.g., Week of Nov 18") },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                if (newPlanName.isNotBlank()) {
-                                    onCreateNew(newPlanName)
-                                    showCreateDialog = false
-                                    newPlanName = ""
-                                }
-                            }
-                        )
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onCreateNew(newPlanName)
-                        showCreateDialog = false
-                        newPlanName = ""
-                    },
-                    enabled = newPlanName.isNotBlank()
-                ) {
-                    Text("Create")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCreateDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-}
-
-/**
- * Format date for display (simple version)
- */
-private fun formatDate(timestamp: Long): String {
-    val date = java.util.Date(timestamp)
-    val format = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
-    return format.format(date)
 }

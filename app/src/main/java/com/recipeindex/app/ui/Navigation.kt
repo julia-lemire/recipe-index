@@ -144,10 +144,12 @@ fun RecipeIndexNavigation(
                         mealPlanViewModel.addRecipeToPlan(planId, selectedRecipeId)
                         showMealPlanPicker = false
                     },
-                    onCreateNew = { planName ->
+                    onCreateNew = { name, startDate, endDate ->
                         val newPlan = com.recipeindex.app.data.entities.MealPlan(
-                            name = planName,
-                            recipeIds = listOf(selectedRecipeId)
+                            name = name,
+                            recipeIds = listOf(selectedRecipeId),
+                            startDate = startDate,
+                            endDate = endDate
                         )
                         mealPlanViewModel.createMealPlan(newPlan)
                         showMealPlanPicker = false
@@ -172,7 +174,14 @@ fun RecipeIndexNavigation(
                 onRecipeClick = { recipeId ->
                     navController.navigate(Screen.RecipeDetail.createRoute(recipeId))
                 },
-                onMenuClick = onMenuClick
+                onMenuClick = onMenuClick,
+                onTabSelect = { screen ->
+                    navController.navigate(screen.route) {
+                        popUpTo(Screen.Home.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
 
@@ -309,13 +318,12 @@ fun RecipeIndexNavigation(
                             mealPlanViewModel.addRecipeToPlan(planId, recipeId)
                             showMealPlanPicker = false
                         },
-                        onCreateNew = { planName ->
-                            // Create a new meal plan with just this recipe
+                        onCreateNew = { name, startDate, endDate ->
                             val newPlan = com.recipeindex.app.data.entities.MealPlan(
-                                name = planName,
+                                name = name,
                                 recipeIds = listOf(recipeId),
-                                startDate = null,
-                                endDate = null
+                                startDate = startDate,
+                                endDate = endDate
                             )
                             mealPlanViewModel.createMealPlan(newPlan) { _ ->
                                 showMealPlanPicker = false
@@ -338,7 +346,14 @@ fun RecipeIndexNavigation(
                 onEditMealPlan = { planId ->
                     navController.navigate(Screen.EditMealPlan.createRoute(planId))
                 },
-                onMenuClick = onMenuClick
+                onMenuClick = onMenuClick,
+                onTabSelect = { screen ->
+                    navController.navigate(screen.route) {
+                        popUpTo(Screen.Home.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
 
@@ -438,7 +453,14 @@ fun RecipeIndexNavigation(
                 onViewList = { listId ->
                     navController.navigate(Screen.GroceryListDetail.createRoute(listId))
                 },
-                onMenuClick = onMenuClick
+                onMenuClick = onMenuClick,
+                onTabSelect = { screen ->
+                    navController.navigate(screen.route) {
+                        popUpTo(Screen.Home.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
 

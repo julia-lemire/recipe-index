@@ -15,14 +15,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.recipeindex.app.data.entities.MealPlan
 import com.recipeindex.app.data.entities.Recipe
 import com.recipeindex.app.ui.components.AppDatePickerDialog
+import com.recipeindex.app.ui.components.ImportSourceCard
+import com.recipeindex.app.utils.DateFormatting
 import com.recipeindex.app.utils.DebugConfig
-import java.text.SimpleDateFormat
-import java.util.*
 
 /**
  * AddEditMealPlanScreen - Form for creating/editing meal plans
@@ -54,10 +53,15 @@ fun AddEditMealPlanScreen(
     var showDateRangePicker by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
 
+    // For create mode, open the date range picker immediately
+    LaunchedEffect(Unit) {
+        if (mealPlan == null) showDateRangePicker = true
+    }
+
     // Auto-set name from dates if user hasn't manually edited it
     LaunchedEffect(startDate, endDate) {
         if (!userHasEditedName && (startDate != null || endDate != null)) {
-            name = formatDateRange(startDate, endDate)
+            name = DateFormatting.autoNameFromDateRange(startDate, endDate)
         }
     }
 
@@ -170,7 +174,7 @@ fun AddEditMealPlanScreen(
                     supportingText = {
                         if (startDate != null || endDate != null) {
                             Text(
-                                text = formatDateRange(startDate, endDate),
+                                text = DateFormatting.formatDateRange(startDate, endDate),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -633,120 +637,6 @@ private fun ImportRecipesTab(
 }
 
 /**
- * Import source card for meal plan recipe import
- */
-@Composable
-private fun ImportSourceCard(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    onClick: () -> Unit,
-    enabled: Boolean = true
-) {
-    Card(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = if (enabled) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                }
-            )
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (enabled) {
-                        MaterialTheme.colorScheme.onSurface
-                    } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                    }
-                )
-
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (enabled) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                    }
-                )
-
-                if (!enabled) {
-                    Text(
-                        text = "Coming soon",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-private fun formatDate(timestamp: Long): String {
-    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-    return dateFormat.format(Date(timestamp))
-}
-
-private fun formatDateRange(startDate: Long?, endDate: Long?): String {
-    if (startDate == null && endDate == null) return ""
-
-    if (startDate != null && endDate != null) {
-        val start = Date(startDate)
-        val end = Date(endDate)
-        val cal = Calendar.getInstance()
-
-        cal.time = start
-        val startMonth = SimpleDateFormat("MMM", Locale.getDefault()).format(start)
-        val startDay = cal.get(Calendar.DAY_OF_MONTH)
-        val startYear = cal.get(Calendar.YEAR)
-
-        cal.time = end
-        val endMonth = SimpleDateFormat("MMM", Locale.getDefault()).format(end)
-        val endDay = cal.get(Calendar.DAY_OF_MONTH)
-        val endYear = cal.get(Calendar.YEAR)
-
-        // Same month and year: "Nov 18-22"
-        if (startMonth == endMonth && startYear == endYear) {
-            return "$startMonth $startDay-$endDay"
-        }
-
-        // Same year, different months: "Nov 28 - Dec 5"
-        if (startYear == endYear) {
-            return "$startMonth $startDay - $endMonth $endDay"
-        }
-
-        // Different years: "Dec 28 - Jan 2"
-        return "$startMonth $startDay - $endMonth $endDay"
-    }
-
-    // Only one date set
-    if (startDate != null) {
-        return "From ${SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(startDate))}"
-    }
-
-    return "Until ${SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(endDate!!))}"
-}
-
-/**
  * Date Range Picker Dialog - allows selecting single date or date range
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -803,8 +693,8 @@ private fun DateRangePickerDialog(
                 val end = dateRangePickerState.selectedEndDateMillis
                 Text(
                     text = when {
-                        start != null && end != null -> "${formatDate(start)} - ${formatDate(end)}"
-                        start != null -> "From ${formatDate(start)}"
+                        start != null && end != null -> "${DateFormatting.formatDate(start)} - ${DateFormatting.formatDate(end)}"
+                        start != null -> "From ${DateFormatting.formatDate(start)}"
                         else -> "Select dates"
                     },
                     modifier = Modifier.padding(horizontal = 16.dp)
