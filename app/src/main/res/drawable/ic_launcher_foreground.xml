@@ -4,112 +4,117 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+  <group android:scaleX="0.66"
+      android:scaleY="0.66"
+      android:translateX="18.36"
+      android:translateY="18.36">
 
-    <!-- LEFT: cover back/spine edge -->
-    <path
-        android:pathData="M18,30 C18,25 21,22 25,22 L25,82 C21,82 18,79 18,74 Z"
-        android:fillColor="#906030"/>
+      <!-- LEFT: cover back/spine edge -->
+      <path
+          android:pathData="M18,30 C18,25 21,22 25,22 L25,82 C21,82 18,79 18,74 Z"
+          android:fillColor="#906030"/>
 
-    <!-- LEFT: cover front face -->
-    <path
-        android:pathData="M25,22 L52,26 L52,82 L25,82 Z"
-        android:fillColor="#C8A060"/>
+      <!-- LEFT: cover front face -->
+      <path
+          android:pathData="M25,22 L52,26 L52,82 L25,82 Z"
+          android:fillColor="#C8A060"/>
 
-    <!-- Cover inner fold top -->
-    <path
-        android:pathData="M25,22 L52,26 L52,31 L27,27 Z"
-        android:fillColor="#A07840"/>
+      <!-- Cover inner fold top -->
+      <path
+          android:pathData="M25,22 L52,26 L52,31 L27,27 Z"
+          android:fillColor="#A07840"/>
 
-    <!-- Cover inner fold bottom -->
-    <path
-        android:pathData="M25,82 L52,82 L52,77 L27,77 Z"
-        android:fillColor="#A07840"/>
+      <!-- Cover inner fold bottom -->
+      <path
+          android:pathData="M25,82 L52,82 L52,77 L27,77 Z"
+          android:fillColor="#A07840"/>
 
-    <!-- Cover texture lines -->
-    <path
-        android:pathData="M30,38 L48,39.5"
-        android:strokeColor="#38FFFFFF"
-        android:strokeWidth="1.5"
-        android:strokeLineCap="round"/>
-    <path
-        android:pathData="M30,46 L48,47.5"
-        android:strokeColor="#38FFFFFF"
-        android:strokeWidth="1.5"
-        android:strokeLineCap="round"/>
-    <path
-        android:pathData="M30,54 L46,55"
-        android:strokeColor="#38FFFFFF"
-        android:strokeWidth="1.5"
-        android:strokeLineCap="round"/>
+      <!-- Cover texture lines -->
+      <path
+          android:pathData="M30,38 L48,39.5"
+          android:strokeColor="#38FFFFFF"
+          android:strokeWidth="1.5"
+          android:strokeLineCap="round"/>
+      <path
+          android:pathData="M30,46 L48,47.5"
+          android:strokeColor="#38FFFFFF"
+          android:strokeWidth="1.5"
+          android:strokeLineCap="round"/>
+      <path
+          android:pathData="M30,54 L46,55"
+          android:strokeColor="#38FFFFFF"
+          android:strokeWidth="1.5"
+          android:strokeLineCap="round"/>
 
-    <!-- SPINE: sage green binding strip -->
-    <path
-        android:pathData="M52,26 L57,24 L57,84 L52,82 Z"
-        android:fillColor="#4A6B55"/>
+      <!-- SPINE: sage green binding strip -->
+      <path
+          android:pathData="M52,26 L57,24 L57,84 L52,82 Z"
+          android:fillColor="#4A6B55"/>
 
-    <!-- RIGHT: inner pages back layer -->
-    <path
-        android:pathData="M57,24 L85,22 C89,22 92,25 92,30 L92,74 C92,79 89,82 85,82 L57,84 Z"
-        android:fillColor="#EDE8DC"/>
+      <!-- RIGHT: inner pages back layer -->
+      <path
+          android:pathData="M57,24 L85,22 C89,22 92,25 92,30 L92,74 C92,79 89,82 85,82 L57,84 Z"
+          android:fillColor="#EDE8DC"/>
 
-    <!-- RIGHT: inner pages middle layer -->
-    <path
-        android:pathData="M57,24 L83,22.5 L83,81.5 L57,84 Z"
-        android:fillColor="#EDE8DC"/>
+      <!-- RIGHT: inner pages middle layer -->
+      <path
+          android:pathData="M57,24 L83,22.5 L83,81.5 L57,84 Z"
+          android:fillColor="#EDE8DC"/>
 
-    <!-- RIGHT: inner pages front layer -->
-    <path
-        android:pathData="M57,24.5 L80,23 L80,81 L57,83.5 Z"
-        android:fillColor="#F5F0E8"/>
+      <!-- RIGHT: inner pages front layer -->
+      <path
+          android:pathData="M57,24.5 L80,23 L80,81 L57,83.5 Z"
+          android:fillColor="#F5F0E8"/>
 
-    <!-- Page edge lines -->
-    <path
-        android:pathData="M80,23 L83,22.5"
-        android:strokeColor="#D8D0C0"
-        android:strokeWidth="0.8"/>
-    <path
-        android:pathData="M80,81 L83,81.5"
-        android:strokeColor="#D8D0C0"
-        android:strokeWidth="0.8"/>
+      <!-- Page edge lines -->
+      <path
+          android:pathData="M80,23 L83,22.5"
+          android:strokeColor="#D8D0C0"
+          android:strokeWidth="0.8"/>
+      <path
+          android:pathData="M80,81 L83,81.5"
+          android:strokeColor="#D8D0C0"
+          android:strokeWidth="0.8"/>
 
-    <!-- Page text lines -->
-    <path
-        android:pathData="M62,40 L86,39"
-        android:strokeColor="#D8D0C0"
-        android:strokeWidth="1.5"
-        android:strokeLineCap="round"/>
-    <path
-        android:pathData="M62,49 L86,48"
-        android:strokeColor="#D8D0C0"
-        android:strokeWidth="1.5"
-        android:strokeLineCap="round"/>
-    <path
-        android:pathData="M62,58 L82,57"
-        android:strokeColor="#D8D0C0"
-        android:strokeWidth="1.5"
-        android:strokeLineCap="round"/>
+      <!-- Page text lines -->
+      <path
+          android:pathData="M62,40 L86,39"
+          android:strokeColor="#D8D0C0"
+          android:strokeWidth="1.5"
+          android:strokeLineCap="round"/>
+      <path
+          android:pathData="M62,49 L86,48"
+          android:strokeColor="#D8D0C0"
+          android:strokeWidth="1.5"
+          android:strokeLineCap="round"/>
+      <path
+          android:pathData="M62,58 L82,57"
+          android:strokeColor="#D8D0C0"
+          android:strokeWidth="1.5"
+          android:strokeLineCap="round"/>
 
-    <!-- SAGE LEAF -->
-    <path
-        android:pathData="M76,27 C76,27 69,37 72,46 C74,52 76,54 76,54 C76,54 78,52 80,46 C83,37 76,27 76,27 Z"
-        android:fillColor="#7A9E8A"/>
+      <!-- SAGE LEAF -->
+      <path
+          android:pathData="M76,27 C76,27 69,37 72,46 C74,52 76,54 76,54 C76,54 78,52 80,46 C83,37 76,27 76,27 Z"
+          android:fillColor="#7A9E8A"/>
 
-    <!-- Leaf centre vein -->
-    <path
-        android:pathData="M76,33 L76,53"
-        android:strokeColor="#4A6B55"
-        android:strokeWidth="1.3"
-        android:strokeLineCap="round"/>
+      <!-- Leaf centre vein -->
+      <path
+          android:pathData="M76,33 L76,53"
+          android:strokeColor="#4A6B55"
+          android:strokeWidth="1.3"
+          android:strokeLineCap="round"/>
 
-    <!-- Leaf side veins -->
-    <path
-        android:pathData="M76,38 C76,38 73,41 72,44"
-        android:strokeColor="#4A6B55"
-        android:strokeWidth="1"
-        android:strokeLineCap="round"/>
-    <path
-        android:pathData="M76,38 C76,38 79,41 80,44"
-        android:strokeColor="#4A6B55"
-        android:strokeWidth="1"
-        android:strokeLineCap="round"/>
+      <!-- Leaf side veins -->
+      <path
+          android:pathData="M76,38 C76,38 73,41 72,44"
+          android:strokeColor="#4A6B55"
+          android:strokeWidth="1"
+          android:strokeLineCap="round"/>
+      <path
+          android:pathData="M76,38 C76,38 79,41 80,44"
+          android:strokeColor="#4A6B55"
+          android:strokeWidth="1"
+          android:strokeLineCap="round"/>
+  </group>
 </vector>
